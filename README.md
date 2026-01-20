@@ -12,15 +12,12 @@ repo layout:
 
 
 Demo: 
-### Loading statsJs ES6 Modules:
 
-`sdk = await import("https://lorenasandoval88.github.io/clustjs/sdk.js")`
 
-### Loading the User Interface (UI):
-
-`sdk.pca.loadUI()`
 
 ### Loading statsJs PCA plot UI:
+
+`sdk = await import("https://lorenasandoval88.github.io/clustjs/sdk.js")`
 
 `sdk.pca_UI( {colors: ["#8C236A", "#4477AA"]} )`
 

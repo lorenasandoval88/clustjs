@@ -20,9 +20,9 @@ Demo:
 
 `sdk.pca.loadUI()`
 
-### Loading statsJs PCA plot only:
+### Loading statsJs PCA plot UI:
 
-`sdk.pca.plot( {colors: ["#8C236A", "#4477AA"]} )`
+`sdk.pca_UI( {colors: ["#8C236A", "#4477AA"]} )`
 
     options can include the following (order is irrelevant) or be left empty:
     {
@@ -33,22 +33,8 @@ Demo:
         width: 400
     }
 
-### Loading statsJs textBox only:
+<img width="299" height="332" alt="image" src="https://github.com/user-attachments/assets/2739074d-12a4-4e5e-ae79-b96b68f73295" />
 
-define the text using the built in Iris data. 
-`const csv = sdk. pca.data.iris.csv`
-
-`sdk.textBox( {text: csv} )`
-
-    options can include the following (order is irrelevant) or be left empty:
-    {
-        divId: "as a string", 
-        text: data in csv or text format,
-        height: 100,
-        width: 400,
-        border: "2px solid",
-        color: "red"
-    }
     
         
 Further documentation can be found on the [wiki](https://github.com/lorenasandoval88/clustjs/wiki).

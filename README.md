@@ -1,4 +1,4 @@
-# Welcome to clust.js!
+# Welcome to clustJs!
 
 
 Multivariate statistical visualization (clustering, correlation, heatmaps, etc) in JavaScript. 

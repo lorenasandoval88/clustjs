@@ -7,7 +7,7 @@ live at: https://lorenasandoval88.github.io/clustjs
 
 repo layout:
 
-<img width="399" height="755" alt="image" src="https://github.com/user-attachments/assets/8c38acbd-9c11-40c4-a762-e9ebbd16425b" />
+<img width="499" height="795" alt="image" src="https://github.com/user-attachments/assets/8c38acbd-9c11-40c4-a762-e9ebbd16425b" />
 
 
 
@@ -30,7 +30,7 @@ Demo:
         width: 400
     }
 
-<img width="299" height="332" alt="image" src="https://github.com/user-attachments/assets/2739074d-12a4-4e5e-ae79-b96b68f73295" />
+<img width="499" height="532" alt="image" src="https://github.com/user-attachments/assets/2739074d-12a4-4e5e-ae79-b96b68f73295" />
 
     
         

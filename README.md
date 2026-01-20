@@ -17,9 +17,9 @@ Demo:
 
 ### Loading statsJs PCA plot UI:
 
-sdk = await import("https://lorenasandoval88.github.io/clustjs/sdk.js")
+```sdk = await import("https://lorenasandoval88.github.io/clustjs/sdk.js")```
 
-sdk.pca_UI( {colors: ["#8C236A", "#4477AA"]} )
+```sdk.pca_UI( {colors: ["#8C236A", "#4477AA"]} )```
 
     options can include the following (order is irrelevant) or be left empty:
     

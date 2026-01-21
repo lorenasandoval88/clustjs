@@ -1,4 +1,4 @@
-import { pca_plot } from "./src/pca.mjs"; // adjust path
+import {irisData,pca_plot } from "./dist/sdk.mjs"; // adjust path
 
 // ======== APP STATE (GUI controls update this) ========
 const appState = {
@@ -8,7 +8,7 @@ const appState = {
 };
 
 // ======== IRIS (your built-in sample) ========
-const irisData = await fetch("./src/data/iris.json").then(r => r.json());
+// const irisData = await fetch("./src/data/iris.json").then(r => r.json());
 
 // ======== RIGHT PANEL TABLE RENDER ========
 function renderTableRight(data, title = "Dataset Preview") {

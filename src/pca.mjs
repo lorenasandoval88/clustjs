@@ -1,26 +1,23 @@
 console.log("pca.mjs loaded")
 // TODO: limit textbox rows to 500
 // TODO: automate UI to apply to dendo and heatmap
-import {   removeNonNumberValues,  removeNumberValues,  scale} from './otherFunctions.js'
-import {  npm_pca,   d3,  d3tip,  localforage} from './imports.js'
+import {   removeNonNumberValues,  removeNumberValues,  scale} from './src/otherFunctions.js'
+// import {  npm_pca,   d3,  d3tip,  localforage} from './imports.js'
 
+import * as d3 from "d3";
+import d3tip from "d3-tip";
+import { PCA } from "ml-pca";        // this is the ml-pca default export
+import irisData from "./data/irisData.js";
+
+// import localforage from "localforage";  // only if you truly need it in SDK
 
 const pcaDt = { data: {}}
 
 // create button when UI function is called?, name divs by number
-
-
 const divNum = 1
 pcaDt.data.divNum = divNum
 console.log("pca pcaDt.data.divNum:", pcaDt.data.divNum)
 console.log("pcaDt object:", pcaDt)
-
-//Get iris data from localforage or from built-in file
-pcaDt.data.iris = {}
-pcaDt.data.iris.json = await localforage.getItem("irisJSON")
-pcaDt.data.iris.csv = await localforage.getItem("irisCSV") //csv// irisData.map(row => row.map(item => (typeof item === 'string' && item.indexOf(',') >= 0) ? `"${item}"`: String(item)).join(',')).join('\n')
-pcaDt.data.file = "none loaded"
-
 
 
 const pcaScores = async function (data) {
@@ -96,15 +93,12 @@ function selectGroup(ctx, group, maxOpacity) {
 
 
 
-
-
-
-const pca_plot = async function (options = {}) {
+export async function pca_plot(options = {}) {
   console.log("RUNNING pca_plot()-------------------------------")
 
   const {
     divid: divid = undefined,
-    data: data = pcaDt.data.iris.json , //formatIrisData(irisData, irisLabels),
+    data: data = irisData , //formatIrisData(irisData, irisLabels),
     width: width = 400,
     height: height = 200,
     colors: colors = ["red", "blue", "green", "orange", "purple", "pink", "yellow"],
@@ -287,9 +281,9 @@ const pca_plot = async function (options = {}) {
 
 
 
-export {  // pca
-  pca_plot,
-}
+// export {  // pca
+//   pca_plot,
+// }
 
 
 

@@ -6,7 +6,21 @@
     "build": "rollup -c"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^29.0.0",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-terser": "^0.4.4",
-    "rollup": "^4.0.0"
+    "rollup": "^4.55.3"
+  },
+  "description": "Multivariate statistical visualization (clustering, correlation, heatmaps, etc) in JavaScript.",
+  "version": "1.0.0",
+  "main": "main.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "d3": "^7.9.0",
+    "d3-tip": "^0.9.1",
+    "ml-pca": "^4.1.1"
   }
 }

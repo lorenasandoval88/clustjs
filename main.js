@@ -8,7 +8,7 @@ const appState = {
 };
 
 // ======== IRIS (your built-in sample) ========
-const irisData = await fetch("./src/data/irisData.js").then(r => r.json());
+const irisData = await fetch("./src/data/iris.json").then(r => r.json());
 
 // ======== RIGHT PANEL TABLE RENDER ========
 function renderTableRight(data, title = "Dataset Preview") {
@@ -157,6 +157,4 @@ const el = document.getElementById("myPCA");
 });
 
 
-  await pca_plot({
-  
-  });
+  //await pca_plot({})

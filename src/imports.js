@@ -1,7 +1,6 @@
 // console.log("imports.js loaded")
 
 import { PCA as npm_pca } from "https://esm.sh/ml-pca"
-const ml_dataset_iris = (await import("https://esm.sh/ml-dataset-iris"))
 import { default as npm_pcajs } from 'https://cdn.jsdelivr.net/npm/pca-js@1.0.1/+esm'
 const Plotly = (await import('https://cdn.jsdelivr.net/npm/plotly.js-dist@3.0.1/+esm')).default
 const localforage = (await import('https://cdn.jsdelivr.net/npm/localforage@1.10.0/+esm')).default
@@ -21,7 +20,6 @@ export {
     Plotly,
     d3,
     d3tip,
-    ml_dataset_iris,
     localforage,
     hclust,
     dist,

@@ -1,7 +1,7 @@
 console.log("pca.mjs loaded")
 // TODO: limit textbox rows to 500
 // TODO: automate UI to apply to dendo and heatmap
-import {   removeNonNumberValues,  removeNumberValues,  scale} from './src/otherFunctions.js'
+import {   removeNonNumberValues,  removeNumberValues,  scale} from './otherFunctions.js'
 // import {  npm_pca,   d3,  d3tip,  localforage} from './imports.js'
 
 import * as d3 from "d3";
@@ -37,7 +37,7 @@ const pcaScores = async function (data) {
   let scaledArr = scaledObjs.map(Object.values)
   // console.log('scaledArr',scaledArr[0])  
 
-  const pca = new npm_pca(scaledArr, {
+  const pca = new PCA(scaledArr, {
     center: true,
     scale: true
   })

@@ -1,4 +1,12 @@
 console.log("pca.mjs loaded")
+console.log("---------------------------------------------------")
+
+console.log("type the following code into the console:")
+console.log("const mod = await import('https://lorenasandoval88.github.io/clustjs/dist/sdk.mjs');")
+console.log("---------------------------------------------------")
+console.log("await mod.pca_plot({data: yourDataArray, divid: 'yourDivId', width: 600, height: 400})")
+
+
 // TODO: limit textbox rows to 500
 // TODO: automate UI to apply to dendo and heatmap
 import {   removeNonNumberValues,  removeNumberValues,  scale} from './otherFunctions.js'

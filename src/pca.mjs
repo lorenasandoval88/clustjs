@@ -2,16 +2,24 @@
 
 // TODO: limit textbox rows to 500
 // TODO: automate UI to apply to dendo and heatmap
-import {   removeNonNumberValues,  removeNumberValues,  scale} from './otherFunctions.js'
+import {
+  removeNonNumberValues,
+  removeNumberValues,
+  scale
+} from './otherFunctions.js'
 
 import * as d3 from "d3";
 import d3tip from "d3-tip";
-import { PCA } from "ml-pca";        // this is the ml-pca default export
+import {
+  PCA
+} from "ml-pca"; // this is the ml-pca default export
 import irisData from "./data/irisData.js";
 
 // import localforage from "localforage";  // only if you truly need it in SDK
 
-const pcaObj = { data: {}}
+const pcaObj = {
+  data: {}
+}
 
 // create button when UI function is called?, name divs by number
 const divNum = 1
@@ -85,23 +93,25 @@ export async function pca_plot(options = {}) {
 
   const {
     divid: divid = undefined,
-    data: data = irisData , //formatIrisData(irisData, irisLabels),
+    data: data = irisData, 
     width: width = 400,
     height: height = 200,
     colors: colors = ["red", "blue", "green", "orange", "purple", "pink", "yellow"],
   } = options;
 
-  //TODO calcscores
-
-  // console.log(" data - pca_plot() (1st row):", data[0])
   const scores = await pcaScores(data)
-  const groups = [...new Set(scores.map(d => d.group))] //.values()//.sort())
+  const groups = [...new Set(scores.map(d => d.group))]
   const color = d3.scaleOrdinal(colors).domain(groups)
 
 
   const fontFamily = 'monospace'
   const maxOpacity = 0.7
- const margin = ({ top: 25, right: 170, bottom: 45, left: 45 })
+  const margin = ({
+    top: 25,
+    right: 170,
+    bottom: 45,
+    left: 45
+  })
   const paddedMin = d3.min(scores, d => d.PC1) - d3.min(scores, d => d.PC1) * -0.10
   const paddedMax = d3.max(scores, d => d.PC1) + d3.max(scores, d => d.PC1) * 0.10
   const x = d3.scaleLinear()
@@ -139,18 +149,16 @@ export async function pca_plot(options = {}) {
       .text("PC2"))
 
 
-
-
   const svg = d3.create("svg")
-    .style("background", "transparent")
-  .style("overflow", "visible");
+    .style("background", "white")
+    .style("overflow", "visible");
 
 
-    svg.selectAll(".tick text")
-  .attr("fill", "#000000");
+  svg.selectAll(".tick text")
+    .attr("fill", "#000000");
 
   svg.selectAll(".domain, .tick line")
-  .attr("stroke", "#000000");
+    .attr("stroke", "#000000");
 
   svg.id = "svgid"
   // const g = d3.select(DOM.svg(width, height));
@@ -261,24 +269,22 @@ export async function pca_plot(options = {}) {
   // }
   // console.log("pca_plot() div:",div)
   // return svg.node();
-let div;
+  let div;
 
-if (divid && document.getElementById(divid)) {
-  console.log("pcaPlot div provided in function parameters:", divid);
-  div = document.getElementById(divid);
-  div.innerHTML = "";
-} else {
-  console.log("pcaPlot div NOT provided or doesn't exist; creating div...");
-  div = document.createElement("div");
-  document.body.appendChild(div);
+  if (divid && document.getElementById(divid)) {
+    console.log("pcaPlot div provided in function parameters:", divid);
+    div = document.getElementById(divid);
+    div.innerHTML = "";
+  } else {
+    console.log("pcaPlot div NOT provided or doesn't exist; creating div...");
+    div = document.createElement("div");
+    document.body.appendChild(div);
+  }
+
+  div.appendChild(svg.node());
+  console.log("pca() target div:", div);
+
 }
-
-div.appendChild(svg.node());
-console.log("pca() target div:", div);
-
-}
-
-
 
 // export {  // pca
 //   pca_plot,

@@ -94,8 +94,8 @@ export async function pca_plot(options = {}) {
   const {
     divid: divid = undefined,
     data: data = irisData, 
-    width: width = 400,
-    height: height = 200,
+    width: width = 600,
+    height: height = 300,
     colors: colors = ["red", "blue", "green", "orange", "purple", "pink", "yellow"],
   } = options;
 
@@ -118,49 +118,52 @@ export async function pca_plot(options = {}) {
     .domain([paddedMin, paddedMax])
     .range([margin.left, width - margin.right])
 
-  const xAxis = g => g
-    .attr("transform", `translate(0,${height - margin.bottom + 5})`)
-    .call(d3.axisBottom(x))
-    .call(g => g.select(".domain").remove())
-    .call(g => g.append("text")
-      .attr("x", width - margin.left - 20)
-      .attr("y", 15)
-      // .attr("x", width - margin.right)
-      //  .attr("y", -4)
-      .attr("fill", "#000000")
-      .attr("font-weight", "bold")
-      .attr("text-anchor", "end")
-      .text("PC1"))
+const xAxis = g => g
+  .attr("transform", `translate(0,${height - margin.bottom + 5})`)
+  .call(d3.axisBottom(x).ticks(6).tickSizeOuter(0))
+  .call(g => g.select(".domain")
+    .attr("stroke", "#000")
+    .attr("stroke-width", 1))
+  .call(g => g.selectAll(".tick line")
+    .attr("stroke", "#000")
+    .attr("stroke-width", 1))
+  .call(g => g.selectAll(".tick text")
+    .attr("fill", "#000")
+    .style("font-size", "12px"))
+  .call(g => g.append("text")
+    .attr("x", width - margin.right)
+    .attr("y", 35)
+    .attr("fill", "#000")
+    .attr("font-weight", "bold")
+    .attr("text-anchor", "end")
+    .text("PC1"));
 
-  const y = d3.scaleLinear()
-    .domain(d3.extent(scores, d => d.PC2))
-    .range([height - margin.bottom, margin.top])
+const y = d3.scaleLinear()
+  .domain(d3.extent(scores, d => d.PC2))
+  .range([height - margin.bottom, margin.top])
 
-  const yAxis = g => g
-    .attr("transform", `translate(${margin.left-5},0)`)
-    .call(d3.axisLeft(y))
-    .call(g => g.select(".domain").remove())
-    .call(g => g.select(".tick:last-of-type text").clone()
-      .attr("x", -margin.top)
-      .attr("y", -margin.top)
-      .attr("fill", "#000000")
-      .attr("text-anchor", "start")
-      .attr("font-weight", "bold")
-      .text("PC2"))
+const yAxis = g => g
+  .attr("transform", `translate(${margin.left-5},0)`)
+  .call(d3.axisLeft(y))
+  .call(g => g.select(".domain")
+    .attr("stroke", "#000")
+    .attr("stroke-width", 1))
+  .call(g => g.select(".tick:last-of-type text").clone()
+    .attr("x", -margin.top)
+    .attr("y", -margin.top)
+    .attr("fill", "#000000")
+    .attr("text-anchor", "start")
+    .attr("font-weight", "bold")
+    .text("PC2"))
 
 
   const svg = d3.create("svg")
     .style("background", "white")
     .style("overflow", "visible");
 
+svg.attr("id", "svgid");
 
-  svg.selectAll(".tick text")
-    .attr("fill", "#000000");
-
-  svg.selectAll(".domain, .tick line")
-    .attr("stroke", "#000000");
-
-  svg.id = "svgid"
+  // svg.id = "svgid"
   // const g = d3.select(DOM.svg(width, height));
 
   // title
@@ -268,7 +271,7 @@ export async function pca_plot(options = {}) {
   //   console.log("pca() div without assigned id:", div)
   // }
   // console.log("pca_plot() div:",div)
-  // return svg.node();
+  return svg.node();
   let div;
 
   if (divid && document.getElementById(divid)) {

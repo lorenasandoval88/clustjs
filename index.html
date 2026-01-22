@@ -13,8 +13,6 @@
 
   <!-- Custom styles -->
   <link href="./css/styles.css" rel="stylesheet" />
-
-
 </head>
 
 <body>
@@ -51,16 +49,11 @@
 <main class="container-fluid py-4">
   <div class="row g-4">
 
-    <!-- LEFT: TOOLS + DATA SOURCE -->
+    <!-- LEFT: DATA SOURCE (top) + TOOLS (below) -->
     <aside class="col-md-3 col-lg-2">
-      <div class="tool-panel mb-4">
-        <div class="tool-square" id="btnPCA">PCA</div>
-        <div class="tool-square" id="btnClustering">Clustering</div>
-        <div class="tool-square" id="btnHeatmap">Heatmap</div>
-      </div>
 
-      <!-- DATA SOURCE (under tools) -->
-      <div class="data-panel">
+      <!-- DATA SOURCE (moved to top) -->
+      <div class="data-panel mb-4">
         <h6 class="mb-3 text-center">Data Source</h6>
 
         <!-- File upload -->
@@ -91,9 +84,17 @@
           </select>
         </div>
       </div>
+
+      <!-- TOOLS (moved below Data Source) -->
+      <div class="tool-panel">
+        <div class="tool-square" id="btnPCA">PCA</div>
+        <div class="tool-square" id="btnClustering">Clustering</div>
+        <div class="tool-square" id="btnHeatmap">Heatmap</div>
+      </div>
+
     </aside>
 
-    <!-- RIGHT: OUTPUT (now split: output content -> console -> plots div) -->
+    <!-- RIGHT: OUTPUT (output content -> console -> plots div) -->
     <section class="col-md-9 col-lg-10">
       <div class="output-panel">
 
@@ -118,7 +119,7 @@
           </div>
         </div>
 
-        <!-- NEW: Plots wrapper (below console) -->
+        <!-- Plots wrapper (below console) -->
         <div id="plotsPanel" class="panel-card">
           <div id="myPCA"></div>
           <div id="myHclust"></div>

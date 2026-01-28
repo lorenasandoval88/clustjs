@@ -45,7 +45,9 @@ function renderTableRight(data, title = "Dataset Preview") {
   table.appendChild(thead);
 
   const tbody = document.createElement("tbody");
-  data.forEach(row => {
+  // Show only first 5 rows
+  const displayData = data.slice(0, 5);
+  displayData.forEach(row => {
     const tr = document.createElement("tr");
     cols.forEach(c => {
       const td = document.createElement("td");

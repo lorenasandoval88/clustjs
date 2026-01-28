@@ -218,14 +218,15 @@ svg.attr("id", "svgid");
     .style('background-color', 'white')
     .style("color", "#000")
     .style('border-radius', '7px')
-    // .style('float', 'left')
+    .style('padding', '8px 12px')
     .style('font-family', fontFamily)
-    .style('width', '9%')
+    .style('font-size', '12px')
+    .style('white-space', 'nowrap')
     .html((event, d) => `
           <div style='text-align: center'>
-            name:${d.name} <br/>
-            pc1:${d.PC1.toFixed(2)} <br/>
-            pc2:${d.PC2.toFixed(2)}
+            name: ${d.name}<br/>
+            pc1: ${d.PC1.toFixed(2)}<br/>
+            pc2: ${d.PC2.toFixed(2)}
           </div>`)
 
   // Apply tooltip to our SVG
@@ -281,7 +282,6 @@ svg.attr("id", "svgid");
   }
 
   div.appendChild(svg.node());
-  console.log("pca() target div:", div);
 
 }
 

@@ -95,6 +95,17 @@
 
           <!-- Output panel (top) -->
           <div id="rightData" class="panel-card mb-4"></div>
+          
+          <!-- Plots wrapper (right below data table) -->
+          <div id="plotsPanel" class="panel-card mb-4">
+            <div id="myPCA"></div>
+            <div id="myHclust"></div>
+            <div id="myHeatmap"></div>
+
+            <!-- optional extra plot container you can target -->
+            <div id="myPlots"></div>
+          </div>
+
           <!-- SDK Usage Example -->
           <div id="sdkExample" class="sdk-example"></div>
           <script>
@@ -108,7 +119,7 @@
   });
 })();`;
           </script>
-          <!-- Embedded Console (below output panel) -->
+          <!-- Embedded Console (below SDK example) -->
           <div id="consolePanel" class="mb-4">
             <div id="consoleHeader">
               <div class="fw-semibold">Console</div>
@@ -124,16 +135,6 @@
             <div id="consoleControls">
               <input id="consoleCmd" type="text" placeholder="Type JS here and press Enter (demo only)" />
             </div>
-          </div>
-
-          <!-- Plots wrapper (below console) -->
-          <div id="plotsPanel" class="panel-card">
-            <div id="myPCA"></div>
-            <div id="myHclust"></div>
-            <div id="myHeatmap"></div>
-
-            <!-- optional extra plot container you can target -->
-            <div id="myPlots"></div>
           </div>
 
         </div>

@@ -241,6 +241,13 @@ body {
   background: #111111;
   border: 2px solid #2a2a2a;
   color: #eaeaea;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  text-align: center;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
 }
 
 .tool-square:hover {

@@ -33,6 +33,141 @@ function displayInConsole(args, type = "log") {
   consoleOut.scrollTop = consoleOut.scrollHeight;
 }
 
+// ======== AUTOCOMPLETE (for console input) ========
+const consoleCmdEl = document.getElementById("consoleCmd");
+const acState = {
+  el: null,
+  visible: false,
+  items: [],
+  index: -1,
+  anchorRect: null
+};
+
+function ensureACEl() {
+  if (acState.el) return acState.el;
+  const el = document.createElement("div");
+  el.id = "console-autocomplete";
+  el.style.position = "absolute";
+  el.style.background = "#1e1e1e";
+  el.style.border = "1px solid #444";
+  el.style.fontFamily = "monospace";
+  el.style.fontSize = "12px";
+  el.style.color = "#ddd";
+  el.style.zIndex = "9999";
+  el.style.maxHeight = "200px";
+  el.style.overflowY = "auto";
+  el.style.minWidth = "180px";
+  el.style.display = "none";
+  document.body.appendChild(el);
+  acState.el = el;
+  return el;
+}
+
+function hideAC() {
+  const el = ensureACEl();
+  el.style.display = "none";
+  acState.visible = false;
+  acState.items = [];
+  acState.index = -1;
+}
+
+function renderAC() {
+  const el = ensureACEl();
+  el.innerHTML = "";
+  acState.items.forEach((name, i) => {
+    const item = document.createElement("div");
+    item.textContent = name;
+    item.style.padding = "4px 8px";
+    item.style.cursor = "pointer";
+    item.style.background = i === acState.index ? "#2b2b2b" : "transparent";
+    item.addEventListener("mouseenter", () => {
+      acState.index = i;
+      renderAC();
+    });
+    item.addEventListener("mousedown", (ev) => {
+      ev.preventDefault();
+      applyACSelection();
+    });
+    el.appendChild(item);
+  });
+}
+
+function showAC(items, anchorRect) {
+  const el = ensureACEl();
+  acState.items = items;
+  acState.index = 0;
+  acState.visible = true;
+  acState.anchorRect = anchorRect;
+  renderAC();
+  const top = window.scrollY + anchorRect.bottom + 4;
+  const left = window.scrollX + anchorRect.left;
+  el.style.top = `${top}px`;
+  el.style.left = `${left}px`;
+  el.style.display = "block";
+}
+
+function getAllPropertyNames(obj, maxDepth = 5) {
+  const set = new Set();
+  let cur = obj; let depth = 0;
+  try {
+    while (cur && depth < maxDepth) {
+      for (const k of Object.getOwnPropertyNames(cur)) set.add(k);
+      cur = Object.getPrototypeOf(cur);
+      depth++;
+    }
+  } catch {}
+  return Array.from(set);
+}
+
+function getCompletionsFor(text, caret) {
+  const before = text.slice(0, caret);
+  const m = before.match(/([A-Za-z_$][\w$]*)\.([A-Za-z_$\w$]*)?$/);
+  if (!m) return null;
+  const objName = m[1];
+  const prefix = m[2] || "";
+  const obj = globalThis[objName];
+  if (!obj) return null;
+  const keys = getAllPropertyNames(obj)
+    .filter(k => !prefix || k.toLowerCase().startsWith(prefix.toLowerCase()))
+    .sort((a,b)=>a.localeCompare(b));
+  return { objName, prefix, start: caret - prefix.length, keys };
+}
+
+function applyACSelection() {
+  if (!consoleCmdEl || !acState.visible || acState.index < 0) return;
+  const value = consoleCmdEl.value;
+  const caret = consoleCmdEl.selectionStart || value.length;
+  const info = getCompletionsFor(value, caret);
+  if (!info) return hideAC();
+  const chosen = acState.items[acState.index];
+  const insertFrom = info.start;
+  const newValue = value.slice(0, insertFrom) + chosen + value.slice(caret);
+  consoleCmdEl.value = newValue;
+  const newCaret = insertFrom + chosen.length;
+  consoleCmdEl.setSelectionRange(newCaret, newCaret);
+  hideAC();
+  consoleCmdEl.focus();
+}
+
+// Update suggestions on input
+consoleCmdEl?.addEventListener("input", () => {
+  if (!consoleCmdEl) return;
+  const caret = consoleCmdEl.selectionStart || 0;
+  const value = consoleCmdEl.value;
+  const info = getCompletionsFor(value, caret);
+  if (!info || info.keys.length === 0) return hideAC();
+  const rect = consoleCmdEl.getBoundingClientRect();
+  showAC(info.keys, rect);
+});
+
+// Hide on blur/click elsewhere
+document.addEventListener("click", (e) => {
+  if (!acState.el || !consoleCmdEl) return;
+  if (e.target === acState.el || acState.el.contains(e.target)) return;
+  if (e.target === consoleCmdEl) return;
+  hideAC();
+});
+
 // Override console methods
 console.log = (...args) => {
   originalConsole.log(...args);
@@ -64,37 +199,65 @@ document.getElementById("btnCopyConsole")?.addEventListener("click", () => {
 
 // Console command input with AsyncFunction support
 document.getElementById("consoleCmd")?.addEventListener("keydown", async (e) => {
+  // If autocomplete is visible, handle navigation/selection
+  if (acState.visible) {
+    if (e.key === "ArrowDown") { e.preventDefault(); acState.index = Math.min(acState.index + 1, acState.items.length - 1); renderAC(); return; }
+    if (e.key === "ArrowUp")   { e.preventDefault(); acState.index = Math.max(acState.index - 1, 0); renderAC(); return; }
+    if (e.key === "Tab" || e.key === "Enter") { e.preventDefault(); applyACSelection(); return; }
+    if (e.key === "Escape") { e.preventDefault(); hideAC(); return; }
+  }
   if (e.key === "Enter") {
     const cmd = e.target.value.trim();
     if (!cmd) return;
-    
+
     displayInConsole([`> ${cmd}`], 'meta');
-    
+
     try {
-      // Create an async function that can use await
-      const AsyncFunction = async function(){}.constructor;
-      
-      // Try as expression first (with return)
-      let result;
-      try {
-        result = await AsyncFunction(`return (${cmd})`)();
-      } catch (e1) {
-        // If that fails, try as statement (without return)
-        try {
-          result = await AsyncFunction(cmd)();
-        } catch (e2) {
-          // If both fail, throw the original error
-          throw e1;
-        }
+      // Build an async wrapper so top-level await works
+      const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+      const isDeclaration = /^\s*(const|let|var|function|class)\s/.test(cmd);
+
+      // Persist declarations to globalThis so they survive across commands
+      let body;
+      const declAssignMatch = cmd.match(/^\s*(const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*([\s\S]+)$/);
+      const declNoInitMatch = cmd.match(/^\s*(const|let|var)\s+([A-Za-z_$][\w$]*)\s*;?$/);
+      const funcMatch = cmd.match(/^\s*function\s+([A-Za-z_$][\w$]*)\s*\(/);
+      const classMatch = cmd.match(/^\s*class\s+([A-Za-z_$][\w$]*)\s*/);
+
+      if (declAssignMatch) {
+        const name = declAssignMatch[2];
+        const rhs = declAssignMatch[3];
+        // Assign to global and do not echo the value
+        body = `globalThis.${name} = (${rhs}); return undefined;`;
+      } else if (declNoInitMatch) {
+        const name = declNoInitMatch[2];
+        body = `globalThis.${name} = undefined; return undefined;`;
+      } else if (funcMatch) {
+        const name = funcMatch[1];
+        body = `${cmd}; globalThis.${name} = ${name}; return undefined;`;
+      } else if (classMatch) {
+        const name = classMatch[1];
+        body = `${cmd}; globalThis.${name} = ${name}; return undefined;`;
+      } else if (isDeclaration) {
+        // Fallback for unusual declarations
+        body = `${cmd}; return undefined;`;
+      } else {
+        // Treat as expression and return its value
+        body = `return (${cmd});`;
       }
-      
+      const wrapped = `return (async () => { ${body} })()`;
+
+      // Create and execute the async function
+      const asyncFn = new AsyncFunction(wrapped);
+      const result = await asyncFn();
+
       if (result !== undefined) {
         console.log(result);
       }
     } catch (err) {
-      console.error(err.message);
+      console.error(err?.stack || err?.message || String(err));
     }
-    
+
     e.target.value = "";
   }
 });

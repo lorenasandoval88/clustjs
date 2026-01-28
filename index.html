@@ -110,14 +110,12 @@
           <div id="sdkExample" class="sdk-example"></div>
           <script>
             document.getElementById("sdkExample").innerHTML =
-              `<div class="title">Select data/method (left) or type the following code into the console:</div>
-(async () => {
-  const mod = await import("https://lorenasandoval88.github.io/clustjs/dist/sdk.mjs");
-  await mod.pca_plot({
-    width: 600,
-    height: 400
-  });
-})();`;
+              `<div class="title">Select data/method (left) or run in the console:</div>
+<div class="small text-muted mb-2">One-liner:</div>
+<pre><code>await (await import("https://lorenasandoval88.github.io/clustjs/dist/sdk.mjs")).pca_plot({ width: 600, height: 400 })</code></pre>
+<div class="small text-muted mb-2">Step-by-step (enter each line):</div>
+<pre><code>const { pca_plot } = await import("https://lorenasandoval88.github.io/clustjs/dist/sdk.mjs")
+await pca_plot({ width: 600, height: 400 })</code></pre>`;
           </script>
           <!-- Embedded Console (below SDK example) -->
           <div id="consolePanel" class="mb-4">
@@ -148,109 +146,6 @@
   <!-- Your existing modules -->
   <script type="module" src="./dist/sdk.mjs"></script>
   <script type="module" src="./main.js"></script>
-
-
-  <!-- Embedded Console logic -->
-  <script>
-    (function () {
-      const out = document.getElementById("consoleOut");
-      const cmd = document.getElementById("consoleCmd");
-      const btnClear = document.getElementById("btnClearConsole");
-      const btnCopy = document.getElementById("btnCopyConsole");
-
-      if (!out) return;
-
-      const fmt = (v) => {
-        if (v instanceof Error) return v.stack || v.message || String(v);
-        if (typeof v === "string") return v;
-        try {
-          return JSON.stringify(v, null, 2);
-        } catch {
-          return String(v);
-        }
-      };
-
-      function writeLine(type, args) {
-        const line = document.createElement("div");
-        line.className = `c-line c-${type}`;
-        line.textContent = args.map(fmt).join(" ");
-        out.appendChild(line);
-        out.scrollTop = out.scrollHeight;
-      }
-
-      // Keep original console methods
-      const original = {
-        log: console.log.bind(console),
-        warn: console.warn.bind(console),
-        error: console.error.bind(console),
-        info: console.info ? console.info.bind(console) : console.log.bind(console)
-      };
-
-      // Patch console -> also write to embedded console
-      console.log = (...args) => {
-        writeLine("log", args);
-        original.log(...args);
-      };
-      console.warn = (...args) => {
-        writeLine("warn", args);
-        original.warn(...args);
-      };
-      console.error = (...args) => {
-        writeLine("err", args);
-        original.error(...args);
-      };
-      if (console.info) {
-        console.info = (...args) => {
-          writeLine("meta", args);
-          original.info(...args);
-        };
-      }
-
-      // Basic global error hooks
-      window.addEventListener("error", (e) => {
-        writeLine("err", [e.message || "Uncaught error", e.error || ""]);
-      });
-
-      window.addEventListener("unhandledrejection", (e) => {
-        writeLine("err", ["Unhandled promise rejection:", e.reason]);
-      });
-
-      // Clear / Copy
-      btnClear?.addEventListener("click", () => {
-        out.textContent = "";
-        writeLine("meta", ["Console cleared."]);
-      });
-
-      btnCopy?.addEventListener("click", async () => {
-        try {
-          const text = out.innerText || "";
-          await navigator.clipboard.writeText(text);
-          writeLine("meta", ["Copied console output to clipboard."]);
-        } catch (err) {
-          writeLine("err", ["Copy failed:", err]);
-        }
-      });
-
-      // Optional command input (demo only). WARNING: eval is unsafe for untrusted users.
-      cmd?.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          const code = cmd.value.trim();
-          if (!code) return;
-          writeLine("meta", [">", code]);
-          try {
-            const result = (0, eval)(code);
-            console.log(result);
-          } catch (err) {
-            console.error(err);
-          }
-          cmd.value = "";
-        }
-      });
-
-      // Smoke test
-      console.log("Embedded console ready.");
-    })();
-  </script>
 
 </body>
 

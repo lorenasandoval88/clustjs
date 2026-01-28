@@ -98,7 +98,7 @@ function selectGroup(ctx, group, maxOpacity) {
 }
 
 export async function pca_plot(options = {}) {
-  console.log("RUNNING: pca_plot() function-------------------")
+  console.log("RUNNING: pca_plot() function----------")
 
   const {
     divid: divid = undefined,

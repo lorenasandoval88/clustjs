@@ -119,8 +119,7 @@ const scale = async function (Objects) {
   //divide each result by the standard deviation (σ)
 
   const d3 = await import("d3");
-  // console.log("d3",d3)
-  // console.log("Objects", Objects)
+
   const clone = JSON.parse(JSON.stringify(Objects));
   const df = asDataFrame(clone);
   df.columns.forEach((column) => {

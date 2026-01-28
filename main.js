@@ -31,10 +31,21 @@ function renderTableRight(data, title = "Dataset Preview") {
     </div>
   `;
 
+  // Create scrollable wrapper
+  const scrollWrapper = document.createElement("div");
+  scrollWrapper.style.maxHeight = "200px";  // Height for ~5 rows
+  scrollWrapper.style.overflowY = "auto";
+  scrollWrapper.style.overflowX = "auto";
+
   const table = document.createElement("table");
   table.className = "table table-dark table-striped table-sm mb-0";
 
   const thead = document.createElement("thead");
+  thead.style.position = "sticky";
+  thead.style.top = "0";
+  thead.style.backgroundColor = "#111111";
+  thead.style.zIndex = "1";
+  
   const hr = document.createElement("tr");
   cols.forEach(c => {
     const th = document.createElement("th");
@@ -45,8 +56,8 @@ function renderTableRight(data, title = "Dataset Preview") {
   table.appendChild(thead);
 
   const tbody = document.createElement("tbody");
-  // Show only first 5 rows
-  const displayData = data.slice(0, 5);
+  // Display up to 500 rows
+  const displayData = data.slice(0, 500);
   displayData.forEach(row => {
     const tr = document.createElement("tr");
     cols.forEach(c => {
@@ -58,7 +69,8 @@ function renderTableRight(data, title = "Dataset Preview") {
   });
 
   table.appendChild(tbody);
-  container.appendChild(table);
+  scrollWrapper.appendChild(table);
+  container.appendChild(scrollWrapper);
 }
 
 // ======== SIMPLE CSV/TSV PARSER ========
@@ -135,7 +147,7 @@ document.getElementById("btnPCA")?.addEventListener("click", async () => {
     return;
   }
 
-  console.log(`Running PCA on ${data.length} rows from ${appState.source}: ${appState.name}`);
+  //console.log(`Running PCA on ${data.length} rows from ${appState.source}: ${appState.name}`);
 
 
 const el = document.getElementById("myPCA");

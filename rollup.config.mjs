@@ -8,7 +8,8 @@ export default {
   output: {
     file: "dist/sdk.mjs",
     format: "es",
-    sourcemap: true
+    sourcemap: true,
+    inlineDynamicImports: true
   },
   plugins: [
     resolve({

@@ -374,7 +374,7 @@ body {
     }
 
     #consoleOut {
-      height: 220px;
+      height: 130px;
       overflow-y: auto;
       padding: .75rem;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;

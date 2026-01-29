@@ -108,6 +108,27 @@ export async function pca_plot(options = {}) {
     colors: colors = ["red", "blue", "green", "orange", "purple", "pink", "yellow"],
   } = options;
 
+    // Here we add the pca svg to the document body or to a specific div if provided
+  let div;
+
+  if (divid && document.getElementById(divid)) {
+    console.log("pcaPlot div provided in function parameters:", divid);
+    div = document.getElementById(divid);
+    div.innerHTML = "";
+  } else {
+    div = document.createElement("div");
+    const currentDivNum = pcaDt.data.divNum;
+
+    div.id = divid || 'pca_plot' + currentDivNum;
+        console.log("^^^^^^^^^^^^^^^^^^^^")
+
+    console.log("currentDivNum",currentDivNum)
+    console.log("div NOT provided within function options or doesn't exist... created a new div with id: ",div.id, "and appended to document body!");
+
+    document.body.appendChild(div);
+    
+  }
+
   const scores = await pcaScores(data)
   const groups = [...new Set(scores.map(d => d.group))]
   const color = d3.scaleOrdinal(colors).domain(groups)
@@ -269,27 +290,7 @@ svg.attr("id", "svgid");
     .style("font-size", "11px")
     .on("click", (event, d) => selectGroup(null, d, maxOpacity))
 
-  // Here we add the pca svg to the document body or to a specific div if provided
-  let div;
-
-  if (divid && document.getElementById(divid)) {
-    console.log("pcaPlot div provided in function parameters:", divid);
-    div = document.getElementById(divid);
-    div.innerHTML = "";
-  } else {
-    div = document.createElement("div");
-    const currentDivNum = pcaDt.data.divNum;
-
-    div.id = divid || 'pca_plot' + currentDivNum;
-    console.log("currentDivNum",currentDivNum)
-    console.log("div NOT provided within function options or doesn't exist... created a new div with id: ",div.id, "and appended to document body!");
-
-    document.body.appendChild(div);
-    
-  }
-
   div.appendChild(svg.node());
-
 }
 
 // load file and plot PCA

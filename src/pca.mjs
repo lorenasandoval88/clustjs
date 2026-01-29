@@ -277,7 +277,7 @@ svg.attr("id", "svgid");
     div = document.getElementById(divid);
     div.innerHTML = "";
   } else {
-    console.log("pcaPlot div NOT provided or doesn't exist; creating div...");
+    console.log("div NOT provided in optionsor doesn't exist; creating a new div with id: ",divid);
     div = document.createElement("div");
     document.body.appendChild(div);
   }

@@ -299,6 +299,7 @@ export async function pca_UI(options = {}) {
       const currentDivNum = pcaDt.data.divNum;
       div = document.createElement("div");
       div.id = divid || 'pca_UI_' + currentDivNum;
+      console.log(div.id)
       console.log("currentDivNum", currentDivNum);
       console.log("div NOT provided within function options or doesn't exist... created a new div with id: ", divid, "and appended to document body!");
       document.body.appendChild(div);

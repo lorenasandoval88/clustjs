@@ -214,8 +214,8 @@ export async function hclust_plot(options = {}) {
         .style('float', 'left')
         .style('color', '#000')
         .style('font-family', tooltip_fontFamily)
-        .html((event, d) => `
-        <div style='float: right'>
+          .html((event, d) => `
+          <div style='float: right; color: #000;'>
            value:${d.value.toFixed(tooltip_decimal)} <br/>
            row:${rowNames2[d.n]}, col:${colNames2[d.t] } 
         </div>`)
@@ -251,7 +251,7 @@ export async function hclust_plot(options = {}) {
     .style('font-family', tooltip_fontFamily)
     .style('font-size', tooltip_fontSize)
     .html((event, d) => `
-<div style='float: right'>
+<div style='float: right; color: #000;'>
    Height:${d.source.data.height.toFixed(3)} <br/>
 </div>`)
 

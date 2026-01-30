@@ -36,6 +36,8 @@
     "d3": "^7.9.0",
     "d3-tip": "^0.9.1",
       "ml-pca": "^4.1.1",
-      "ml-hclust": "^3.1.0"
+      "ml-hclust": "^3.1.0",
+      "ml-distance-matrix": "^2.0.0",
+      "ml-distance": "^4.0.1"
   }
 }

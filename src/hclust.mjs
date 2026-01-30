@@ -1,6 +1,8 @@
 import * as d3 from "d3";
 import d3tip from "d3-tip";
 import * as hclust from "ml-hclust";
+import dist from "ml-distance-matrix";
+import * as distance from "ml-distance";
 import irisData from "./data/irisData.js";
 import { csvToJson } from "./otherFunctions.js";
 

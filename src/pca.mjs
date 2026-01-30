@@ -291,12 +291,12 @@ export async function pca_UI(options = {}) {
 
   // use the div provided in the function call or create a new one
   // Resolve target container and avoid redundant lookups
+  const currentDivNum = pcaDt.data.divNum;
   let div = divid ? document.getElementById(divid) : null;
   if (div) {
     console.log("pca_UI() div provided in function parameters:", divid);
     div.innerHTML = "";
   } else {
-      const currentDivNum = pcaDt.data.divNum;
       div = document.createElement("div");
       div.id = divid || 'pca_UI_' + currentDivNum;
       console.log(div.id)

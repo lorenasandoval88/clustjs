@@ -6,7 +6,7 @@ import { distance } from "ml-distance";
 import irisData from "./data/irisData.js";
 import { csvToJson } from "./otherFunctions.js";
 
-const hclustDt = {
+export const hclustDt = {
   data: {
     divNum: 1,
     iris: {

@@ -18,7 +18,7 @@ import irisData from "./data/irisData.js";
 
 // import localforage from "localforage";  // only if you truly need it in SDK
 
-const pcaDt = {
+export const pcaDt = {
   data: {
     divNum: 1,
     iris: {

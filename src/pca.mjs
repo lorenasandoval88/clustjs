@@ -286,6 +286,7 @@ export async function pca_UI(options = {}) {
     width: width = 600,
     height: height = 300,
     colors: colors = ["red", "blue", "green", "orange", "purple", "pink", "yellow"],
+    loadIrisOnStart: loadIrisOnStart = false,
   } = options;
 
 
@@ -298,10 +299,10 @@ export async function pca_UI(options = {}) {
     div.innerHTML = "";
   } else {
       div = document.createElement("div");
-      div.id = divid || 'pca_UI_' + currentDivNum;
-      console.log(div.id)
+      div.id = divid || 'pca_UI' + currentDivNum;
+      console.log("div.id",div.id)
       console.log("currentDivNum", currentDivNum);
-      console.log("div NOT provided within function options or doesn't exist... created a new div with id: ", divid, "and appended to document body!");
+      console.log("div NOT provided within function options or doesn't exist... created a new div with id: ", div.id, "and appended to document body!");
       document.body.appendChild(div);
       pcaDt.data.divNum = currentDivNum + 1;
     }

@@ -66,8 +66,8 @@ export async function hclust_plot(options = {}) {
         clusteringDistanceCols: clusteringDistanceCols = "euclidean",
         clusteringMethodCols: clusteringMethodCols = "complete",
         clusteringMethodRows: clusteringMethodRows = "complete",
-        marginTop: marginTop = clusterCols ? 85 : 70,
-        marginLeft: marginLeft = clusterRows ? 250 : 70,
+        marginTop: marginTop = clusterCols ? 85 : 53,
+        marginLeft: marginLeft = clusterRows ? 250 : 80,
         colPadding: colPadding = clusterCols ? 12 : 0, 
         rowPadding: rowPadding = clusterRows ? 75 : 0,
         dendogram_font: dendogram_font = "10px",
@@ -124,25 +124,18 @@ export async function hclust_plot(options = {}) {
     let rowIdx = clusterRows ? root2.leaves().map(x => x.data.index) : d3.range(data.length) //row clust
     //  // console.log("rowIdx",rowIdx)
     const newMatrix2 = transpose(colIdx.map(i => transpose(rowIdx.map(e => data[e]))[i]))
-   // console.log("newMatrix2",newMatrix2)
-   // console.log("buildData",buildData(newMatrix2))
 
     // if labels (truncated length) are not provided, indices are used
     let colNames2 = colnames ? trimText(colIdx, colnames) : Array.from(new Array(data[0].length), (x, i) => i + 1)
-   // console.log("colNames",colnames)
-   // console.log("colNames2",colNames2)
 
     let rowNames2 = rownames ? trimText(rowIdx, rownames) : Array.from(new Array(data[0].length), (x, i) => i + 1) //rownames.map((x,i) => x + rowIdx[i])//
-    // let rowNames2 = rowIdx//rownames ? trimText(rowIdx, rownames) : Array.from(new Array(data[0].length), (x, i) => i + 1) //rownames.map((x,i) => x + rowIdx[i])//
-
-   // console.log("rowNames2",rowNames2)
-
+  
     // max x and y label lengths to be used in dendogram heights
     const colNames2Lengths = d3.max(colNames2.map(e => e.length))
     const rowNames2Lengths = d3.max(rowNames2.map(e => String(e).length))
    // console.log("rowNames2Lengths",rowNames2Lengths)
 
-
+// start of heatmap
     const color_scale = d3.scaleLinear()
         .domain(heatmapColorScale)
         .range(['#fff', `${heatmapColor}`])

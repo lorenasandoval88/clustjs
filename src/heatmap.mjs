@@ -33,6 +33,8 @@ console.log("RUNNING heatmap_plot()----------------------");
     height: height = 1800,
     width: width = 400,
     color: color = "red", //"#d62728",
+    marginLeft: marginLeft = 80,
+    marginRight: marginRight = 10,
   } =  options
 
   const color_scale = d3.scaleLinear()
@@ -42,8 +44,8 @@ console.log("RUNNING heatmap_plot()----------------------");
  const margin = ({ 
     top: 53,
     bottom: 10,
-    left: 80,
-    right: 10
+    left: marginLeft,
+    right: marginRight
   });
 
 

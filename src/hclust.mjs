@@ -68,6 +68,7 @@ export async function hclust_plot(options = {}) {
         clusteringMethodRows: clusteringMethodRows = "complete",
         marginTop: marginTop = clusterCols ? 85 : 53,
         marginLeft: marginLeft = clusterRows ? 250 : 80,
+        marginRight: marginRight = 10,
         colPadding: colPadding = clusterCols ? 12 : 0, 
         rowPadding: rowPadding = clusterRows ? 75 : 0,
         dendogram_font: dendogram_font = "10px",
@@ -89,7 +90,7 @@ export async function hclust_plot(options = {}) {
         top: marginTop,
         bottom: 0,
         left: marginLeft,
-        right: 0
+        right: marginRight
     })
     const svg = d3.create("svg")
 

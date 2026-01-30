@@ -149,8 +149,8 @@ await sdk.pca_plot({ width: 600, height: 400 })</code></pre>
 
 <div class="small text-muted mb-2">Localhost One-liner:</div>
 <div class="d-flex align-items-start gap-2 mb-2">
-  <pre class="mb-0"><code id="sdkOneLiner">await (await import("./dist/sdk.mjs")).hclust_plot({ width: 600, height: 400 })</code></pre>
-  <button id="copySdkOneLinerBtn" class="btn btn-sm btn-outline-secondary" type="button">Copy</button>
+  <pre class="mb-0"><code id="localSdkOneLiner">await (await import("./dist/sdk.mjs")).hclust_plot({ width: 600, height: 400 })</code></pre>
+  <button id="copyLocalOneLinerBtn" class="btn btn-sm btn-outline-secondary copy-snippet-btn" type="button">Copy</button>
 </div>`;
 
 
@@ -159,6 +159,27 @@ await sdk.pca_plot({ width: 600, height: 400 })</code></pre>
     (function() {
       const btn = document.getElementById("copySdkOneLinerBtn");
       const codeEl = document.getElementById("sdkOneLiner");
+      if (!btn || !codeEl) return;
+      btn.addEventListener("click", async () => {
+        const text = codeEl.textContent || "";
+        try {
+          await navigator.clipboard.writeText(text);
+          btn.textContent = "Copied!";
+        } catch (_) {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand("copy"); btn.textContent = "Copied!"; } finally { document.body.removeChild(ta); }
+        }
+        setTimeout(() => { btn.textContent = "Copy"; }, 1500);
+      });
+    })();
+
+    // Copy button for the Localhost one-liner
+    (function() {
+      const btn = document.getElementById("copyLocalOneLinerBtn");
+      const codeEl = document.getElementById("localSdkOneLiner");
       if (!btn || !codeEl) return;
       btn.addEventListener("click", async () => {
         const text = codeEl.textContent || "";

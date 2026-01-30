@@ -84,8 +84,6 @@ export async function hclust_plot(options = {}) {
         tooltip_fontSize: tooltip_fontSize = '12px',
     } = options;
 
-          console.log(divid,"RUNNING hclust_plot()-------------------------------")
-
    // console.log("dendogram options", options)
     const margin = ({
         top: marginTop,
@@ -381,7 +379,7 @@ if (clusterCols== true){
             .data(root2.links())
     }
 
-   // console.log("rowNames6-----------------------------")
+
 
    // Here we add the svg to the plot div
     // Check if the div was provided in the function call
@@ -394,12 +392,16 @@ if (clusterCols== true){
 
 
     } else if (!document.getElementById("childDiv")) {
-       console.log(`hclust div  NOT provided in function parameters or doesn't exist, creating div....`);
+
+       const currentDivNum = hclustDt.data.divNum;
+
        const div = document.createElement("div")
+       div.id = divid || 'hclust_plot' + currentDivNum;
+       console.log("div  NOT provided in function options or doesn't exist... created a new div with id: ", div.id, "and appended to document body!");
+
         document.body.appendChild(div)
         div.appendChild(svg.node());
-        console.log("hclust div", div.id, div) 
-    
+        hclustDt.data.divNum = currentDivNum + 1;
     }
    // console.log("svg", svg.node())
 

@@ -83,7 +83,7 @@
           <div class="tool-square" id="btnPCA">PCA</div>
           <div class="tool-square" id="btnTSNE">t-SNE</div>
           <div class="tool-square" id="btnUMAP">UMAP</div>
-          <div class="tool-square" id="btnClustering">Clustering</div>
+          <div class="tool-square" id="btnHclust">Hclust</div>
           <div class="tool-square" id="btnHeatmap">Heatmap</div>
         </div>
 
@@ -93,158 +93,7 @@
       <section class="col-md-9 col-lg-10">
         <div class="output-panel">
 
-          <!-- Output panel (top) -->
-          <div id="rightData" class="panel-card mb-4"></div>
-          
-          <!-- Plots wrapper (right below data table) -->
-          <div id="plotsPanel" class="panel-card mb-4">
-            <div id="myPCA"></div>
-            <div id="myHclust"></div>
-            <div id="myHeatmap"></div>
-
-            <!-- optional extra plot container you can target -->
-            <div id="myPlots"></div>
-          </div>
-
-          <!-- SDK Usage Example -->
-          <div id="sdkExample" class="sdk-example"></div>
-          <script>
-            document.getElementById("sdkExample").innerHTML =
-              `<div class="title">Select data & tool (left) or run the following in the console:</div>
-<div class="small text-muted mb-2">One-liner:</div>
-<div class="d-flex align-items-start gap-2 mb-2">
-  <pre class="mb-0"><code id="sdkOneLiner">await (await import("https://lorenasandoval88.github.io/clustjs/dist/sdk.mjs")).pca_plot({ width: 600, height: 400 })</code></pre>
-  <button id="copySdkOneLinerBtn" class="btn btn-sm btn-outline-secondary" type="button">Copy</button>
-</div>
-<div class="small text-muted mb-2">Step-by-step (enter each line):</div>
-<pre><code>const sdk = await import("https://lorenasandoval88.github.io/clustjs/dist/sdk.mjs")
-await sdk.pca_plot({ width: 600, height: 400 })</code></pre>`;
-
-            // Copy button for the explicit one-liner snippet
-            (function() {
-              const btn = document.getElementById("copySdkOneLinerBtn");
-              const codeEl = document.getElementById("sdkOneLiner");
-              if (!btn || !codeEl) return;
-              btn.addEventListener("click", async () => {
-                const text = codeEl.textContent || "";
-                try {
-                  await navigator.clipboard.writeText(text);
-                  btn.textContent = "Copied!";
-                } catch (_) {
-                  const ta = document.createElement("textarea");
-                  ta.value = text;
-                  document.body.appendChild(ta);
-                  ta.select();
-                  try { document.execCommand("copy"); btn.textContent = "Copied!"; } finally { document.body.removeChild(ta); }
-                }
-                setTimeout(() => { btn.textContent = "Copy"; }, 1500);
-              });
-            })();
-
-            // Generic: add copy buttons to any single-line <pre><code> blocks
-            (function() {
-              const root = document.getElementById("sdkExample");
-              if (!root) return;
-              const blocks = root.querySelectorAll("pre > code");
-              blocks.forEach(codeEl => {
-                const text = (codeEl.textContent || "").trim();
-                if (!text || text.includes("\n")) return; // only one-liners
-
-                const pre = codeEl.parentElement;
-                const parent = pre?.parentElement;
-                if (!pre || !parent) return;
-
-                // Skip if a copy button already exists nearby
-                if (parent.querySelector("button.copy-snippet-btn, #copySdkOneLinerBtn, button.copy-line-btn")) return;
-
-                // Build wrapper row with button
-                const wrapper = document.createElement("div");
-                wrapper.className = "d-flex align-items-start gap-2 mb-2";
-                const btn = document.createElement("button");
-                btn.type = "button";
-                btn.className = "btn btn-sm btn-outline-secondary copy-snippet-btn";
-                btn.textContent = "Copy";
-
-                parent.insertBefore(wrapper, pre);
-                wrapper.appendChild(pre);
-                pre.classList.add("mb-0");
-                wrapper.appendChild(btn);
-
-                btn.addEventListener("click", async () => {
-                  try {
-                    await navigator.clipboard.writeText(text);
-                    btn.textContent = "Copied!";
-                  } catch (_) {
-                    const ta = document.createElement("textarea");
-                    ta.value = text;
-                    document.body.appendChild(ta);
-                    ta.select();
-                    try { document.execCommand("copy"); btn.textContent = "Copied!"; } finally { document.body.removeChild(ta); }
-                  }
-                  setTimeout(() => { btn.textContent = "Copy"; }, 1500);
-                });
-              });
-            })();
-
-            // Transform multi-line <pre><code> blocks into per-line rows with copy buttons
-            (function() {
-              const root = document.getElementById("sdkExample");
-              if (!root) return;
-              const blocks = root.querySelectorAll("pre > code");
-              blocks.forEach(codeEl => {
-                const raw = codeEl.textContent || "";
-                if (!/\r?\n/.test(raw)) return; // only multi-line
-
-                const pre = codeEl.parentElement;
-                const parent = pre?.parentElement;
-                if (!pre || !parent) return;
-
-                // Build a container to host per-line rows
-                const container = document.createElement("div");
-                const lines = raw.replace(/\r\n/g, "\n").split("\n");
-
-                lines.forEach(line => {
-                  // Keep empty lines visually but skip adding a button
-                  const row = document.createElement("div");
-                  row.className = "d-flex align-items-start gap-2 mb-2";
-
-                  const linePre = document.createElement("pre");
-                  linePre.className = "mb-0 flex-grow-1";
-                  const lineCode = document.createElement("code");
-                  lineCode.textContent = line;
-                  linePre.appendChild(lineCode);
-                  row.appendChild(linePre);
-
-                  if (line.trim().length > 0) {
-                    const btn = document.createElement("button");
-                    btn.type = "button";
-                    btn.className = "btn btn-sm btn-outline-secondary copy-line-btn";
-                    btn.textContent = "Copy";
-                    btn.addEventListener("click", async () => {
-                      const text = line;
-                      try {
-                        await navigator.clipboard.writeText(text);
-                        btn.textContent = "Copied!";
-                      } catch (_) {
-                        const ta = document.createElement("textarea");
-                        ta.value = text;
-                        document.body.appendChild(ta);
-                        ta.select();
-                        try { document.execCommand("copy"); btn.textContent = "Copied!"; } finally { document.body.removeChild(ta); }
-                      }
-                      setTimeout(() => { btn.textContent = "Copy"; }, 1500);
-                    });
-                    row.appendChild(btn);
-                  }
-
-                  container.appendChild(row);
-                });
-
-                parent.replaceChild(container, pre);
-              });
-            })();
-          </script>
-          <!-- Embedded Console (below SDK example) -->
+          <!-- Embedded Console (moved to top) -->
           <div id="consolePanel" class="mb-4">
             <div id="consoleHeader">
               <div class="fw-semibold">Console</div>
@@ -262,11 +111,165 @@ await sdk.pca_plot({ width: 600, height: 400 })</code></pre>`;
             </div>
           </div>
 
+          <!-- Output panel (data table) -->
+          <div id="rightData" class="panel-card mb-4"></div>
+          
+          <!-- Plots wrapper (right below data table) -->
+          <div id="plotsPanel" class="panel-card mb-4">
+            <div id="myPCA"></div>
+            <div id="myHclust"></div>
+            <div id="myHeatmap"></div>
+
+            <!-- optional extra plot container you can target -->
+            <div id="myPlots"></div>
+          </div>
+
+          
+
         </div>
       </section>
 
     </div>
   </main>
+
+  <!-- SDK Usage Example moved to lower part of body -->
+  <div id="sdkExample" class="sdk-example"></div>
+  <script>
+    document.getElementById("sdkExample").innerHTML =
+      `<div class="title">Select data & tool (left) or run the following in the console:</div>
+<div class="small text-muted mb-2">One-liner:</div>
+<div class="d-flex align-items-start gap-2 mb-2">
+  <pre class="mb-0"><code id="sdkOneLiner">await (await import("https://lorenasandoval88.github.io/clustjs/dist/sdk.mjs")).pca_plot({ width: 600, height: 400 })</code></pre>
+  <button id="copySdkOneLinerBtn" class="btn btn-sm btn-outline-secondary" type="button">Copy</button>
+</div>
+<div class="small text-muted mb-2">Step-by-step (enter each line):</div>
+<pre><code>const sdk = await import("https://lorenasandoval88.github.io/clustjs/dist/sdk.mjs")
+await sdk.pca_plot({ width: 600, height: 400 })</code></pre>`;
+
+    // Copy button for the explicit one-liner snippet
+    (function() {
+      const btn = document.getElementById("copySdkOneLinerBtn");
+      const codeEl = document.getElementById("sdkOneLiner");
+      if (!btn || !codeEl) return;
+      btn.addEventListener("click", async () => {
+        const text = codeEl.textContent || "";
+        try {
+          await navigator.clipboard.writeText(text);
+          btn.textContent = "Copied!";
+        } catch (_) {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand("copy"); btn.textContent = "Copied!"; } finally { document.body.removeChild(ta); }
+        }
+        setTimeout(() => { btn.textContent = "Copy"; }, 1500);
+      });
+    })();
+
+    // Generic: add copy buttons to any single-line <pre><code> blocks
+    (function() {
+      const root = document.getElementById("sdkExample");
+      if (!root) return;
+      const blocks = root.querySelectorAll("pre > code");
+      blocks.forEach(codeEl => {
+        const text = (codeEl.textContent || "").trim();
+        if (!text || text.includes("\n")) return; // only one-liners
+
+        const pre = codeEl.parentElement;
+        const parent = pre?.parentElement;
+        if (!pre || !parent) return;
+
+        // Skip if a copy button already exists nearby
+        if (parent.querySelector("button.copy-snippet-btn, #copySdkOneLinerBtn, button.copy-line-btn")) return;
+
+        // Build wrapper row with button
+        const wrapper = document.createElement("div");
+        wrapper.className = "d-flex align-items-start gap-2 mb-2";
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn btn-sm btn-outline-secondary copy-snippet-btn";
+        btn.textContent = "Copy";
+
+        parent.insertBefore(wrapper, pre);
+        wrapper.appendChild(pre);
+        pre.classList.add("mb-0");
+        wrapper.appendChild(btn);
+
+        btn.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(text);
+            btn.textContent = "Copied!";
+          } catch (_) {
+            const ta = document.createElement("textarea");
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand("copy"); btn.textContent = "Copied!"; } finally { document.body.removeChild(ta); }
+          }
+          setTimeout(() => { btn.textContent = "Copy"; }, 1500);
+        });
+      });
+    })();
+
+    // Transform multi-line <pre><code> blocks into per-line rows with copy buttons
+    (function() {
+      const root = document.getElementById("sdkExample");
+      if (!root) return;
+      const blocks = root.querySelectorAll("pre > code");
+      blocks.forEach(codeEl => {
+        const raw = codeEl.textContent || "";
+        if (!/\r?\n/.test(raw)) return; // only multi-line
+
+        const pre = codeEl.parentElement;
+        const parent = pre?.parentElement;
+        if (!pre || !parent) return;
+
+        // Build a container to host per-line rows
+        const container = document.createElement("div");
+        const lines = raw.replace(/\r\n/g, "\n").split("\n");
+
+        lines.forEach(line => {
+          // Keep empty lines visually but skip adding a button
+          const row = document.createElement("div");
+          row.className = "d-flex align-items-start gap-2 mb-2";
+
+          const linePre = document.createElement("pre");
+          linePre.className = "mb-0 flex-grow-1";
+          const lineCode = document.createElement("code");
+          lineCode.textContent = line;
+          linePre.appendChild(lineCode);
+          row.appendChild(linePre);
+
+          if (line.trim().length > 0) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "btn btn-sm btn-outline-secondary copy-line-btn";
+            btn.textContent = "Copy";
+            btn.addEventListener("click", async () => {
+              const text = line;
+              try {
+                await navigator.clipboard.writeText(text);
+                btn.textContent = "Copied!";
+              } catch (_) {
+                const ta = document.createElement("textarea");
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                try { document.execCommand("copy"); btn.textContent = "Copied!"; } finally { document.body.removeChild(ta); }
+              }
+              setTimeout(() => { btn.textContent = "Copy"; }, 1500);
+            });
+            row.appendChild(btn);
+          }
+
+          container.appendChild(row);
+        });
+
+        parent.replaceChild(container, pre);
+      });
+    })();
+  </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 

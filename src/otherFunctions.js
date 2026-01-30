@@ -173,17 +173,13 @@ const textBox = async function ( options = {}) {
     const div = document.getElementById(divid)
     div.id = divid
     div.style.display = "block"
-    div.style.overflow = "scroll"
+    div.style.overflow = "auto"
     div.style.width = width + 'px'
     div.style.height = height + 'px'
     div.style.border = border + " " + color//"2px solid blue"
     div.style.resize = "both"
-    // div.style.alignContent = "left"
-    // div.style.marginRight = "auto"
-    // div.style.marginLeft = "auto"
-    div.appendChild(document.createElement('br'));
-    div.appendChild(document.createElement('br'));
-    div.appendChild(document.createElement('br'));
+    div.style.boxSizing = "border-box"
+    div.style.margin = "8px 0"
 
     //  console.log("div",div);
 
@@ -195,29 +191,26 @@ const textBox = async function ( options = {}) {
     createTableFromCSV(text, "textboxDiv")
 
   } else {
-    // Optionally, handle the case where the element doesn't exist
-    console.log(`textbox div NOT provided in function parameters. creating div...`);
-    const div = document.createElement("table")
-    div.id = "textboxDiv"
-    div.appendChild(document.createElement('br'));
-    div.appendChild(document.createElement('br'));
-    div.appendChild(document.createElement('br'));
-    document.body.appendChild(div);
+    // Create a new table element (use provided id if given, else fallback)
+    const targetId = divid || "textboxDiv";
+    console.log(`textbox div NOT provided or not found. creating element with id: ${targetId}`);
+    const tbl = document.createElement("table")
+    tbl.id = targetId
+    document.body.appendChild(tbl);
 
-    createTableFromCSV(text, "textboxDiv")
-    div.style.display = "block"
-    div.style.overflow = "scroll"
-    div.style.width = width + 'px'
-    div.style.height = height + 'px'
-    div.style.border = border + " " + color//"2px solid blue"
-    div.style.resize = "both"
-    // div.style.alignContent = "left"
-    // div.style.marginRight = "auto"
-    // div.style.marginLeft = "auto"
+    createTableFromCSV(text, targetId)
+    tbl.style.display = "block"
+    tbl.style.overflow = "auto"
+    tbl.style.width = width + 'px'
+    tbl.style.height = height + 'px'
+    tbl.style.border = border + " " + color
+    tbl.style.resize = "both"
+    tbl.style.boxSizing = "border-box"
+    tbl.style.margin = "8px 0"
 
   }
 
-return document.getElementById("textboxDiv")
+  return document.getElementById(divid || "textboxDiv")
 }
 
 
@@ -236,10 +229,6 @@ return document.getElementById("textboxDiv")
 //     .then(async response =>  {irisCSV =  response
 //         // console.log("response", response)
 //     })
-
-
-
-
 
 export {
   // irisJSON,

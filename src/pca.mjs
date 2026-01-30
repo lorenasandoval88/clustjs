@@ -33,9 +33,9 @@ const pcaDt = {
 }
 
 // Generate CSV from iris JSON data
-const irisHeaders = Object.keys(irisData[0]);
-pcaDt.data.iris.csv = irisHeaders.join(',') + '\n' + 
-  irisData.map(row => irisHeaders.map(h => row[h]).join(',')).join('\n');
+// const irisHeaders = Object.keys(irisData[0]);
+// pcaDt.data.iris.csv = irisHeaders.join(',') + '\n' + 
+//   irisData.map(row => irisHeaders.map(h => row[h]).join(',')).join('\n');
 
 
 const pcaScores = async function (data) {
@@ -301,7 +301,7 @@ export async function pca_UI(options = {}) {
       div.id = divid || 'pca_UI' + currentDivNum;
       console.log("div NOT provided within function options or doesn't exist... created a new div with id: ", div.id, "and appended to document body!");
       document.body.appendChild(div);
-      pcaDt.data.divNum = currentDivNum + 1;
+      //pcaDt.data.divNum = currentDivNum + 1;
     }
 
   // Create loading message div

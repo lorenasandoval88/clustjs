@@ -29,7 +29,7 @@ export async function  heatmap_plot(options = {}){
     matrix: matrix = irisData.map(obj => Object.values(obj)).map(row => row.slice(0, -1)),
     rownames: rownames = irisData.map(obj => Object.values(obj)).map((d, idx) => d[4] + idx),
     colnames: colnames = Object.keys(irisData[0]).slice(0, -1),
-    height: height = 1200,
+    height: height = 1800,
     width: width = 400,
     color: color = "red", //"#d62728",
   } =  options
@@ -41,7 +41,7 @@ export async function  heatmap_plot(options = {}){
  const margin = ({ 
     top: 53,
     bottom: 10,
-    left: 45,
+    left: 80,
     right: 10
   });
 
@@ -110,7 +110,7 @@ export async function  heatmap_plot(options = {}){
      
   y_axis.selectAll('.tick').selectAll('line').remove()
   y_axis.selectAll("text")
-    .attr("dx", "7px")
+    .attr("dx", "14px")
     .attr("dy", "0.3em")
     .style("fill", "#000")
   

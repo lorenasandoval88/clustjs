@@ -3,7 +3,7 @@
 
 Multivariate statistical visualization (PCA, t-SNE, UMAP, clustering, heatmaps, etc) in JavaScript. 
 
-live at: https://lorenasandoval88.github.io/clustjs  ·  npm: https://www.npmjs.com/package/clustjs
+live at: https://lorenasandoval88.github.io/clustjs
 
 
 ## Getting Started

@@ -1,4 +1,4 @@
-import { irisData, pca_plot, hclust_plot, heatmap_plot } from "./dist/sdk.mjs"; // adjust path
+import { irisData, pca_plot, hclust_plot, heatmap_plot, umap_plot } from "./dist/sdk.mjs"; // adjust path
 
 // ======== EMBEDDED CONSOLE ========
 const consoleOut = document.getElementById("consoleOut");
@@ -526,5 +526,41 @@ document.getElementById("btnHeatmap")?.addEventListener("click", async () => {
     width,
     height,
     color: "red"
+  });
+});
+
+
+// ======== UMAP: CLICK TOOL BUTTON ========
+document.getElementById("btnUMAP")?.addEventListener("click", async () => {
+  const data = appState.data;
+console.log("btnUmap clicked, appState.data:", data);
+  if (!data || data.length === 0) {
+    renderTableRight([], "");
+    const rightPanel = document.getElementById("rightData");
+    if (rightPanel) {
+      rightPanel.innerHTML = `
+        <div class="text-muted">
+          Load a file or select a built-in dataset (Iris) first.
+        </div>
+      `;
+    }
+    return;
+  }
+
+  const el = document.getElementById("myUMAP");
+  if (!el) return;
+
+  const width = Math.max(520, el.clientWidth - 24);
+  const height = 460;
+
+  // Clear and mark container
+  el.innerHTML = "";
+  el.classList.add("has-plot");
+
+  await umap_plot({
+    data,
+    divid: "myUMAP",
+    width: width,
+    height: height
   });
 });

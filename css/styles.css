@@ -127,7 +127,8 @@ p.lead {
    ========================= */
 #myPCA,
 #myHclust,
-#myHeatmap {
+#myHeatmap,
+#myUMAP {
   background-color: #f8f9fa;
   border-radius: 0.75rem;
   border: 1px solid #dee2e6;
@@ -291,7 +292,8 @@ body {
 /* ===== OUTPUT CONTAINERS (plots) ===== */
 #myPCA,
 #myHclust,
-#myHeatmap {
+#myHeatmap,
+#myUMAP {
   background: #000000;
   color: #eaeaea;
 }
@@ -321,9 +323,12 @@ body {
   padding: 12px;          
 } */
 
-/* Prevent PCA SVG from being clipped */
-/* PCA container: invisible until plot renders */
-#myPCA{
+/* Prevent plot SVG from being clipped */
+/* All plot containers: invisible until plot renders */
+#myPCA,
+#myUMAP,
+#myHeatmap,
+#myHclust {
   background: transparent;
   padding: 0;
   width: 100%;
@@ -332,7 +337,10 @@ body {
 }
 
 /* When plot exists, add this class to get white plot frame */
-#myPCA.has-plot{
+#myPCA.has-plot,
+#myUMAP.has-plot,
+#myHeatmap.has-plot,
+#myHclust.has-plot {
   background: #ffffff;
   color: #ffffff;
   padding: 12px;
@@ -344,7 +352,10 @@ body {
 
 
 /* Ensure the SVG can render fully */
-#myPCA svg {
+#myPCA svg,
+#myUMAP svg,
+#myHeatmap svg,
+#myHclust svg {
   display: block;
   max-width: none;        /* don't force shrink */
 }

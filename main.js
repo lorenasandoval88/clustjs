@@ -1,4 +1,4 @@
-import { irisData, spiralData, pca_plot, hclust_plot, heatmap_plot, umap_plot } from "./dist/sdk.mjs"; // adjust path
+import { irisData, spiralData, pca_plot, hclust_plot, heatmap_plot, umap_plot, scatter_plot } from "./dist/sdk.mjs"; // adjust path
 
 // ======== EMBEDDED CONSOLE ========
 const consoleOut = document.getElementById("consoleOut");
@@ -423,7 +423,7 @@ const el = document.getElementById("myPCA");
 
   // Use container size (with safe minimums)
   const width = Math.max(520, el.clientWidth - 24);
-  const height = 460;
+  const height = 410;
 
 // Toggle the class in JS when you render/clear PCA plot so background stays white
   const p = document.getElementById("myPCA");
@@ -460,7 +460,7 @@ document.getElementById("btnHclust")?.addEventListener("click", async () => {
   if (!el) return;
 
   const width = Math.max(520, el.clientWidth - 24);
-  const height = 600;
+  const height = 680;
 
   // Derive numeric columns and labels
   const sample = data[0] || {};
@@ -509,7 +509,7 @@ document.getElementById("btnHeatmap")?.addEventListener("click", async () => {
   if (!el) return;
 
   const width = Math.max(520, el.clientWidth - 24);
-  const height = 460;
+  const height = 680;
 
   // Derive numeric columns and labels
   const sample = data[0] || {};
@@ -558,7 +558,7 @@ console.log("btnUmap clicked, appState.data:", data);
   if (!el) return;
 
   const width = Math.max(520, el.clientWidth - 24);
-  const height = 460;
+  const height = 410;
 
   // Clear and mark container
   el.innerHTML = "";
@@ -567,6 +567,42 @@ console.log("btnUmap clicked, appState.data:", data);
   await umap_plot({
     data,
     divid: "myUMAP",
+    width: width,
+    height: height
+  });
+});
+
+
+// ======== SCATTER: CLICK TOOL BUTTON ========
+document.getElementById("btnScatter")?.addEventListener("click", async () => {
+  const data = appState.data;
+
+  if (!data || data.length === 0) {
+    renderTableRight([], "");
+    const rightPanel = document.getElementById("rightData");
+    if (rightPanel) {
+      rightPanel.innerHTML = `
+        <div class="text-muted">
+          Load a file or select a built-in dataset (Iris) first.
+        </div>
+      `;
+    }
+    return;
+  }
+
+  const el = document.getElementById("myScatter");
+  if (!el) return;
+
+  const width = Math.max(520, el.clientWidth - 24);
+  const height = 410;
+
+  // Clear and mark container
+  el.innerHTML = "";
+  el.classList.add("has-plot");
+
+  await scatter_plot({
+    data,
+    divid: "myScatter",
     width: width,
     height: height
   });

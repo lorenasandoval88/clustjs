@@ -30,16 +30,19 @@ console.log("RUNNING heatmap_plot()----------------------");
     matrix: matrix = irisData.map(obj => Object.values(obj)).map(row => row.slice(0, -1)),
     rownames: rownames = irisData.map(obj => Object.values(obj)).map((d, idx) => d[4] + idx),
     colnames: colnames = Object.keys(irisData[0]).slice(0, -1),
-    height: height = 1800,
+    height: height = 900,
     width: width = 400,
-    color: color = "red", //"#d62728",
-    marginLeft: marginLeft = 80,
+    color: color = "green", //"#d62728",
+    marginLeft: marginLeft = 50,
     marginRight: marginRight = 10,
+    colorScale: colorScale = [0, 8],
+
   } =  options
 
   const color_scale = d3.scaleLinear()
-  .domain([0, 8])
-  .range(['#fff', `${color}`])
+  .domain(colorScale)
+  .range(['#000', `${color}`])
+
 
  const margin = ({ 
     top: 53,
@@ -71,7 +74,7 @@ console.log("RUNNING heatmap_plot()----------------------");
      
      let y_scale = d3.scaleBand()
     .domain(rownames)
-    .range([ 0, height-margin.top-margin.bottom])
+    .range([ 0, height-  margin.top])
      
     let x_scale = d3.scaleBand()
     .domain(colnames)
@@ -102,7 +105,7 @@ console.log("RUNNING heatmap_plot()----------------------");
   x_axis.selectAll('.tick').selectAll('line').remove()
   x_axis.selectAll("text")
     .style("text-anchor", "start")
-    .attr("dx", "1px")
+    .attr("dx", "2px")
     .attr("dy", "1.1em")
     .attr("transform", "rotate(-90)") 
     .style("fill", "#000")
@@ -110,11 +113,13 @@ console.log("RUNNING heatmap_plot()----------------------");
   //create y  axes
   let y_axis = g.append('g')
     .call(d3.axisLeft(y_scale))
-     
+    .attr("id", "ya")
+
   y_axis.selectAll('.tick').selectAll('line').remove()
   y_axis.selectAll("text")
-    .attr("dx", "14px")
+    .attr("dx", "3px")
     .attr("dy", "0.3em")
+    .attr("class", "yaa")
     .style("fill", "#000")
   
 // console.log("y_axis", y_axis)
@@ -123,6 +128,7 @@ console.log("RUNNING heatmap_plot()----------------------");
 
    // create squares
    const gPoints = g.append("g").attr("class", "gPoints");
+
    gPoints.selectAll()
       .data(await buildData(matrix))
       .enter()

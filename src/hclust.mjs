@@ -60,7 +60,7 @@ export async function hclust_plot(options = {}) {
     rownames: rownames = irisData.map(obj => Object.values(obj)).map((d, idx) => d[4] + idx),
     colnames: colnames = Object.keys(irisData[0]).slice(0, -1),
         width: width = 400,
-        height: height = 1200,
+        height: height = 1600,
         // dendograms
         clusterCols: clusterCols = true,
         clusterRows: clusterRows = true,
@@ -140,7 +140,7 @@ export async function hclust_plot(options = {}) {
 // start of heatmap
     const color_scale = d3.scaleLinear()
         .domain(heatmapColorScale)
-        .range(['#fff', `${heatmapColor}`])
+        .range(['#000', `${heatmapColor}`])
 
     let x_scale = d3.scaleBand()
         .domain(colNames2)
@@ -257,7 +257,7 @@ if (clusterCols== true){
     function transformY(data) {
        // console.log("height",height,colPadding)
         const ht = colPadding//height-500//-innerHeight;
-        return (data.data.height / colMaxHeight) * ht;
+        return ht - (data.data.height / colMaxHeight) * ht;
       }
     
     function colElbow(d) { // H = width, V = height

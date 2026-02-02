@@ -8,6 +8,8 @@ import { csvToJson } from "./otherFunctions.js";
 
 
 // TODO: call heat_map from heatmap.mjs
+// TODO: make pairs plot for scatter, bc only two first features are used
+// TODO: add t-SNE and 3D UMAP plot
 export const hclustDt = {
   data: {
     divNum: 1,
@@ -195,7 +197,7 @@ export async function hclust_plot(options = {}) {
 
     yAxis.selectAll('.tick').selectAll('line').remove()
     yAxis.selectAll("text")
-        .attr("dx", "2px")
+        .attr("dx", "14px")
         .attr("dy", "0.3em")
         .attr("class", "yaa")
         .style("fill", "#000")

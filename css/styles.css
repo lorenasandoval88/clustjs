@@ -327,6 +327,7 @@ body {
 /* All plot containers: invisible until plot renders */
 #myPCA,
 #myUMAP,
+#myScatter,
 #myHeatmap,
 #myHclust {
   background: transparent;
@@ -339,6 +340,7 @@ body {
 /* When plot exists, add this class to get white plot frame */
 #myPCA.has-plot,
 #myUMAP.has-plot,
+#myScatter.has-plot,
 #myHeatmap.has-plot,
 #myHclust.has-plot {
   background: #ffffff;
@@ -354,6 +356,7 @@ body {
 /* Ensure the SVG can render fully */
 #myPCA svg,
 #myUMAP svg,
+#myScatter svg,
 #myHeatmap svg,
 #myHclust svg {
   display: block;

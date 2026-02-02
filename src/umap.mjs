@@ -2,13 +2,18 @@ import * as d3 from "d3";
 import d3tip from "d3-tip";
 import { UMAP } from 'umap-js';
 import irisData from "./data/irisData.js";
-console.log(irisData)
+import spiralData from "./data/spiralData.js";
+
 
 export const umapDt = {
   data: {
     divNum: 1,
     iris: {
       json: irisData,
+      csv: null  // Will be generated on demand
+    },
+      spiral: {
+      json: spiralData,
       csv: null  // Will be generated on demand
     },
     file: {

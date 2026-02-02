@@ -1,4 +1,4 @@
-import { irisData, pca_plot, hclust_plot, heatmap_plot, umap_plot } from "./dist/sdk.mjs"; // adjust path
+import { irisData, spiralData, pca_plot, hclust_plot, heatmap_plot, umap_plot } from "./dist/sdk.mjs"; // adjust path
 
 // ======== EMBEDDED CONSOLE ========
 const consoleOut = document.getElementById("consoleOut");
@@ -365,6 +365,13 @@ document.getElementById("builtinData")?.addEventListener("change", (e) => {
     appState.name = "Iris";
     console.log("Built-in Iris data selected");
     renderTableRight(appState.data, "Iris (built-in)");
+    document.getElementById("myPCA").innerHTML = ""; // optional: clear old plot
+  } else if (val === "spiral") {
+    appState.data = spiralData;
+    appState.source = "builtin";
+    appState.name = "Spiral";
+    console.log("Built-in Spiral data selected");
+    renderTableRight(appState.data, "Spiral (built-in)");
     document.getElementById("myPCA").innerHTML = ""; // optional: clear old plot
   }
 });

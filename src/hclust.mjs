@@ -257,7 +257,7 @@ if (clusterCols== true){
     function transformY(data) {
        // console.log("height",height,colPadding)
         const ht = colPadding//height-500//-innerHeight;
-        return ht - (data.data.height / colMaxHeight) * ht;
+        return (data.data.height / colMaxHeight) * ht;
       }
     
     function colElbow(d) { // H = width, V = height

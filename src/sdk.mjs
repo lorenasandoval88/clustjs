@@ -2,6 +2,7 @@
 // DATASETS
 // ===============================
 export { default as irisData } from "./data/irisData.js";
+export { default as spiralData } from "./data/spiralData.js";
 
 // ===============================
 // PLOTS

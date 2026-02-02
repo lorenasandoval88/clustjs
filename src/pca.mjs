@@ -42,7 +42,7 @@ const pcaScores = async function (data) {
   // console.log("RUNNING pcaScores()-------------------------------")
 
   const numbersOnlyObjs = removeNonNumberValues(data)
-
+  console.log("numbersOnlyObjs", numbersOnlyObjs)
   let scaledObjs = (await scale(numbersOnlyObjs))
   let scaledArr = scaledObjs.map(Object.values)
 
@@ -51,10 +51,14 @@ const pcaScores = async function (data) {
     scale: true
   })
 
+  // Detect categorical column (first non-numeric column)
+  const sample = data[0] || {};
+  const categoryKey = Object.keys(sample).find(k => typeof sample[k] !== "number");
+
   // Efficiently extract only the first two principal components (PC1, PC2)
   const scoresArray = pca.predict(scaledArr).toJSON();
   const scores = scoresArray.map((row, rowIndex) => ({
-    group: data[rowIndex]?.species,
+    group: categoryKey ? data[rowIndex]?.[categoryKey] : "row_" + rowIndex,
     name: "id_" + rowIndex,
     PC1: row[0],
     PC2: row[1]
@@ -109,6 +113,8 @@ export async function pca_plot(options = {}) {
   }
 
   const scores = await pcaScores(data)
+  console.log("Data for PCA plot:", data)
+  console.log("PCA scores:", scores)
   const groups = [...new Set(scores.map(d => d.group))]
   const color = d3.scaleOrdinal(colors).domain(groups)
 

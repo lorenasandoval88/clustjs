@@ -24,11 +24,11 @@ export const scatterDt = {
 function selectGroup(ctx, group, maxOpacity) {
   const groupElements = d3.selectAll(".scatter-points")
     .filter(d => d.group !== group);
-  const activeGroup = d3.selectAll(".scatter-keyRects")
+  const activeGroup = d3.selectAll(".scatter-legend")
     .filter(d => d === group);
   const otherElements = d3.selectAll(".scatter-points")
     .filter(d => d.group === group);
-  const otherGroups = d3.selectAll(".scatter-keyRects")
+  const otherGroups = d3.selectAll(".scatter-legend")
     .filter(d => d !== group);
 
   groupElements.transition().attr("opacity", 0.1);
@@ -222,12 +222,12 @@ export async function scatter_plot(options = {}) {
     .on('mouseover', tooltip.show)
     .on('mouseout', tooltip.hide);
 
-  const key = g.append("g")
+  const legend = g.append("g")
     .selectAll("rect")
     .data(groups);
 
-  key.enter().append("rect")
-    .attr("class", "scatter-keyRects")
+  legend.enter().append("rect")
+    .attr("class", "scatter-legend")
     .attr("x", width - margin.left - 50)
     .attr("y", (d, i) => i * 20)
     .attr("width", 12)
@@ -235,7 +235,7 @@ export async function scatter_plot(options = {}) {
     .attr("fill", d => color(d))
     .on("click", (event, d) => selectGroup(null, d, maxOpacity));
 
-  key.enter().append("text")
+  legend.enter().append("text")
     .attr("x", d => width - margin.left - 30)
     .attr("y", (d, i) => i * 20)
     .attr("dy", "0.7em")

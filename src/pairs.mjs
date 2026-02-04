@@ -21,6 +21,59 @@ export const pairsDt = {
   }
 };
 
+let selectedPairsGroup = null;
+
+function resetGroups(maxOpacity) {
+  d3.selectAll(".pairs-points")
+    .transition()
+    .attr("opacity", maxOpacity);
+  d3.selectAll(".pairs-legend")
+    .transition()
+    .attr("opacity", 1);
+  selectedPairsGroup = null;
+}
+
+
+// function selectGroup(ctx, group, maxOpacity) {
+//   // If clicking the same group, reset
+//   if (selectedPairsGroup === group) {
+//     resetGroups(maxOpacity);
+//     return;
+//   }
+
+//   selectedPairsGroup = group;
+
+//   const groupElements = d3.selectAll(".pairs-points")
+//     .filter(d => d.group !== group);
+//   const activeGroup = d3.selectAll(".pairs-legend")
+//     .filter(d => d === group);
+//   const otherElements = d3.selectAll(".pairs-points")
+//     .filter(d => d.group === group);
+//   const otherGroups = d3.selectAll(".pairs-legend")
+//     .filter(d => d !== group);
+
+//   groupElements.transition().attr("opacity", 0.1);
+//   otherGroups.transition().attr("opacity", 0.1);
+//   otherElements.transition().attr("opacity", maxOpacity);
+//   activeGroup.transition().attr("opacity", maxOpacity);
+// }
+function selectGroup(ctx, group, maxOpacity) {
+
+  const groupElements = d3.selectAll(".pairs-points")
+    .filter(d => d.group !== group);
+  const activeGroup = d3.selectAll(".pairs-legend")
+    .filter(d => d === group);
+  const otherElements = d3.selectAll(".pairs-points")
+    .filter(d => d.group === group);
+  const otherGroups = d3.selectAll(".pairs-legend")
+    .filter(d => d !== group);
+
+  groupElements.transition().attr("opacity", 0.1);
+  otherGroups.transition().attr("opacity", 0.1);
+  otherElements.transition().attr("opacity", maxOpacity);
+  activeGroup.transition().attr("opacity", maxOpacity);
+}
+
 export async function pairs_plot(options = {}) {
   console.log("RUNNING: pairs_plot() function----------");
 
@@ -66,6 +119,7 @@ export async function pairs_plot(options = {}) {
 
   const groups = [...new Set(plotData.map(d => d.group))];
   const color = d3.scaleOrdinal(colors).domain(groups);
+  const maxOpacity = 0.6;
 
   const n = numericKeys.length;
   const cellSize = Math.min(180, (width - 100) / n);
@@ -89,6 +143,17 @@ export async function pairs_plot(options = {}) {
 
   const g = svg.append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  // Add background for click reset
+  g.append("rect")
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("width", cellSize * n)
+    .attr("height", cellSize * n)
+    .attr("fill", "transparent")
+    .attr("pointer-events", "all")
+    .style("cursor", "pointer")
+    .on("click", () => resetGroups(maxOpacity));
 
   // Create tooltip
   const tooltip = d3tip()
@@ -157,11 +222,12 @@ export async function pairs_plot(options = {}) {
               xVal: d.values[j],
               yVal: d.values[i]
             })
+            .attr("class", "pairs-points")
             .attr("cx", xScale(d.values[j]))
             .attr("cy", yScale(d.values[i]))
             .attr("r", 2.5)
             .attr("fill", color(d.group))
-            .attr("opacity", 0.6)
+            .attr("opacity", maxOpacity)
             .on('mouseover', tooltip.show)
             .on('mouseout', tooltip.hide);
         });
@@ -192,25 +258,32 @@ export async function pairs_plot(options = {}) {
   }
 
   // Add legend
-  const legend = svg.append("g")
+  const legendG = svg.append("g")
     .attr("transform", `translate(${plotWidth - margin.right + 20},${margin.top})`);
 
-  groups.forEach((group, i) => {
-    const legendRow = legend.append("g")
-      .attr("transform", `translate(0,${i * 20})`);
+  const legend = legendG
+    .selectAll("g")
+    .data(groups)
+    .enter()
+    .append("g")
+    .attr("transform", (d, i) => `translate(0,${i * 20})`)
+    .style("cursor", "pointer")
+    .on("click", (event, d) => selectGroup(null, d, maxOpacity));
 
-    legendRow.append("rect")
-      .attr("width", 12)
-      .attr("height", 12)
-      .attr("fill", color(group));
+  legend.append("rect")
+    .attr("class", "pairs-legend")
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("width", 12)
+    .attr("height", 12)
+    .attr("fill", d => color(d));
 
-    legendRow.append("text")
-      .attr("x", 20)
-      .attr("y", 6)
-      .attr("dy", "0.35em")
-      .style("font-size", "11px")
-      .text(group);
-  });
+  legend.append("text")
+    .attr("x", 20)
+    .attr("y", 0)
+    .attr("dy", "0.7em")
+    .text(d => `${d}`)
+    .style("font-size", "11px");
 
   div.appendChild(svg.node());
 }

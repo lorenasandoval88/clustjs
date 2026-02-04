@@ -27,6 +27,8 @@ await sdk.pca_UI({ divid: "myPCA", width: 600, height: 300, loadIrisOnStart: tru
 ```
 
 <img width="499" height="532" alt="image" src="https://github.com/user-attachments/assets/2739074d-12a4-4e5e-ae79-b96b68f73295" />
+
+
 ### npm (ESM)
 
 Install and import in your application:

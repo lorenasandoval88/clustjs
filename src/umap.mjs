@@ -49,7 +49,7 @@ export async function umap_plot(options = {}) {
   // Resolve target container
   let div = divid ? document.getElementById(divid) : null;
   if (div) {
-    console.log("div provided in function parameters:", divid);
+    console.log("plot div provided in function parameters. divid:", divid);
     div.innerHTML = "";
   } else {
     const currentDivNum = umapDt.data.divNum;

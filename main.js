@@ -266,7 +266,8 @@ document.getElementById("consoleCmd")?.addEventListener("keydown", async (e) => 
 const appState = {
   data: null,         // array of objects (rows)
   source: null,       // "file" | "builtin"
-  name: null          // filename or dataset name
+  name: null,         // filename or dataset name
+  selectedColumns: [] // columns selected by user
 };
 
 // ======== IRIS (your built-in sample) ========
@@ -285,13 +286,23 @@ function renderTableRight(data, title = "Dataset Preview") {
   }
 
   const cols = Object.keys(data[0]);
+  
+  // Initialize all columns as selected if none are selected
+  if (appState.selectedColumns.length === 0) {
+    appState.selectedColumns = [...cols];
+  }
 
-  container.innerHTML = `
-    <div class="d-flex justify-content-between align-items-center mb-2">
-      <div class="fw-semibold">${title}</div>
-      <div class="text-muted small">${data.length} rows</div>
+  // Header with title and selected columns count
+  const headerDiv = document.createElement("div");
+  headerDiv.className = "d-flex justify-content-between align-items-center mb-2";
+  headerDiv.innerHTML = `
+    <div class="fw-semibold">${title}</div>
+    <div class="text-muted small">
+      ${data.length} rows | 
+      <span id="selectedColCount">${appState.selectedColumns.length}</span> columns selected
     </div>
   `;
+  container.appendChild(headerDiv);
 
   // Create scrollable wrapper
   const scrollWrapper = document.createElement("div");
@@ -311,7 +322,60 @@ function renderTableRight(data, title = "Dataset Preview") {
   const hr = document.createElement("tr");
   cols.forEach(c => {
     const th = document.createElement("th");
-    th.textContent = c.replaceAll("_", " ");
+    th.style.userSelect = "none";
+    th.style.padding = "8px";
+    
+    // Check if column is categorical (text)
+    const sample = data[0];
+    const isCategorical = typeof sample[c] !== 'number';
+    
+    // Set cursor style
+    th.style.cursor = isCategorical ? "not-allowed" : "pointer";
+    
+    // Create button for column selection
+    const btn = document.createElement("button");
+    btn.className = "btn btn-sm w-100 text-start";
+    btn.textContent = c.replaceAll("_", " ");
+    btn.style.fontSize = "0.85rem";
+    btn.style.padding = "4px 8px";
+    
+    // Check if column is selected
+    const isSelected = appState.selectedColumns.includes(c);
+    btn.className += isSelected ? " btn-primary" : " btn-outline-secondary";
+    
+    // Add tooltip for categorical columns
+    if (isCategorical) {
+      btn.title = "Categorical columns cannot be deselected";
+      btn.style.cursor = "not-allowed";
+    }
+    
+    // Click handler to toggle selection
+    btn.addEventListener("click", () => {
+      // Prevent deselection of categorical columns
+      if (isCategorical) {
+        console.log(`Cannot deselect categorical column: ${c}`);
+        return;
+      }
+      
+      const idx = appState.selectedColumns.indexOf(c);
+      if (idx > -1) {
+        // Deselect numeric column
+        appState.selectedColumns.splice(idx, 1);
+        btn.className = "btn btn-sm w-100 text-start btn-outline-secondary";
+      } else {
+        // Select
+        appState.selectedColumns.push(c);
+        btn.className = "btn btn-sm w-100 text-start btn-primary";
+      }
+      
+      // Update count
+      const countEl = document.getElementById("selectedColCount");
+      if (countEl) countEl.textContent = appState.selectedColumns.length;
+      
+      //console.log("Selected columns:", appState.selectedColumns);
+    });
+    
+    th.appendChild(btn);
     hr.appendChild(th);
   });
   thead.appendChild(hr);
@@ -363,6 +427,7 @@ document.getElementById("builtinData")?.addEventListener("change", (e) => {
     appState.data = irisData;
     appState.source = "builtin";
     appState.name = "Iris";
+    appState.selectedColumns = []; // Reset selection
     console.log("Built-in Iris data selected");
     renderTableRight(appState.data, "Iris (built-in)");
     document.getElementById("myPCA").innerHTML = ""; // optional: clear old plot
@@ -370,6 +435,7 @@ document.getElementById("builtinData")?.addEventListener("change", (e) => {
     appState.data = spiralData;
     appState.source = "builtin";
     appState.name = "Spiral";
+    appState.selectedColumns = []; // Reset selection
     console.log("Built-in Spiral data selected");
     renderTableRight(appState.data, "Spiral (built-in)");
     document.getElementById("myPCA").innerHTML = ""; // optional: clear old plot
@@ -392,6 +458,7 @@ document.getElementById("fileInput")?.addEventListener("change", (e) => {
     appState.data = data;
     appState.source = "file";
     appState.name = file.name;
+    appState.selectedColumns = []; // Reset selection
 
     renderTableRight(appState.data, `Loaded file: ${file.name}`);
     document.getElementById("myPCA").innerHTML = ""; // optional: clear old plot
@@ -401,7 +468,7 @@ document.getElementById("fileInput")?.addEventListener("change", (e) => {
 
 // ======== PCA: CLICK TOOL BUTTON ========
 document.getElementById("btnPCA")?.addEventListener("click", async () => {
-  const data = appState.data;
+  let data = appState.data;
 
   if (!data || data.length === 0) {
     renderTableRight([], "");
@@ -414,6 +481,25 @@ document.getElementById("btnPCA")?.addEventListener("click", async () => {
       `;
     }
     return;
+  }
+
+  // Filter to selected columns if any are selected
+  if (appState.selectedColumns.length > 0) {
+    data = data.map(row => {
+      const filtered = {};
+      // Include selected columns
+      appState.selectedColumns.forEach(col => {
+        if (col in row) filtered[col] = row[col];
+      });
+      // Always include text/categorical columns
+      Object.keys(row).forEach(col => {
+        if (typeof row[col] !== 'number' && !(col in filtered)) {
+          filtered[col] = row[col];
+        }
+      });
+      return filtered;
+    });
+    console.log(`Using ${appState.selectedColumns.length} selected columns + categorical columns for PCA`);
   }
 
   //console.log(`Running PCA on ${data.length} rows from ${appState.source}: ${appState.name}`);
@@ -464,7 +550,14 @@ document.getElementById("btnHclust")?.addEventListener("click", async () => {
 
   // Derive numeric columns and labels
   const sample = data[0] || {};
-  const keys = Object.keys(sample);
+  let keys = Object.keys(sample);
+  
+  // Use selected columns if available
+  if (appState.selectedColumns.length > 0) {
+    keys = appState.selectedColumns;
+    console.log(`Using ${appState.selectedColumns.length} selected columns for Hclust`);
+  }
+  
   const numericKeys = keys.filter(k => typeof sample[k] === "number");
   const labelKey = keys.find(k => typeof sample[k] !== "number");
 
@@ -513,7 +606,14 @@ document.getElementById("btnHeatmap")?.addEventListener("click", async () => {
 
   // Derive numeric columns and labels
   const sample = data[0] || {};
-  const keys = Object.keys(sample);
+  let keys = Object.keys(sample);
+  
+  // Use selected columns if available
+  if (appState.selectedColumns.length > 0) {
+    keys = appState.selectedColumns;
+    console.log(`Using ${appState.selectedColumns.length} selected columns for Heatmap`);
+  }
+  
   const numericKeys = keys.filter(k => typeof sample[k] === "number");
   const labelKey = keys.find(k => typeof sample[k] !== "number");
 
@@ -539,7 +639,7 @@ document.getElementById("btnHeatmap")?.addEventListener("click", async () => {
 
 // ======== UMAP: CLICK TOOL BUTTON ========
 document.getElementById("btnUMAP")?.addEventListener("click", async () => {
-  const data = appState.data;
+  let data = appState.data;
 console.log("btnUmap clicked, appState.data:", data);
   if (!data || data.length === 0) {
     renderTableRight([], "");
@@ -552,6 +652,25 @@ console.log("btnUmap clicked, appState.data:", data);
       `;
     }
     return;
+  }
+
+  // Filter to selected columns if any are selected
+  if (appState.selectedColumns.length > 0) {
+    data = data.map(row => {
+      const filtered = {};
+      // Include selected columns
+      appState.selectedColumns.forEach(col => {
+        if (col in row) filtered[col] = row[col];
+      });
+      // Always include text/categorical columns
+      Object.keys(row).forEach(col => {
+        if (typeof row[col] !== 'number' && !(col in filtered)) {
+          filtered[col] = row[col];
+        }
+      });
+      return filtered;
+    });
+    console.log(`Using ${appState.selectedColumns.length} selected columns + categorical columns for UMAP`);
   }
 
   const el = document.getElementById("myUMAP");
@@ -575,7 +694,7 @@ console.log("btnUmap clicked, appState.data:", data);
 
 // ======== SCATTER: CLICK TOOL BUTTON ========
 document.getElementById("btnScatter")?.addEventListener("click", async () => {
-  const data = appState.data;
+  let data = appState.data;
 
   if (!data || data.length === 0) {
     renderTableRight([], "");
@@ -588,6 +707,25 @@ document.getElementById("btnScatter")?.addEventListener("click", async () => {
       `;
     }
     return;
+  }
+
+  // Filter to selected columns if any are selected
+  if (appState.selectedColumns.length > 0) {
+    data = data.map(row => {
+      const filtered = {};
+      // Include selected columns
+      appState.selectedColumns.forEach(col => {
+        if (col in row) filtered[col] = row[col];
+      });
+      // Always include text/categorical columns
+      Object.keys(row).forEach(col => {
+        if (typeof row[col] !== 'number' && !(col in filtered)) {
+          filtered[col] = row[col];
+        }
+      });
+      return filtered;
+    });
+    console.log(`Using ${appState.selectedColumns.length} selected columns + categorical columns for Scatter`);
   }
 
   const el = document.getElementById("myScatter");

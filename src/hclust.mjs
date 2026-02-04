@@ -387,7 +387,7 @@ if (clusterCols== true){
         // document.body.appendChild(div)
         div.innerHTML = ""
         div.appendChild(svg.node())
-        console.log(`hclust div provided in function parameters.`,div,divid);
+        console.log(`hclust div provided in function parameters.divid:`,divid);
 
 
     } else if (!document.getElementById("childDiv")) {

@@ -146,7 +146,7 @@ console.log("RUNNING heatmap_plot()----------------------");
     // Here we add the svg to the plot div
   // Check if the div was provided in the function call
   if (document.getElementById(divid)) {
-  // console.log(`pcaPlot div provided in function parameters.`);
+    console.log(`plot div provided in function parameters.divid:`,divid);
     const div = document.getElementById(divid)
     div.innerHTML = ""
     div.appendChild(svg.node())

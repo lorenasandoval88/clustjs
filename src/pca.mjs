@@ -42,7 +42,6 @@ const pcaScores = async function (data) {
   // console.log("RUNNING pcaScores()-------------------------------")
 
   const numbersOnlyObjs = removeNonNumberValues(data)
-  console.log("numbersOnlyObjs", numbersOnlyObjs)
   let scaledObjs = (await scale(numbersOnlyObjs))
   let scaledArr = scaledObjs.map(Object.values)
 
@@ -300,7 +299,7 @@ export async function pca_UI(options = {}) {
   const currentDivNum = pcaDt.data.divNum;
   let div = divid ? document.getElementById(divid) : null;
   if (div) {
-    console.log("div provided in function parameters:", divid);
+    console.log("plot div provided in function parameters. divid:", divid);
     div.innerHTML = "";
   } else {
       div = document.createElement("div");

@@ -24,10 +24,10 @@ export const pairsDt = {
 let selectedPairsGroup = null;
 
 function resetGroups(maxOpacity) {
-  d3.selectAll(".pairs-points")
+  d3.selectAll(".points")
     .transition()
     .attr("opacity", maxOpacity);
-  d3.selectAll(".pairs-legend")
+  d3.selectAll(".keyRects")
     .transition()
     .attr("opacity", 1);
   selectedPairsGroup = null;
@@ -36,14 +36,13 @@ function resetGroups(maxOpacity) {
 
 
 function selectGroup(ctx, group, maxOpacity) {
-
-  const groupElements = d3.selectAll(".pairs-points")
+  const groupElements = d3.selectAll(".points")
     .filter(d => d.group !== group);
-  const activeGroup = d3.selectAll(".pairs-legend")
+  const activeGroup = d3.selectAll(".keyRects")
     .filter(d => d === group);
-  const otherElements = d3.selectAll(".pairs-points")
+  const otherElements = d3.selectAll(".points")
     .filter(d => d.group === group);
-  const otherGroups = d3.selectAll(".pairs-legend")
+  const otherGroups = d3.selectAll(".keyRects")
     .filter(d => d !== group);
 
   groupElements.transition().attr("opacity", 0.1);
@@ -200,7 +199,7 @@ export async function pairs_plot(options = {}) {
               xVal: d.values[j],
               yVal: d.values[i]
             })
-            .attr("class", "pairs-points")
+            .attr("class", "points")
             .attr("cx", xScale(d.values[j]))
             .attr("cy", yScale(d.values[i]))
             .attr("r", 2.5)
@@ -244,7 +243,7 @@ export async function pairs_plot(options = {}) {
     .data(groups);
 
   legend.enter().append("rect")
-    .attr("class", "pairs-legend")
+    .attr("class", "keyRects")
     .attr("x", 0)
     .attr("y", (d, i) => i * 20)
     .attr("width", 12)

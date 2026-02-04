@@ -328,5 +328,5 @@ export function umapIris(rows, opts = {}) {
 }
 
 // ---- Example usage ----
-const { points } = umapIris(irisData);
-console.log(points.slice(0, 5));
+// const { points } = umapIris(irisData);
+// console.log(points.slice(0, 5));

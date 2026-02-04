@@ -22,13 +22,13 @@ export const scatterDt = {
 };
 
 function selectGroup(ctx, group, maxOpacity) {
-  const groupElements = d3.selectAll(".scatter-points")
+  const groupElements = d3.selectAll(".points")
     .filter(d => d.group !== group);
-  const activeGroup = d3.selectAll(".scatter-legend")
+  const activeGroup = d3.selectAll(".keyRects")
     .filter(d => d === group);
-  const otherElements = d3.selectAll(".scatter-points")
+  const otherElements = d3.selectAll(".points")
     .filter(d => d.group === group);
-  const otherGroups = d3.selectAll(".scatter-legend")
+  const otherGroups = d3.selectAll(".keyRects")
     .filter(d => d !== group);
 
   groupElements.transition().attr("opacity", 0.1);
@@ -213,7 +213,7 @@ export async function scatter_plot(options = {}) {
     .data(scatterData)
     .enter()
     .append("circle")
-    .attr("class", "scatter-points")
+    .attr("class", "points")
     .attr("cx", d => x(d.x))
     .attr("cy", d => y(d.y))
     .attr("fill", d => color(d.group))
@@ -227,7 +227,7 @@ export async function scatter_plot(options = {}) {
     .data(groups);
 
   legend.enter().append("rect")
-    .attr("class", "scatter-legend")
+    .attr("class", "keyRects")
     .attr("x", width - margin.left - 50)
     .attr("y", (d, i) => i * 20)
     .attr("width", 12)

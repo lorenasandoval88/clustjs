@@ -112,8 +112,8 @@ export async function pca_plot(options = {}) {
   }
 
   const scores = await pcaScores(data)
-  console.log("Data for PCA plot:", data)
-  console.log("PCA scores:", scores)
+  // console.log("Data for PCA plot:", data)
+  // console.log("PCA scores:", scores)
   const groups = [...new Set(scores.map(d => d.group))]
   const color = d3.scaleOrdinal(colors).domain(groups)
 

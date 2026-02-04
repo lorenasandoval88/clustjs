@@ -1,4 +1,4 @@
-import { irisData, spiralData, pca_plot, hclust_plot, heatmap_plot, umap_plot, scatter_plot, pairs_plot } from "./dist/sdk.mjs"; // adjust path
+import { irisData, spiralData, pca_plot, hclust_plot, heatmap_plot, umap_plot, tsne_plot, scatter_plot, pairs_plot } from "./dist/sdk.mjs"; // adjust path
 
 // ======== EMBEDDED CONSOLE ========
 const consoleOut = document.getElementById("consoleOut");
@@ -666,7 +666,7 @@ document.getElementById("btnUMAP")?.addEventListener("click", async () => {
   // Reset to normal selection mode
   appState.selectionMode = "normal";
 
-console.log("btnUmap clicked, appState.data:", data);
+  //console.log("btnUmap clicked, appState.data:", data);
   if (!data || data.length === 0) {
     renderTableRight([], "");
     const rightPanel = document.getElementById("rightData");
@@ -718,6 +718,63 @@ console.log("btnUmap clicked, appState.data:", data);
 });
 
 
+// ======== t-SNE: CLICK TOOL BUTTON ========
+document.getElementById("btnTSNE")?.addEventListener("click", async () => {
+  let data = appState.data;
+
+  // Reset to normal selection mode
+  appState.selectionMode = "normal";
+
+  if (!data || data.length === 0) {
+    renderTableRight([], "");
+    const rightPanel = document.getElementById("rightData");
+    if (rightPanel) {
+      rightPanel.innerHTML = `
+        <div class="text-muted">
+          Load a file or select a built-in dataset (Iris) first.
+        </div>
+      `;
+    }
+    return;
+  }
+
+  // Filter to selected columns if any are selected
+  if (appState.selectedColumns.length > 0) {
+    data = data.map(row => {
+      const filtered = {};
+      // Include selected columns
+      appState.selectedColumns.forEach(col => {
+        if (col in row) filtered[col] = row[col];
+      });
+      // Always include text/categorical columns
+      Object.keys(row).forEach(col => {
+        if (typeof row[col] !== 'number' && !(col in filtered)) {
+          filtered[col] = row[col];
+        }
+      });
+      return filtered;
+    });
+    console.log(`Using ${appState.selectedColumns.length} selected columns + categorical columns for t-SNE`);
+  }
+
+  const el = document.getElementById("myTSNE");
+  if (!el) return;
+
+  const width = Math.max(520, el.clientWidth - 24);
+  const height = 410;
+
+  // Clear and mark container
+  el.innerHTML = "";
+  el.classList.add("has-plot");
+
+  await tsne_plot({
+    data,
+    divid: "myTSNE",
+    width: width,
+    height: height
+  });
+});
+
 // ======== SCATTER: CLICK TOOL BUTTON ========
 document.getElementById("btnScatter")?.addEventListener("click", async () => {
   let data = appState.data;
@@ -766,7 +823,7 @@ document.getElementById("btnScatter")?.addEventListener("click", async () => {
   // Re-render table to update button states
   renderTableRight(appState.data, appState.name ? `${appState.name} (${appState.source})` : "Dataset Preview");
   
-  console.log(`Scatter mode: Using ${selectedNumeric.length} numeric columns`);
+  console.log(`Scatter mode: Using ${selectedNumeric.length-1} numeric columns`);
 
   // Filter to selected columns if any are selected
   if (appState.selectedColumns.length > 0) {

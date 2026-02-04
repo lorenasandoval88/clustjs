@@ -9,8 +9,8 @@ export { default as spiralData } from "./data/spiralData.js";
 // ===============================
 export { hclust_plot, hclust_UI, hclustDt } from "./hclust.mjs";
 export { pca_plot, pca_UI, pcaDt } from "./pca.mjs";
-export { tsne_plot, tsne_UI } from "./tsne.mjs";
-export { umap_plot, umap_UI } from "./umap.mjs";
+export { tsne_plot, tsne_UI, tsneDt } from "./tsne.mjs";
+export { umap_plot, umap_UI, umapDt } from "./umap.mjs";
 export { scatter_plot, scatter_UI, scatterDt } from "./scatter.mjs";
 export { pairs_plot, pairs_UI, pairsDt } from "./pairs.mjs";
 export { heatmap_plot } from "./heatmap.mjs";

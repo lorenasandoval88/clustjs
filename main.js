@@ -1,4 +1,4 @@
-import { irisData, spiralData, pca_plot, hclust_plot, heatmap_plot, umap_plot, scatter_plot } from "./dist/sdk.mjs"; // adjust path
+import { irisData, spiralData, pca_plot, hclust_plot, heatmap_plot, umap_plot, scatter_plot, pairs_plot } from "./dist/sdk.mjs"; // adjust path
 
 // ======== EMBEDDED CONSOLE ========
 const consoleOut = document.getElementById("consoleOut");
@@ -267,7 +267,8 @@ const appState = {
   data: null,         // array of objects (rows)
   source: null,       // "file" | "builtin"
   name: null,         // filename or dataset name
-  selectedColumns: [] // columns selected by user
+  selectedColumns: [], // columns selected by user
+  selectionMode: "normal" // "normal" | "scatter" (for 2-column limit)
 };
 
 // ======== IRIS (your built-in sample) ========
@@ -363,6 +364,18 @@ function renderTableRight(data, title = "Dataset Preview") {
         appState.selectedColumns.splice(idx, 1);
         btn.className = "btn btn-sm w-100 text-start btn-outline-secondary";
       } else {
+        // Special handling for scatter mode: only allow 2 numeric columns
+        if (appState.selectionMode === "scatter") {
+          const numericSelected = appState.selectedColumns.filter(col => {
+            return typeof data[0][col] === 'number';
+          }).length;
+          
+          if (numericSelected >= 2) {
+            console.log("Scatter mode: Maximum 2 numeric columns allowed");
+            return;
+          }
+        }
+        
         // Select
         appState.selectedColumns.push(c);
         btn.className = "btn btn-sm w-100 text-start btn-primary";
@@ -470,6 +483,9 @@ document.getElementById("fileInput")?.addEventListener("change", (e) => {
 document.getElementById("btnPCA")?.addEventListener("click", async () => {
   let data = appState.data;
 
+  // Reset to normal selection mode
+  appState.selectionMode = "normal";
+
   if (!data || data.length === 0) {
     renderTableRight([], "");
     const rightPanel = document.getElementById("rightData");
@@ -530,6 +546,9 @@ const el = document.getElementById("myPCA");
 document.getElementById("btnHclust")?.addEventListener("click", async () => {
   const data = appState.data;
 
+  // Reset to normal selection mode
+  appState.selectionMode = "normal";
+
   if (!data || data.length === 0) {
     const rightPanel = document.getElementById("rightData");
     if (rightPanel) {
@@ -586,6 +605,9 @@ document.getElementById("btnHclust")?.addEventListener("click", async () => {
 document.getElementById("btnHeatmap")?.addEventListener("click", async () => {
   const data = appState.data;
 
+  // Reset to normal selection mode
+  appState.selectionMode = "normal";
+
   if (!data || data.length === 0) {
     const rightPanel = document.getElementById("rightData");
     if (rightPanel) {
@@ -640,6 +662,10 @@ document.getElementById("btnHeatmap")?.addEventListener("click", async () => {
 // ======== UMAP: CLICK TOOL BUTTON ========
 document.getElementById("btnUMAP")?.addEventListener("click", async () => {
   let data = appState.data;
+
+  // Reset to normal selection mode
+  appState.selectionMode = "normal";
+
 console.log("btnUmap clicked, appState.data:", data);
   if (!data || data.length === 0) {
     renderTableRight([], "");
@@ -709,6 +735,39 @@ document.getElementById("btnScatter")?.addEventListener("click", async () => {
     return;
   }
 
+  // Set scatter selection mode and limit to 2 numeric columns
+  appState.selectionMode = "scatter";
+  
+  // Get all columns and identify numeric vs categorical
+  const sample = data[0] || {};
+  const allCols = Object.keys(sample);
+  const numericCols = allCols.filter(col => typeof sample[col] === 'number');
+  const categoricalCols = allCols.filter(col => typeof sample[col] !== 'number');
+  
+  // Check if user has already selected numeric columns
+  const currentNumericSelected = appState.selectedColumns.filter(col => 
+    numericCols.includes(col)
+  );
+  
+  // If user hasn't selected any numeric columns, default to first 2
+  // Otherwise, keep their selection (limited to 2)
+  let selectedNumeric;
+  if (currentNumericSelected.length === 0) {
+    selectedNumeric = numericCols.slice(0, 2);
+    console.log(`Scatter mode: Defaulting to first 2 numeric columns:`, selectedNumeric);
+  } else {
+    selectedNumeric = currentNumericSelected.slice(0, 2);
+    console.log(`Scatter mode: Using user-selected numeric columns:`, selectedNumeric);
+  }
+  
+  // Update selected columns with chosen numeric + all categorical
+  appState.selectedColumns = [...selectedNumeric, ...categoricalCols];
+  
+  // Re-render table to update button states
+  renderTableRight(appState.data, appState.name ? `${appState.name} (${appState.source})` : "Dataset Preview");
+  
+  console.log(`Scatter mode: Using ${selectedNumeric.length} numeric columns`);
+
   // Filter to selected columns if any are selected
   if (appState.selectedColumns.length > 0) {
     data = data.map(row => {
@@ -741,6 +800,64 @@ document.getElementById("btnScatter")?.addEventListener("click", async () => {
   await scatter_plot({
     data,
     divid: "myScatter",
+    width: width,
+    height: height
+  });
+});
+
+
+// ======== PAIRS: CLICK TOOL BUTTON ========
+document.getElementById("btnPairs")?.addEventListener("click", async () => {
+  let data = appState.data;
+
+  // Reset to normal selection mode
+  appState.selectionMode = "normal";
+
+  if (!data || data.length === 0) {
+    renderTableRight([], "");
+    const rightPanel = document.getElementById("rightData");
+    if (rightPanel) {
+      rightPanel.innerHTML = `
+        <div class="text-muted">
+          Load a file or select a built-in dataset (Iris) first.
+        </div>
+      `;
+    }
+    return;
+  }
+
+  // Filter to selected columns if any are selected
+  if (appState.selectedColumns.length > 0) {
+    data = data.map(row => {
+      const filtered = {};
+      // Include selected columns
+      appState.selectedColumns.forEach(col => {
+        if (col in row) filtered[col] = row[col];
+      });
+      // Always include text/categorical columns
+      Object.keys(row).forEach(col => {
+        if (typeof row[col] !== 'number' && !(col in filtered)) {
+          filtered[col] = row[col];
+        }
+      });
+      return filtered;
+    });
+    console.log(`Using ${appState.selectedColumns.length} selected columns + categorical columns for Pairs`);
+  }
+
+  const el = document.getElementById("myPairs");
+  if (!el) return;
+
+  const width = Math.max(900, el.clientWidth - 24);
+  const height = 900;
+
+  // Clear and mark container
+  el.innerHTML = "";
+  el.classList.add("has-plot");
+
+  await pairs_plot({
+    data,
+    divid: "myPairs",
     width: width,
     height: height
   });

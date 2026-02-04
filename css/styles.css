@@ -328,6 +328,7 @@ body {
 #myPCA,
 #myUMAP,
 #myScatter,
+#myPairs,
 #myHeatmap,
 #myHclust {
   background: transparent;
@@ -341,6 +342,7 @@ body {
 #myPCA.has-plot,
 #myUMAP.has-plot,
 #myScatter.has-plot,
+#myPairs.has-plot,
 #myHeatmap.has-plot,
 #myHclust.has-plot {
   background: #ffffff;
@@ -357,6 +359,7 @@ body {
 #myPCA svg,
 #myUMAP svg,
 #myScatter svg,
+#myPairs svg,
 #myHeatmap svg,
 #myHclust svg {
   display: block;

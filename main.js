@@ -763,8 +763,8 @@ document.getElementById("btnTSNE")?.addEventListener("click", async () => {
   const width = Math.max(520, el.clientWidth - 24);
   const height = 410;
 
-  // Clear and mark container
-  el.innerHTML = "";
+  // Clear and mark container with loading message
+  el.innerHTML = '<div class="text-center text-muted p-4">Loading t-SNE plot...</div>';
   el.classList.add("has-plot");
 
   await tsne_plot({

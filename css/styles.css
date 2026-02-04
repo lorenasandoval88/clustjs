@@ -126,6 +126,7 @@ p.lead {
    Modal plot containers
    ========================= */
 #myPCA,
+#myTSNE,
 #myHclust,
 #myHeatmap,
 #myUMAP {
@@ -326,6 +327,7 @@ body {
 /* Prevent plot SVG from being clipped */
 /* All plot containers: invisible until plot renders */
 #myPCA,
+#myTSNE,
 #myUMAP,
 #myScatter,
 #myPairs,
@@ -340,6 +342,7 @@ body {
 
 /* When plot exists, add this class to get white plot frame */
 #myPCA.has-plot,
+#myTSNE.has-plot,
 #myUMAP.has-plot,
 #myScatter.has-plot,
 #myPairs.has-plot,
@@ -357,6 +360,7 @@ body {
 
 /* Ensure the SVG can render fully */
 #myPCA svg,
+#myTSNE svg,
 #myUMAP svg,
 #myScatter svg,
 #myPairs svg,

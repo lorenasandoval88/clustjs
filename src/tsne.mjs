@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import d3tip from "d3-tip";
-import { tSNE } from '@keckelt/tsne';
+import { TSNE } from '@keckelt/tsne';
 import irisData from "./data/irisData.js";
 import spiralData from "./data/spiralData.js";
 
@@ -64,8 +64,16 @@ export async function tsne_plot(options = {}) {
   // Standardize features
   const Xs = standardize(X);
 
-  // Run t-SNE using @keckelt/tsne API
-  const model = new tSNE({
+  // Run t-SNE using @keckelt/tsne API -------------------------------------------
+  // This library requires separate initialization steps
+
+// 1.  Create the TSNE model with just options (no data)
+// 2.  Call model.initDataRaw(Xs) to initialize with the data
+// 3.  Call model.initSolution() to set up the initial random solution
+// 4.  Then run the iterations with model.step()
+// 5.  Finally get the result with model.getSolution()
+
+  const model = new TSNE({
     dim: 2,
     perplexity: perplexity,
     earlyExaggeration: 4.0,
@@ -74,17 +82,19 @@ export async function tsne_plot(options = {}) {
     metric: 'euclidean'
   });
 
-  // Initialize with data
-  model.init({
-    data: Xs,
-    type: 'dense'
-  });
+  // Initialize with raw data
+  model.initDataRaw(Xs);
+  
+  // Initialize the solution (random initial positions)
+  model.initSolution();
 
   // Run all iterations
-  model.run();
+  for (let i = 0; i < iterations; i++) {
+    model.step();
+  }
 
   // Get output coordinates
-  const embedding = model.getOutputScaled();
+  const embedding = model.getSolution();
 
   // Create scores array similar to PCA/UMAP
   const scores = embedding.map((xy, i) => ({

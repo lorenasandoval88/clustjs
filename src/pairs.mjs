@@ -34,29 +34,7 @@ function resetGroups(maxOpacity) {
 }
 
 
-// function selectGroup(ctx, group, maxOpacity) {
-//   // If clicking the same group, reset
-//   if (selectedPairsGroup === group) {
-//     resetGroups(maxOpacity);
-//     return;
-//   }
 
-//   selectedPairsGroup = group;
-
-//   const groupElements = d3.selectAll(".pairs-points")
-//     .filter(d => d.group !== group);
-//   const activeGroup = d3.selectAll(".pairs-legend")
-//     .filter(d => d === group);
-//   const otherElements = d3.selectAll(".pairs-points")
-//     .filter(d => d.group === group);
-//   const otherGroups = d3.selectAll(".pairs-legend")
-//     .filter(d => d !== group);
-
-//   groupElements.transition().attr("opacity", 0.1);
-//   otherGroups.transition().attr("opacity", 0.1);
-//   otherElements.transition().attr("opacity", maxOpacity);
-//   activeGroup.transition().attr("opacity", maxOpacity);
-// }
 function selectGroup(ctx, group, maxOpacity) {
 
   const groupElements = d3.selectAll(".pairs-points")
@@ -262,28 +240,25 @@ export async function pairs_plot(options = {}) {
     .attr("transform", `translate(${plotWidth - margin.right + 20},${margin.top})`);
 
   const legend = legendG
-    .selectAll("g")
-    .data(groups)
-    .enter()
-    .append("g")
-    .attr("transform", (d, i) => `translate(0,${i * 20})`)
-    .style("cursor", "pointer")
-    .on("click", (event, d) => selectGroup(null, d, maxOpacity));
+    .selectAll("rect")
+    .data(groups);
 
-  legend.append("rect")
+  legend.enter().append("rect")
     .attr("class", "pairs-legend")
     .attr("x", 0)
-    .attr("y", 0)
+    .attr("y", (d, i) => i * 20)
     .attr("width", 12)
     .attr("height", 12)
-    .attr("fill", d => color(d));
+    .attr("fill", d => color(d))
+    .on("click", (event, d) => selectGroup(null, d, maxOpacity));
 
-  legend.append("text")
+  legend.enter().append("text")
     .attr("x", 20)
-    .attr("y", 0)
+    .attr("y", (d, i) => i * 20)
     .attr("dy", "0.7em")
     .text(d => `${d}`)
-    .style("font-size", "11px");
+    .style("font-size", "11px")
+    .on("click", (event, d) => selectGroup(null, d, maxOpacity));
 
   div.appendChild(svg.node());
 }

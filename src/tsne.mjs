@@ -256,7 +256,7 @@ export async function tsne_plot(options = {}) {
     .attr("y", (d, i) => i * 20)
     .attr("dy", "0.7em")
     .text(d => `${d}`)
-    .style("font-size", "11px")
+    .style("font-size", "14px")
     .on("click", (event, d) => selectGroup(null, d, maxOpacity));
 
   div.appendChild(svg.node());

@@ -65,7 +65,7 @@ export async function hclust_plot(options = {}) {
     rownames: rownames = irisData.map(obj => Object.values(obj)).map((d, idx) => d[4] + idx),
     colnames: colnames = Object.keys(irisData[0]).slice(0, -1),
         width: width = 400,
-        height: height = 1600,
+        height: height = 2000,
         // dendograms
         clusterCols: clusterCols = true,
         clusterRows: clusterRows = true,

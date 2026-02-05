@@ -313,6 +313,7 @@ if (clusterCols== true){
     // Apply tooltip to our SVG
       svg.call(dendoTooltip)
     // dendo columns
+            const colDendroYOffset = Math.max(0, margin.top - colPadding);
       root.links().forEach((link,i) => {
       svg
           .append("path")
@@ -320,7 +321,7 @@ if (clusterCols== true){
           .attr("stroke", link.source.color || `${colDendoColor}`)
           .attr("stroke-width", `${3}px`)
           .attr("fill", 'none')
-          .attr("transform", `translate(${margin.left}, ${colPadding})`)
+                    .attr("transform", `translate(${margin.left}, ${colDendroYOffset})`)
           .attr("d", colElbow(link,colMaxHeight,margin.top,colNames2Lengths))
           .on('mouseover', dendoTooltip.show)
           // Hide the tooltip when "mouseout"

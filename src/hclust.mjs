@@ -6,13 +6,13 @@ import { distance } from "ml-distance";
 import irisData from "./data/irisData.js";
 import { csvToJson } from "./otherFunctions.js";
 
-
+// TODO: reset/clear plots when variables are selected or deselected
 // TODO: call heat_map from heatmap.mjs
 // TODO: make pairs plot for scatter, bc only two first features are used
 // TODO: add t-SNE and 3D UMAP plot
 // TODO: adjust top dendogram to text label width
 // TODO: scatter plot add row number to hover label e species setosa_12
-// fix dendo for spiral
+// fix dendo for spiral, decrease spiral data
 export const hclustDt = {
   data: {
     divNum: 1,

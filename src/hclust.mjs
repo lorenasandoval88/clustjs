@@ -84,7 +84,7 @@ export async function hclust_plot(options = {}) {
         rowDendoColor: rowDendoColor = "red",
         // heatmap color
         heatmapColor: heatmapColor = "green",
-        heatmapColorScale: heatmapColorScale = [0, 8],
+        heatmapColorScale: heatmapColorScale = null,
         // hover tooltip
         tooltip_decimal: tooltip_decimal = 2,
         tooltip_fontFamily: tooltip_fontFamily = 'monospace',
@@ -143,8 +143,19 @@ export async function hclust_plot(options = {}) {
    // console.log("rowNames2Lengths",rowNames2Lengths)
 
 // start of heatmap
+    const flatValues = data.flat().filter(v => Number.isFinite(v));
+    let derivedScale = heatmapColorScale;
+    if (!Array.isArray(derivedScale) || derivedScale.length !== 2 || !derivedScale.every(Number.isFinite)) {
+        const extent = d3.extent(flatValues);
+        if (extent[0] === extent[1]) {
+            derivedScale = [extent[0] ?? 0, (extent[1] ?? 0) + 1];
+        } else {
+            derivedScale = extent;
+        }
+    }
+
     const color_scale = d3.scaleLinear()
-        .domain(heatmapColorScale)
+        .domain(derivedScale)
         .range(['#000', `${heatmapColor}`])
 
     let x_scale = d3.scaleBand()

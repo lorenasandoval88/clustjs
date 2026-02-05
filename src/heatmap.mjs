@@ -35,12 +35,23 @@ console.log("RUNNING heatmap_plot()----------------------");
     color: color = "green", //"#d62728",
     marginLeft: marginLeft = 50,
     marginRight: marginRight = 10,
-    colorScale: colorScale = [0, 8],
+    colorScale: colorScale = null,
 
   } =  options
 
+  const flatValues = matrix.flat().filter(v => Number.isFinite(v));
+  let derivedScale = colorScale;
+  if (!Array.isArray(derivedScale) || derivedScale.length !== 2 || !derivedScale.every(Number.isFinite)) {
+    const extent = d3.extent(flatValues);
+    if (extent[0] === extent[1]) {
+      derivedScale = [extent[0] ?? 0, (extent[1] ?? 0) + 1];
+    } else {
+      derivedScale = extent;
+    }
+  }
+
   const color_scale = d3.scaleLinear()
-  .domain(colorScale)
+  .domain(derivedScale)
   .range(['#000', `${color}`])
 
 

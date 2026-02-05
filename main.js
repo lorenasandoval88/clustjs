@@ -565,7 +565,7 @@ document.getElementById("btnHclust")?.addEventListener("click", async () => {
   if (!el) return;
 
   const width = Math.max(520, el.clientWidth - 24);
-  const height = 680;
+  const height = 800;
 
   // Derive numeric columns and labels
   const sample = data[0] || {};
@@ -624,7 +624,7 @@ document.getElementById("btnHeatmap")?.addEventListener("click", async () => {
   if (!el) return;
 
   const width = Math.max(520, el.clientWidth - 24);
-  const height = 680;
+  const height = 800;
 
   // Derive numeric columns and labels
   const sample = data[0] || {};

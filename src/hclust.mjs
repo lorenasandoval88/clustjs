@@ -73,9 +73,9 @@ export async function hclust_plot(options = {}) {
         clusteringDistanceCols: clusteringDistanceCols = "euclidean",
         clusteringMethodCols: clusteringMethodCols = "complete",
         clusteringMethodRows: clusteringMethodRows = "complete",
-        marginTop: marginTop = clusterCols ? 85 : 53,
+        marginTop: marginTop = clusterCols ? 100 : 53,
         marginLeft: marginLeft = clusterRows ? 200 : 80,
-        colPadding: colPadding = clusterCols ? 30 : 0, 
+        colPadding: colPadding = clusterCols ? 60 : 0, 
         rowPadding: rowPadding = clusterRows ? 15 : 0,
         dendogram_font: dendogram_font = "14px",
         // topdendogram color
@@ -374,7 +374,8 @@ if (clusterCols== true){
 
     //// console.log(root.links()) 
     
-      const colMaxHeight = root.data.height-colPadding+5//-25; // col leaf height/length
+      // Ensure colMaxHeight is always positive to prevent flipping for small datasets
+      const colMaxHeight = Math.max(root.data.height, 1);
     
       const allNodes = root.descendants().reverse()
       const leafs = allNodes.filter(d => !d.children)

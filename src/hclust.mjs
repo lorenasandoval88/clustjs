@@ -79,9 +79,9 @@ export async function hclust_plot(options = {}) {
         rowPadding: rowPadding = clusterRows ? 15 : 0,
         dendogram_font: dendogram_font = "14px",
         // topdendogram color
-        colDendoColor: colDendoColor = "blue",
+        colDendoColor: colDendoColor = "black",
         // bottomdendogram color
-        rowDendoColor: rowDendoColor = "red",
+        rowDendoColor: rowDendoColor = "black",
         // heatmap color
         heatmapColor: heatmapColor = "green",
         heatmapColorScale: heatmapColorScale = null,
@@ -159,7 +159,7 @@ export async function hclust_plot(options = {}) {
     const midVal = (derivedScale[0] + derivedScale[1]) / 2;
     const color_scale = d3.scaleLinear()
         .domain([derivedScale[0], midVal, derivedScale[1]])
-        .range(['#4575b4', '#ffffff', '#d73027']) // blue (low) - white (middle) - red (high)
+        .range(['#000080', '#ffffff', '#d73027']) // navy (low) - white (middle) - red (high)
 
     let x_scale = d3.scaleBand()
         .domain(colNames2)
@@ -262,38 +262,41 @@ export async function hclust_plot(options = {}) {
     const legendHeight = 300;
     const legendX = heatmapWidth + 150; // Position after y-axis labels
     const legendY = 0; // Align with top of heatmap
-    const numBoxes = 5;
-    const boxHeight = legendHeight / numBoxes;
 
     // Create 5 discrete color boxes
     const minVal = derivedScale[0];
     const maxVal = derivedScale[1];
     const range = maxVal - minVal;
 
-    // Color scale for boxes (diverging: blue-white-red)
-    const boxColorScale = d3.scaleLinear()
-        .domain([0, (numBoxes - 1) / 2, numBoxes - 1])
-        .range(["#4575b4", "#ffffff", "#d73027"]); // blue (low) - white (middle) - red (high)
+    // Create gradient definition
+    const gradientId = "legend-gradient-" + Math.random().toString(36).substr(2, 9);
+    const defs = svg.append("defs");
+    const gradient = defs.append("linearGradient")
+        .attr("id", gradientId)
+        .attr("x1", "0%")
+        .attr("y1", "100%")  // bottom (low values)
+        .attr("x2", "0%")
+        .attr("y2", "0%");   // top (high values)
 
-    // Draw 5 boxes from bottom (dark) to top (bright)
-    for (let i = 0; i < numBoxes; i++) {
-        g.append("rect")
-            .attr("x", legendX)
-            .attr("y", legendY + (numBoxes - 1 - i) * boxHeight)
-            .attr("width", legendWidth)
-            .attr("height", boxHeight)
-            .style("fill", boxColorScale(i))
-            .style("stroke", "#fff")
-            .style("stroke-width", "1px");
-    }
+    gradient.append("stop")
+        .attr("offset", "0%")
+        .attr("stop-color", "#000080"); // navy (low)
 
-    // Outer border for the legend
+    gradient.append("stop")
+        .attr("offset", "50%")
+        .attr("stop-color", "#ffffff"); // white (middle)
+
+    gradient.append("stop")
+        .attr("offset", "100%")
+        .attr("stop-color", "#d73027"); // red (high)
+
+    // Draw gradient rectangle
     g.append("rect")
         .attr("x", legendX)
         .attr("y", legendY)
         .attr("width", legendWidth)
         .attr("height", legendHeight)
-        .style("fill", "none")
+        .style("fill", `url(#${gradientId})`)
         .style("stroke", "#000")
         .style("stroke-width", "1px");
 
@@ -302,7 +305,8 @@ export async function hclust_plot(options = {}) {
         .domain(derivedScale)
         .range([legendHeight, 0]);
 
-    // Create 5 tick values for the 5 boxes
+    // Create 5 tick values for the legend
+    const numBoxes = 5;
     const legendTickValues = [];
     for (let i = 0; i < numBoxes; i++) {
         legendTickValues.push(minVal + (i / (numBoxes - 1)) * range);

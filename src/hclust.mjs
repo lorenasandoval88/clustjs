@@ -5,7 +5,7 @@ import dist from "ml-distance-matrix";
 import { distance } from "ml-distance";
 import irisData from "./data/irisData.js";
 import { csvToJson } from "./otherFunctions.js";
-
+// TODO: fix padding for left and right dendograms
 // TODO: reset/clear plots when variables are selected or deselected
 // TODO: call heat_map from heatmap.mjs
 // TODO: make pairs plot for scatter, bc only two first features are used
@@ -74,10 +74,10 @@ export async function hclust_plot(options = {}) {
         clusteringMethodCols: clusteringMethodCols = "complete",
         clusteringMethodRows: clusteringMethodRows = "complete",
         marginTop: marginTop = clusterCols ? 85 : 53,
-        marginLeft: marginLeft = clusterRows ? 250 : 80,
-        colPadding: colPadding = clusterCols ? 12 : 0, 
-        rowPadding: rowPadding = clusterRows ? 75 : 0,
-        dendogram_font: dendogram_font = "10px",
+        marginLeft: marginLeft = clusterRows ? 200 : 80,
+        colPadding: colPadding = clusterCols ? 30 : 0, 
+        rowPadding: rowPadding = clusterRows ? 15 : 0,
+        dendogram_font: dendogram_font = "14px",
         // topdendogram color
         colDendoColor: colDendoColor = "blue",
         // bottomdendogram color
@@ -92,12 +92,6 @@ export async function hclust_plot(options = {}) {
     } = options;
 
    // console.log("dendogram options", options)
-    const margin = ({
-        top: marginTop,
-        bottom: 0,
-        left: marginLeft,
-        right: 0
-    })
     const svg = d3.create("svg")
 
     const data = matrix //matrix.data ? matrix.data: matrix
@@ -142,6 +136,14 @@ export async function hclust_plot(options = {}) {
     const rowNames2Lengths = d3.max(rowNames2.map(e => String(e).length))
    // console.log("rowNames2Lengths",rowNames2Lengths)
 
+    const margin = ({
+        top: marginTop,
+        bottom: 140,
+        left: marginLeft,
+        right: 300
+    })
+    const innerHeight = height - margin.top - margin.bottom;
+
 // start of heatmap
     const flatValues = data.flat().filter(v => Number.isFinite(v));
     let derivedScale = heatmapColorScale;
@@ -165,7 +167,7 @@ export async function hclust_plot(options = {}) {
     let y_scale = d3.scaleBand()
         .domain(rowNames2)
         // .domain(rownames)
-        .range([0, height - margin.top])
+        .range([0, innerHeight])
 
    // console.log("y_scale",y_scale)
 // observable plot d3 to do
@@ -186,34 +188,40 @@ export async function hclust_plot(options = {}) {
     const g = svg
         .append('g')
         // move the entire graph down and right to accomodate labels
-        .attr('transform', `translate(${margin.left+margin.right}, ${margin.top+margin.bottom})`)
-   // console.log("rowNames3-----------------------------")
+        .attr('transform', `translate(${margin.left}, ${margin.top})`)
 
-    //text x axis
+    //text x axis (move labels to bottom)
+    const xAxisYOffset = 0;
     const xAxis = g.append('g')
-        .call(d3.axisTop(x_scale))
+        .attr('transform', `translate(0, ${innerHeight + xAxisYOffset})`)
+        .call(d3.axisBottom(x_scale))
         .style("font-size", dendogram_font);
 
     xAxis.selectAll('.tick').selectAll('line').remove()
     xAxis.selectAll("text")
-        .style("text-anchor", "start")
-        .attr("dx", "2px")
-        .attr("dy", "1.1em")
+        .style("text-anchor", "end")
+        .attr("dx", "-2px")
+        .attr("dy", "1.2em")
         .attr("transform", "rotate(-90)")
         .attr("class", "xa")
         .style("fill", "#000")
 
-    //text y axis
+    //text y axis (move labels to right of heatmap)
+    const heatmapWidth = width - margin.left - margin.right;
+    const yAxisX = heatmapWidth; // position right after heatmap ends
+
     let yAxis = g.append('g')
-        .call(d3.axisLeft(y_scale))
+        .attr('transform', `translate(${yAxisX}, 0)`)
+        .call(d3.axisRight(y_scale))
         .style("font-size", dendogram_font)
         .attr("id", "ya")
 
     yAxis.selectAll('.tick').selectAll('line').remove()
     yAxis.selectAll("text")
-        .attr("dx", "14px")
+        .attr("dx", "2px")
         .attr("dy", "0.3em")
         .attr("class", "yaa")
+        .style("text-anchor", "start")
         .style("fill", "#000")
 
     const gPoints = g.append("g").attr("class", "gPoints");
@@ -242,14 +250,84 @@ export async function hclust_plot(options = {}) {
         .append('rect')
         .attr('x', (d) => x_scale(colNames2[d.t]))
         .attr('y', (d) => y_scale(rowNames2[d.n]))
-        .attr('width', width / data[0].length)
-        .attr('height', height / data.length)
+        .attr('width', (width - margin.left - margin.right) / data[0].length)
+        .attr('height', innerHeight / data.length)
         .attr('fill', (d) => color_scale(d.value))
         .on('mouseover', tooltip.show)
         .on('mouseout', tooltip.hide)
 
+    // Color legend on the right side (START)
+    const legendWidth = 30;
+    const legendHeight = 300;
+    const legendX = heatmapWidth + 150; // Position after y-axis labels
+    const legendY = (innerHeight - legendHeight) / 2; // Vertically centered
+    const numBoxes = 5;
+    const boxHeight = legendHeight / numBoxes;
 
-   // console.log("rowNames5-----------------------------")
+    // Create 5 discrete color boxes
+    const minVal = derivedScale[0];
+    const maxVal = derivedScale[1];
+    const range = maxVal - minVal;
+
+    // Color scale for boxes
+    const boxColorScale = d3.scaleLinear()
+        .domain([0, numBoxes - 1])
+        .range(["#000", heatmapColor]);
+
+    // Draw 5 boxes from bottom (dark) to top (bright)
+    for (let i = 0; i < numBoxes; i++) {
+        g.append("rect")
+            .attr("x", legendX)
+            .attr("y", legendY + (numBoxes - 1 - i) * boxHeight)
+            .attr("width", legendWidth)
+            .attr("height", boxHeight)
+            .style("fill", boxColorScale(i))
+            .style("stroke", "#fff")
+            .style("stroke-width", "1px");
+    }
+
+    // Outer border for the legend
+    g.append("rect")
+        .attr("x", legendX)
+        .attr("y", legendY)
+        .attr("width", legendWidth)
+        .attr("height", legendHeight)
+        .style("fill", "none")
+        .style("stroke", "#000")
+        .style("stroke-width", "1px");
+
+    // Legend axis (scale for the values)
+    const legendScale = d3.scaleLinear()
+        .domain(derivedScale)
+        .range([legendHeight, 0]);
+
+    // Create 5 tick values for the 5 boxes
+    const legendTickValues = [];
+    for (let i = 0; i < numBoxes; i++) {
+        legendTickValues.push(minVal + (i / (numBoxes - 1)) * range);
+    }
+
+    const legendAxis = d3.axisRight(legendScale)
+        .tickValues(legendTickValues)
+        .tickFormat(d3.format(".2f"));
+
+    const legendAxisG = g.append("g")
+        .attr("transform", `translate(${legendX + legendWidth}, ${legendY})`)
+        .call(legendAxis)
+        .style("font-size", "14px");
+    
+    // Ensure tick text is visible with black fill
+    legendAxisG.selectAll("text")
+        .style("fill", "#000");
+    
+    legendAxisG.selectAll("line")
+        .style("stroke", "#000");
+    
+    legendAxisG.selectAll("path")
+        .style("stroke", "#000");
+
+
+    // Color legend on the right side (END)
 
     // Top dendogram---------------------------------
 
@@ -273,7 +351,7 @@ if (clusterCols== true){
     function transformY(data) {
        // console.log("height",height,colPadding)
         const ht = colPadding//height-500//-innerHeight;
-        return ht - (data.data.height / colMaxHeight) * ht;
+                return (data.data.height / colMaxHeight) * ht;
       }
     
     function colElbow(d) { // H = width, V = height
@@ -301,7 +379,9 @@ if (clusterCols== true){
       const allNodes = root.descendants().reverse()
       const leafs = allNodes.filter(d => !d.children)
           leafs.sort((a,b) => a.x - b.x)
-      const leafHeight = (width-margin.left)/ leafs.length// spacing between leaves
+      //const leafHeight = (width-margin.left)/ leafs.length// spacing between leaves
+            const leafHeight = (width - margin.left - margin.right) / leafs.length// spacing between leaves (matches x_scale range)
+
           leafs.forEach((d,i) => d.x = i*leafHeight + leafHeight/2)
       
       allNodes.forEach(node => {
@@ -313,6 +393,14 @@ if (clusterCols== true){
     // Apply tooltip to our SVG
       svg.call(dendoTooltip)
     // dendo columns
+            // Rotation center: half of heatmap width to align leaves with bottom labels after 180° flip
+            const heatmapWidth = width - margin.left - margin.right;
+            const colDendroRotateX = heatmapWidth / 2;
+            const colDendroRotateY = colPadding / 2;
+            // Position dendrogram so leaves are near heatmap top edge after 180° rotation
+            // Add small gap (5px) between dendrogram leaves and heatmap
+            const colDendroGap = 5;
+            const colDendroY = margin.top - colPadding - colDendroGap;
       root.links().forEach((link,i) => {
       svg
           .append("path")
@@ -320,7 +408,7 @@ if (clusterCols== true){
           .attr("stroke", link.source.color || `${colDendoColor}`)
           .attr("stroke-width", `${3}px`)
           .attr("fill", 'none')
-                    .attr("transform", `translate(${margin.left}, ${colPadding})`)
+                    .attr("transform", `translate(${margin.left}, ${colDendroY}) rotate(180, ${colDendroRotateX}, ${colDendroRotateY})`)
           .attr("d", colElbow(link,colMaxHeight,margin.top,colNames2Lengths))
           .on('mouseover', dendoTooltip.show)
           // Hide the tooltip when "mouseout"
@@ -350,6 +438,8 @@ if (clusterCols== true){
         
         function transformX(data) { // row dendogram height
             const height2 = margin.left - rowPadding;//padding = 60  
+                        // const height2 = margin.left - rowPadding;//padding = 60  
+
             // const height2 = margin.left - (rowLen+10);
             return height2 - (data.data.height / rowMaxHeight) * height2
         }
@@ -361,7 +451,7 @@ if (clusterCols== true){
         const allNodes2 = root2.descendants().reverse()
         const leafs2 = allNodes2.filter(d => !d.children)
         leafs2.sort((a, b) => a.x - b.x)
-        const leafHeight2 = (height - margin.top) / leafs2.length
+        const leafHeight2 = innerHeight / leafs2.length
         leafs2.forEach((d, i) => d.x = i * leafHeight2 + leafHeight2 / 2)
 
         allNodes2.forEach(node => {
@@ -383,7 +473,7 @@ if (clusterCols== true){
                 .attr("stroke-width", `${3}px`)
                 .attr("fill", 'none')
                 .attr(`transform`, `translate(${rowNames2Lengths},${margin.top})`)
-                .attr("d", rowElbow(link, rowMaxHeight, margin.left, rowNames2Lengths))
+                .attr("d", rowElbow(link))
                 .on('mouseover', dendoTooltip.show)
                 // Hide the tooltip when "mouseout"
                 .on('mouseout', dendoTooltip.hide)

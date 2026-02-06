@@ -156,9 +156,10 @@ export async function hclust_plot(options = {}) {
         }
     }
 
+    const midVal = (derivedScale[0] + derivedScale[1]) / 2;
     const color_scale = d3.scaleLinear()
-        .domain(derivedScale)
-        .range(['#000', `${heatmapColor}`])
+        .domain([derivedScale[0], midVal, derivedScale[1]])
+        .range(['#4575b4', '#ffffff', '#d73027']) // blue (low) - white (middle) - red (high)
 
     let x_scale = d3.scaleBand()
         .domain(colNames2)
@@ -260,7 +261,7 @@ export async function hclust_plot(options = {}) {
     const legendWidth = 30;
     const legendHeight = 300;
     const legendX = heatmapWidth + 150; // Position after y-axis labels
-    const legendY = (innerHeight - legendHeight) / 2; // Vertically centered
+    const legendY = 0; // Align with top of heatmap
     const numBoxes = 5;
     const boxHeight = legendHeight / numBoxes;
 
@@ -269,10 +270,10 @@ export async function hclust_plot(options = {}) {
     const maxVal = derivedScale[1];
     const range = maxVal - minVal;
 
-    // Color scale for boxes
+    // Color scale for boxes (diverging: blue-white-red)
     const boxColorScale = d3.scaleLinear()
-        .domain([0, numBoxes - 1])
-        .range(["#000", heatmapColor]);
+        .domain([0, (numBoxes - 1) / 2, numBoxes - 1])
+        .range(["#4575b4", "#ffffff", "#d73027"]); // blue (low) - white (middle) - red (high)
 
     // Draw 5 boxes from bottom (dark) to top (bright)
     for (let i = 0; i < numBoxes; i++) {

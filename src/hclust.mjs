@@ -90,7 +90,7 @@ export async function hclust_plot(options = {}) {
         // hover tooltip
         tooltip_decimal: tooltip_decimal = 2,
         tooltip_fontFamily: tooltip_fontFamily = 'monospace',
-        tooltip_fontSize: tooltip_fontSize = '12px',
+        tooltip_fontSize: tooltip_fontSize = '14px',
     } = options;
 
     // console.log("dendogram options", options)

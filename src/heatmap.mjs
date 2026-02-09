@@ -36,7 +36,7 @@ export async function heatmap_plot(options = {}) {
 
   const {
     divid: divid = "",
-    matrix: matrix = irisData.map(obj => Object.values(obj)).map(row => row.slice(0, -1)),
+    data: data = irisData.map(obj => Object.values(obj)).map(row => row.slice(0, -1)),
     rownames: rownames = irisData.map(obj => Object.values(obj)).map((d, idx) => d[4] + idx),
     colnames: colnames = Object.keys(irisData[0]).slice(0, -1),
     height: height = 900,
@@ -48,11 +48,15 @@ export async function heatmap_plot(options = {}) {
     marginRight: marginRight = 10,
 
     colorScale: colorScale = null,
+         // hover tooltip
+        tooltip_decimal: tooltip_decimal = 2,
+        tooltip_fontFamily: tooltip_fontFamily = 'monospace',
+        tooltip_fontSize: tooltip_fontSize = '14px',
 
   } = options
 
   // start of heatmap
-  const flatValues = matrix.flat().filter(v => Number.isFinite(v));
+  const flatValues = data.flat().filter(v => Number.isFinite(v));
   let derivedScale = colorScale;
   if (!Array.isArray(derivedScale) || derivedScale.length !== 2 || !derivedScale.every(Number.isFinite)) {
     const extent = d3.extent(flatValues);
@@ -69,7 +73,7 @@ export async function heatmap_plot(options = {}) {
     .range(color) // navy (low) - white (middle) - red (high)
 
   // bottom labels: Calculate font size as half the heatmap cell width
-  const cellWidth = (width - marginLeft - marginRight) / matrix[0].length;
+  const cellWidth = (width - marginLeft - marginRight) / data[0].length;
   console.log("cellWidth:", cellWidth)
   const labelFontSizeBottom = Math.max(cellWidth / 6, 8); // minimum 8px
   console.log("labelFontSizeBottom:", labelFontSizeBottom)
@@ -82,7 +86,7 @@ export async function heatmap_plot(options = {}) {
   console.log("dynamicBottomMargin:", dynamicBottomMargin)
 
   // right labels: Calculate font size as half the heatmap cell height
-  const cellHeight = (height - marginTop - dynamicBottomMargin) / matrix.length;
+  const cellHeight = (height - marginTop - dynamicBottomMargin) / data.length;
   console.log("cellHeight:-------------------------", cellHeight)
   const labelFontSizeRight = Math.max(cellHeight / 3, 7); // minimum 7px
   console.log("labelFontSizeRight:", labelFontSizeRight)
@@ -108,8 +112,8 @@ console.log("dynamicRightMargin:", dynamicRightMargin)
   const trimmedRownames = trimText(rownames);
 
   // Use indices for scale domain to avoid duplicate label issues
-  const colIndices = d3.range(matrix[0].length);
-  const rowIndices = d3.range(matrix.length);
+  const colIndices = d3.range(data[0].length);
+  const rowIndices = d3.range(data.length);
 
   let x_scale = d3.scaleBand()
     .domain(colIndices)
@@ -172,27 +176,28 @@ console.log("dynamicRightMargin:", dynamicRightMargin)
     .attr("dx", "3px")
     .attr("dy", "0.3em")
     .attr("class", "yaa")
+    .style("text-anchor", "start")
     .style("fill", "#000")
 
 
   // interactive labels
   const tooltip = d3tip()
-    .style('border', 'solid 2px black')
+    .style('border', 'solid 3px black')
     .style('background-color', 'white')
     .style('color', '#000')
-    .style('border-radius', '6px')
+    .style('border-radius', '10px')
     .style('float', 'left')
-    .style('font-family', 'monospace')
-    .style("font-size", '10px')
+    .style('font-family', tooltip_fontFamily)
+    .style("font-size", tooltip_fontSize)
     .html((event, d) => `
         <div style='float: right; color: #000;'>
-           val:${d.value.toFixed(0)} <br/>
+           val:${d.value.toFixed(tooltip_decimal)} <br/>
              row:${rownames[d.n]}, col:${(colnames[d.t])} 
         </div>`)
   svg.call(tooltip)
 
   // create heatmap squares
-  const heatMapData = await buildData(matrix)
+  const heatMapData = await buildData(data)
 
   const gPoints = g.append("g").attr("class", "gPoints");
 
@@ -214,7 +219,7 @@ console.log("dynamicRightMargin:", dynamicRightMargin)
      // Color legend on the right side (START)
     const legendWidth = 30;
     const legendHeight = 300;
-    const legendX = width - margin.left - margin.right + 150; // Position after y-axis labels
+    const legendX = innerWidth + 150; // Position after y-axis labels
     const legendY = 0; // Align with top of heatmap
 
     // Create 5 discrete color boxes

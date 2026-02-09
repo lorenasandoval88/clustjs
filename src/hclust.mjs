@@ -63,7 +63,7 @@ export async function hclust_plot(options = {}) {
 
     const {
         divid: divid = "",
-        matrix: matrix = irisData.map(obj => Object.values(obj)).map(row => row.slice(0, -1)),
+        data: data = irisData.map(obj => Object.values(obj)).map(row => row.slice(0, -1)),
         rownames: rownames = irisData.map(obj => Object.values(obj)).map((d, idx) => d[4] + idx),
         colnames: colnames = Object.keys(irisData[0]).slice(0, -1),
         width: width = 400,
@@ -94,7 +94,7 @@ export async function hclust_plot(options = {}) {
     } = options;
 
 
-    const data = matrix 
+        // 'data' is now the main matrix input
     
     // dendograms--------------------
     const colHclustTree = new hclust.agnes(dist(transpose(data), distance[clusteringDistanceCols]), {
@@ -250,6 +250,7 @@ export async function hclust_plot(options = {}) {
         .style('float', 'left')
         .style('color', '#000')
         .style('font-family', tooltip_fontFamily)
+        .style("font-size", tooltip_fontSize)
         .html((event, d) => `
           <div style='float: right; color: #000;'>
            value:${d.value.toFixed(tooltip_decimal)} <br/>
@@ -358,7 +359,7 @@ export async function hclust_plot(options = {}) {
     const dendoTooltip = d3tip()
         .style('border', 'solid 3px black')
         .style('background-color', 'white')
-        .style('border-radius', '9px')
+        .style('border-radius', '10px')
         .style('float', 'left')
         .style('color', '#000')
         .style('font-family', tooltip_fontFamily)
@@ -556,7 +557,7 @@ export async function hclust_UI(options = {}) {
 
     // Call heatmap_plot with clustered matrix and labels
     await heatmap_plot({
-        matrix: newMatrix2,
+        data: newMatrix2,
         rownames: rowNames2,
         colnames: colNames2,
         width: width - marginLeft - dynamicRightMargin,
@@ -622,8 +623,8 @@ export async function hclust_UI(options = {}) {
 
                         console.log("hclustDt.data.divNum", hclustDt.data.divNum)
 
-                        const matrix = (json.map(Object.values))
-                        matrix['headers'] = json['headers']
+                        const data = (json.map(Object.values))
+                        data['headers'] = json['headers']
 
                         hclustDt.data.file = []
                         hclustDt.data.file.json = json
@@ -657,7 +658,7 @@ export async function hclust_UI(options = {}) {
                         console.log("load iris data button for Hclust clicked!")
 
                         hclust_plot({
-                            matrix: hclustDt.data.file.json.map(obj => Object.values(obj)).map(row => row.slice(0, -1)), //numbers only, no species,
+                            data: hclustDt.data.file.json.map(obj => Object.values(obj)).map(row => row.slice(0, -1)), //numbers only, no species,
                             rownames: hclustDt.data.file.json.map(obj => Object.values(obj)).map((d, idx) => d[4] + idx),
                             colnames: Object.keys(hclustDt.data.file.json[0]).slice(0, -1),
                             divid: plotDiv.id,
@@ -709,13 +710,12 @@ export async function hclust_UI(options = {}) {
         //TO DO: fix add file button. The cluster button revert to the load iris data
         // hclust plot and text box
         hclust_plot({
-            matrix: irisData.map(obj => Object.values(obj)).map(row => row.slice(0, -1)),
+            data: irisData.map(obj => Object.values(obj)).map(row => row.slice(0, -1)),
             rownames: irisData.map(obj => Object.values(obj)).map((d, idx) => d[4] + idx),
             colnames: Object.keys(irisData[0]).slice(0, -1),
             divid: plotDiv.id,
             clusterCols: clusterCols,
             clusterRows: clusterRows
-
         })
         // textBox({ text: hclustDt.data.iris.csv, divid: textBoxDiv.id})
 
@@ -730,7 +730,7 @@ export async function hclust_UI(options = {}) {
             }
             console.log("clusterRows", clusterRows)
             hclust_plot({
-                matrix: irisData.map(obj => Object.values(obj)).map(row => row.slice(0, -1)),
+                data: irisData.map(obj => Object.values(obj)).map(row => row.slice(0, -1)),
                 rownames: irisData.map(obj => Object.values(obj)).map((d, idx) => d[4] + idx),
                 colnames: Object.keys(irisData[0]).slice(0, -1),
                 divid: plotDiv.id,
@@ -751,7 +751,7 @@ export async function hclust_UI(options = {}) {
             console.log("clusterCols", clusterCols)
 
             hclust_plot({
-                matrix: irisData.map(obj => Object.values(obj)).map(row => row.slice(0, -1)),
+                data: irisData.map(obj => Object.values(obj)).map(row => row.slice(0, -1)),
                 rownames: irisData.map(obj => Object.values(obj)).map((d, idx) => d[4] + idx),
                 colnames: Object.keys(irisData[0]).slice(0, -1),
                 divid: plotDiv.id,

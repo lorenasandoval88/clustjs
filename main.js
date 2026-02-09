@@ -605,7 +605,7 @@ console.log("btnHclust clicked, appState.data:", data);
 
   await hclust_plot({
     divid: "myHclust",
-    matrix,
+    data: matrix,
     rownames,
     colnames,
     width,
@@ -664,7 +664,7 @@ console.log("btnHeatmap clicked, appState.data:", data);
 
   await heatmap_plot({
     divid: "myHeatmap",
-    matrix,
+    data: matrix,
     rownames,
     colnames,
     width,

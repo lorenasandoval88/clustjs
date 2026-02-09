@@ -357,7 +357,7 @@ function renderTableRight(data, title = "Dataset Preview") {
         console.log(`Cannot deselect categorical column: ${c}`);
         return;
       }
-      
+
       const idx = appState.selectedColumns.indexOf(c);
       if (idx > -1) {
         // Deselect numeric column
@@ -375,17 +375,21 @@ function renderTableRight(data, title = "Dataset Preview") {
             return;
           }
         }
-        
         // Select
         appState.selectedColumns.push(c);
         btn.className = "btn btn-sm w-100 text-start btn-primary";
       }
-      
+
       // Update count
       const countEl = document.getElementById("selectedColCount");
       if (countEl) countEl.textContent = appState.selectedColumns.length;
-      
-      //console.log("Selected columns:", appState.selectedColumns);
+
+      // Clear all plot containers when variable is selected/deselected
+      const plotIds = ["myPCA", "myHclust", "myHeatmap", "myUMAP", "myTSNE", "myScatter", "myPairs"];
+      plotIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = "";
+      });
     });
     
     th.appendChild(btn);

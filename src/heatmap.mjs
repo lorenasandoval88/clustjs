@@ -73,7 +73,7 @@ export async function heatmap_plot(options = {}) {
     .range(color) // navy (low) - white (middle) - red (high)
 
   // bottom labels: Calculate font size as a smaller fraction of the heatmap cell width to leave space for legend
-  const legendSpace = 250; // Reserve space for legend
+  const legendSpace = 100; // Reserve space for legend
   const cellWidth = (width - marginLeft - marginRight - legendSpace) / data[0].length;
   console.log("cellWidth:", cellWidth)
   const labelFontSizeBottom = Math.max(cellWidth / 6, 8); // minimum 8px
@@ -95,7 +95,7 @@ export async function heatmap_plot(options = {}) {
   // Calculate right margin based on longest row label and font size
   const maxRowLabelLength = Math.min(d3.max(rownames.map(r => String(r).length)), 13);
   console.log("maxRowLabelLength:", maxRowLabelLength)
-  const dynamicRightMargin = Math.max(marginRight, labelFontSizeRight * maxRowLabelLength * 0.6 +5);
+  const dynamicRightMargin = Math.max(marginRight, labelFontSizeRight * maxRowLabelLength * 0.6 +100);
 console.log("dynamicRightMargin:", dynamicRightMargin)
 
   const margin = ({
@@ -128,22 +128,18 @@ console.log("dynamicRightMargin:", dynamicRightMargin)
 
 
   // index of the rows based on cluster hierarchy
-  // Ensure SVG is wide enough for legend
-  const legendWidth = 30;
-  const legendOffset = 180;
-  const svgWidth = width + legendWidth + legendOffset;
   const svg = d3.create("svg");
 
   // Set SVG size 
   svg
-    .attr('width', svgWidth)
+    .attr('width', width)
     .attr('height', height);
 
   // Solid white background to ensure white behind dendrograms/heatmap
   svg.append('rect')
     .attr('x', 0)
     .attr('y', 0)
-    .attr('width', svgWidth)
+    .attr('width', width)
     .attr('height', height)
     .attr('fill', '#ffffff');
 
@@ -221,9 +217,9 @@ console.log("dynamicRightMargin:", dynamicRightMargin)
 
 
      // Color legend on the right side (START)
-    // legendWidth already defined above
+    const legendWidth = 30;
     const legendHeight = 300;
-    const legendX = width - margin.left - margin.right + legendOffset; // Position after y-axis labels
+    const legendX = innerWidth + 150; // Position after y-axis labels
     const legendY = 0; // Align with top of heatmap
 
     // Create 5 discrete color boxes

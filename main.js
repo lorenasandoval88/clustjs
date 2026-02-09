@@ -440,32 +440,26 @@ function parseDelimitedText(text) {
 document.getElementById("builtinData")?.addEventListener("change", (e) => {
   const val = e.target.value;
 
-  if (val === "iris") {
-    appState.data = irisData;
-    appState.source = "builtin";
-    appState.name = "Iris";
-    appState.selectedColumns = []; // Reset selection
-    console.log("Built-in Iris data selected");
-    renderTableRight(appState.data, "Iris (built-in)");
+  if (val === "iris" || val === "spiral") {
     // Clear all plot containers
     const plotIds = ["myPCA", "myHclust", "myHeatmap", "myUMAP", "myTSNE", "myScatter", "myPairs"];
     plotIds.forEach(id => {
       const el = document.getElementById(id);
       if (el) el.innerHTML = "";
     });
-  } else if (val === "spiral") {
-    appState.data = spiralData;
+
+    // Reset loaded file info
     appState.source = "builtin";
-    appState.name = "Spiral";
-    appState.selectedColumns = []; // Reset selection
-    console.log("Built-in Spiral data selected");
-    renderTableRight(appState.data, "Spiral (built-in)");
-    // Clear all plot containers
-    const plotIds = ["myPCA", "myHclust", "myHeatmap", "myUMAP", "myTSNE", "myScatter", "myPairs"];
-    plotIds.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.innerHTML = "";
-    });
+    appState.name = val === "iris" ? "Iris" : "Spiral";
+    appState.selectedColumns = [];
+    appState.data = val === "iris" ? irisData : spiralData;
+
+    // Optionally clear file input
+    const fileInput = document.getElementById("fileInput");
+    if (fileInput) fileInput.value = "";
+
+    console.log(`Built-in ${appState.name} data selected`);
+    renderTableRight(appState.data, `${appState.name} (built-in)`);
   }
 });
 

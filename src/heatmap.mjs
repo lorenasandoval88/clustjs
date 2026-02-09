@@ -72,9 +72,8 @@ export async function heatmap_plot(options = {}) {
     .domain([derivedScale[0], midVal, derivedScale[1]])
     .range(color) // navy (low) - white (middle) - red (high)
 
-  // bottom labels: Calculate font size as a smaller fraction of the heatmap cell width to leave space for legend
-  const legendSpace = 100; // Reserve space for legend
-  const cellWidth = (width - marginLeft - marginRight - legendSpace) / data[0].length;
+  // bottom labels: Calculate font size as half the heatmap cell width
+  const cellWidth = (width - marginLeft - marginRight ) / data[0].length;
   console.log("cellWidth:", cellWidth)
   const labelFontSizeBottom = Math.max(cellWidth / 6, 8); // minimum 8px
   console.log("labelFontSizeBottom:", labelFontSizeBottom)
@@ -95,7 +94,7 @@ export async function heatmap_plot(options = {}) {
   // Calculate right margin based on longest row label and font size
   const maxRowLabelLength = Math.min(d3.max(rownames.map(r => String(r).length)), 13);
   console.log("maxRowLabelLength:", maxRowLabelLength)
-  const dynamicRightMargin = Math.max(marginRight, labelFontSizeRight * maxRowLabelLength * 0.6 + 150);
+  const dynamicRightMargin = Math.max(200, labelFontSizeRight * maxRowLabelLength * 0.6 + 100);
 console.log("dynamicRightMargin:", dynamicRightMargin)
 
   const margin = ({
@@ -218,8 +217,9 @@ console.log("dynamicRightMargin:", dynamicRightMargin)
 
      // Color legend on the right side (START)
     const legendWidth = 30;
-    const legendHeight = 300;
-    const legendX = innerWidth + 150; // Position after y-axis labels
+    const legendHeight = Math.max(innerHeight / 2, 60); // Half the heatmap height, minimum 60px
+    const legendX = innerWidth + margin.right/2; // Position after right axis labels
+    console.log("margin.right:", margin.right)
     const legendY = 0; // Align with top of heatmap
 
     // Create 5 discrete color boxes

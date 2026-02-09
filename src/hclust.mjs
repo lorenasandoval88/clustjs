@@ -2,10 +2,16 @@ import * as d3 from "d3";
 import d3tip from "d3-tip";
 import * as hclust from "ml-hclust";
 import dist from "ml-distance-matrix";
-import {    distance} from "ml-distance";
+import {
+    distance
+} from "ml-distance";
 import irisData from "./data/irisData.js";
-import { heatmap_plot } from "./heatmap.mjs";
-import {    csvToJson} from "./otherFunctions.js";
+import {
+    heatmap_plot
+} from "./heatmap.mjs";
+import {
+    csvToJson
+} from "./otherFunctions.js";
 // TODO: fix padding for left and right dendograms
 // TODO: reset/clear plots when variables are selected or deselected
 // TODO: call heat_map from heatmap.mjs
@@ -96,8 +102,8 @@ export async function hclust_plot(options = {}) {
     } = options;
 
 
-        // 'data' is now the main matrix input
-    
+    // 'data' is now the main matrix input
+
     // dendograms--------------------
     const colHclustTree = new hclust.agnes(dist(transpose(data), distance[clusteringDistanceCols]), {
         method: clusteringMethodCols,
@@ -153,9 +159,9 @@ export async function hclust_plot(options = {}) {
         .range(['#000080', '#ffffff', '#d73027']) // navy (low) - white (middle) - red (high)
 
     // bottom labels: Calculate font size as half the heatmap cell width
-      const legendSpace = 20; // Reserve space for legend
+    const legendSpace = 20; // Reserve space for legend
 
-  const cellWidth = (width - marginLeft - marginRight - legendSpace) / data[0].length;
+    const cellWidth = (width - marginLeft - marginRight - legendSpace) / data[0].length;
     const labelFontSizeBottom = Math.max(cellWidth / 6, 8); // minimum 8px
 
     // Calculate bottom margin based on longest column label and font size
@@ -167,8 +173,8 @@ export async function hclust_plot(options = {}) {
     const labelFontSizeRight = Math.max(cellHeight / 3, 7); // minimum 7px
 
     // Calculate right margin based on longest row label and font size
-    const maxRowLabelLength =  Math.min(d3.max(rowNames2.map(r => String(r).length)), 13);
-    const dynamicRightMargin = Math.max(300, labelFontSizeRight * maxRowLabelLength * 0.6 + 50); // 170 extra for legend
+    const maxRowLabelLength = Math.min(d3.max(rowNames2.map(r => String(r).length)), 13);
+    const dynamicRightMargin = Math.max(200, labelFontSizeRight * maxRowLabelLength * 0.6 + 100); // 170 extra for legend
 
     const margin = ({
         top: marginTop,
@@ -220,19 +226,19 @@ export async function hclust_plot(options = {}) {
     const x_axis = g.append('g')
         .attr('transform', `translate(0, ${innerHeight})`)
         .call(d3.axisBottom(x_scale).tickFormat(i => colNames2[i]))
-        .style("font-size",  labelFontSizeBottom + "px");
+        .style("font-size", labelFontSizeBottom + "px");
 
     x_axis.selectAll('.tick').selectAll('line').remove()
     x_axis.selectAll("text")
-    .style("text-anchor", "end")
-    .attr("dx", "-2px")
-    .attr("dy", "0.3em")
-    .attr("class", "xa")
-    .attr("transform", "rotate(-90)")
-    .style("fill", "#000")
+        .style("text-anchor", "end")
+        .attr("dx", "-2px")
+        .attr("dy", "0.3em")
+        .attr("class", "xa")
+        .attr("transform", "rotate(-90)")
+        .style("fill", "#000")
 
     //text y axis (move labels to right of heatmap)
-     let y_axis = g.append('g')
+    let y_axis = g.append('g')
         .attr('transform', `translate(${innerWidth}, 0)`)
         .call(d3.axisRight(y_scale).tickFormat(i => rowNames2[i]))
         .style("font-size", labelFontSizeRight + "px")
@@ -281,8 +287,8 @@ export async function hclust_plot(options = {}) {
 
     // Color legend on the right side (START)
     const legendWidth = 30;
-    const legendHeight = 300;
-    const legendX = innerWidth + 150; // Position after y-axis labels
+    const legendHeight = Math.max(innerHeight / 2, 60); // Half the heatmap height, minimum 60px
+    const legendX = innerWidth + margin.right / 2; // Position after right axis labels
     const legendY = 0; // Align with top of heatmap
 
     // Create 5 discrete color boxes
@@ -559,15 +565,15 @@ export async function hclust_UI(options = {}) {
         console.log("hclust_UI() div ID provided, loading div:", div);
         // div.id = 'loadUI'
 
-    // Call heatmap_plot with clustered matrix and labels
-    await heatmap_plot({
-        data: newMatrix2,
-        rownames: rowNames2,
-        colnames: colNames2,
-        width: width - marginLeft - dynamicRightMargin,
-        height: height - marginTop - dynamicBottomMargin,
-        divid: divid // or another div id
-    });
+        // Call heatmap_plot with clustered matrix and labels
+        await heatmap_plot({
+            data: newMatrix2,
+            rownames: rowNames2,
+            colnames: colNames2,
+            width: width - marginLeft - dynamicRightMargin,
+            height: height - marginTop - dynamicBottomMargin,
+            divid: divid // or another div id
+        });
     } else {
         console.log("hclust_UI() div NOT provided. creating div...", div);
         // create the div element here

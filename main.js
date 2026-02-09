@@ -443,7 +443,12 @@ document.getElementById("builtinData")?.addEventListener("change", (e) => {
     appState.selectedColumns = []; // Reset selection
     console.log("Built-in Iris data selected");
     renderTableRight(appState.data, "Iris (built-in)");
-    document.getElementById("myPCA").innerHTML = ""; // optional: clear old plot
+    // Clear all plot containers
+    const plotIds = ["myPCA", "myHclust", "myHeatmap", "myUMAP", "myTSNE", "myScatter", "myPairs"];
+    plotIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = "";
+    });
   } else if (val === "spiral") {
     appState.data = spiralData;
     appState.source = "builtin";
@@ -451,7 +456,12 @@ document.getElementById("builtinData")?.addEventListener("change", (e) => {
     appState.selectedColumns = []; // Reset selection
     console.log("Built-in Spiral data selected");
     renderTableRight(appState.data, "Spiral (built-in)");
-    document.getElementById("myPCA").innerHTML = ""; // optional: clear old plot
+    // Clear all plot containers
+    const plotIds = ["myPCA", "myHclust", "myHeatmap", "myUMAP", "myTSNE", "myScatter", "myPairs"];
+    plotIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = "";
+    });
   }
 });
 
@@ -474,7 +484,12 @@ document.getElementById("fileInput")?.addEventListener("change", (e) => {
     appState.selectedColumns = []; // Reset selection
 
     renderTableRight(appState.data, `Loaded file: ${file.name}`);
-    document.getElementById("myPCA").innerHTML = ""; // optional: clear old plot
+    // Clear all plot containers
+    const plotIds = ["myPCA", "myHclust", "myHeatmap", "myUMAP", "myTSNE", "myScatter", "myPairs"];
+    plotIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = "";
+    });
   };
   reader.readAsText(file);
 });

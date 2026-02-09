@@ -3,14 +3,14 @@ import d3tip from "d3-tip";
 import irisData from "./data/irisData.js";
 
 
-// auxiliary function to convert a matrix to a data array
-const buildData = async function (matrix) {
+// auxiliary function to convert a data to a data array
+const buildData = async function (data) {
   let array = []
-  d3.range(matrix.length).map((d) => {
-    const o = d3.range(matrix[0].length).map((t) => ({
+  d3.range(data.length).map((d) => {
+    const o = d3.range(data[0].length).map((t) => ({
       t: t,
       n: d,
-      value: matrix[d][t]
+      value: data[d][t]
     }))
     array = [...array, ...o]
   })
@@ -36,7 +36,7 @@ export async function heatmap_plot(options = {}) {
 
   const {
     divid: divid = "",
-    matrix: matrix = irisData.map(obj => Object.values(obj)).map(row => row.slice(0, -1)),
+    data: data = irisData.map(obj => Object.values(obj)).map(row => row.slice(0, -1)),
     rownames: rownames = irisData.map(obj => Object.values(obj)).map((d, idx) => d[4] + idx),
     colnames: colnames = Object.keys(irisData[0]).slice(0, -1),
     height: height = 900,
@@ -52,7 +52,7 @@ export async function heatmap_plot(options = {}) {
   } = options
 
   // start of heatmap
-  const flatValues = matrix.flat().filter(v => Number.isFinite(v));
+  const flatValues = data.flat().filter(v => Number.isFinite(v));
   let derivedScale = colorScale;
   if (!Array.isArray(derivedScale) || derivedScale.length !== 2 || !derivedScale.every(Number.isFinite)) {
     const extent = d3.extent(flatValues);
@@ -69,7 +69,7 @@ export async function heatmap_plot(options = {}) {
     .range(color) // navy (low) - white (middle) - red (high)
 
   // bottom labels: Calculate font size as half the heatmap cell width
-  const cellWidth = (width - marginLeft - marginRight) / matrix[0].length;
+  const cellWidth = (width - marginLeft - marginRight) / data[0].length;
   console.log("cellWidth:", cellWidth)
   const labelFontSizeBottom = Math.max(cellWidth / 6, 8); // minimum 8px
   console.log("labelFontSizeBottom:", labelFontSizeBottom)
@@ -82,7 +82,7 @@ export async function heatmap_plot(options = {}) {
   console.log("dynamicBottomMargin:", dynamicBottomMargin)
 
   // right labels: Calculate font size as half the heatmap cell height
-  const cellHeight = (height - marginTop - dynamicBottomMargin) / matrix.length;
+  const cellHeight = (height - marginTop - dynamicBottomMargin) / data.length;
   console.log("cellHeight:-------------------------", cellHeight)
   const labelFontSizeRight = Math.max(cellHeight / 3, 7); // minimum 7px
   console.log("labelFontSizeRight:", labelFontSizeRight)
@@ -108,8 +108,8 @@ console.log("dynamicRightMargin:", dynamicRightMargin)
   const trimmedRownames = trimText(rownames);
 
   // Use indices for scale domain to avoid duplicate label issues
-  const colIndices = d3.range(matrix[0].length);
-  const rowIndices = d3.range(matrix.length);
+  const colIndices = d3.range(data[0].length);
+  const rowIndices = d3.range(data.length);
 
   let x_scale = d3.scaleBand()
     .domain(colIndices)
@@ -192,7 +192,7 @@ console.log("dynamicRightMargin:", dynamicRightMargin)
   svg.call(tooltip)
 
   // create heatmap squares
-  const heatMapData = await buildData(matrix)
+  const heatMapData = await buildData(data)
 
   const gPoints = g.append("g").attr("class", "gPoints");
 

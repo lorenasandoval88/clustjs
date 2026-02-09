@@ -63,7 +63,7 @@ export async function hclust_plot(options = {}) {
 
     const {
         divid: divid = "",
-        data: data = irisData.map(obj => Object.values(obj)).map(row => row.slice(0, -1)),
+        matrix: matrix = irisData.map(obj => Object.values(obj)).map(row => row.slice(0, -1)),
         rownames: rownames = irisData.map(obj => Object.values(obj)).map((d, idx) => d[4] + idx),
         colnames: colnames = Object.keys(irisData[0]).slice(0, -1),
         width: width = 400,
@@ -93,10 +93,9 @@ export async function hclust_plot(options = {}) {
         tooltip_fontSize: tooltip_fontSize = '14px',
     } = options;
 
-    // console.log("dendogram options", options)
-    const svg = d3.create("svg")
 
-
+    const data = matrix 
+    
     // dendograms--------------------
     const colHclustTree = new hclust.agnes(dist(transpose(data), distance[clusteringDistanceCols]), {
         method: clusteringMethodCols,
@@ -193,6 +192,7 @@ export async function hclust_plot(options = {}) {
         .range([0, innerHeight])
         .padding(0)
 
+    const svg = d3.create("svg")
 
     // Set SVG size 
     svg

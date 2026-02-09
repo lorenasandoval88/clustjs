@@ -73,7 +73,7 @@ export async function heatmap_plot(options = {}) {
     .range(color) // navy (low) - white (middle) - red (high)
 
   // bottom labels: Calculate font size as a smaller fraction of the heatmap cell width to leave space for legend
-  const legendSpace = 20; // Reserve space for legend
+  const legendSpace = 100; // Reserve space for legend
   const cellWidth = (width - marginLeft - marginRight - legendSpace) / data[0].length;
   console.log("cellWidth:", cellWidth)
   const labelFontSizeBottom = Math.max(cellWidth / 6, 8); // minimum 8px

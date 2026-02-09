@@ -654,7 +654,6 @@ document.getElementById("btnHeatmap")?.addEventListener("click", async () => {
     colnames,
     width,
     height,
-    color: "red"
   });
 });
 

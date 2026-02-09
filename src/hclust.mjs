@@ -153,7 +153,7 @@ export async function hclust_plot(options = {}) {
         .range(['#000080', '#ffffff', '#d73027']) // navy (low) - white (middle) - red (high)
 
     // bottom labels: Calculate font size as half the heatmap cell width
-      const legendSpace = 100; // Reserve space for legend
+      const legendSpace = 50; // Reserve space for legend
 
   const cellWidth = (width - marginLeft - marginRight - legendSpace) / data[0].length;
     const labelFontSizeBottom = Math.max(cellWidth / 6, 8); // minimum 8px
@@ -168,7 +168,7 @@ export async function hclust_plot(options = {}) {
 
     // Calculate right margin based on longest row label and font size
     const maxRowLabelLength =  Math.min(d3.max(rowNames2.map(r => String(r).length)), 13);
-    const dynamicRightMargin = Math.max(300, labelFontSizeRight * maxRowLabelLength * 0.6 + 100); // 170 extra for legend
+    const dynamicRightMargin = Math.max(300, labelFontSizeRight * maxRowLabelLength * 0.6 + 50); // 170 extra for legend
 
     const margin = ({
         top: marginTop,

@@ -560,7 +560,7 @@ const el = document.getElementById("myPCA");
 // ======== HCLUST: CLICK TOOL BUTTON ========
 document.getElementById("btnHclust")?.addEventListener("click", async () => {
   const data = appState.data;
-
+console.log("btnHclust clicked, appState.data:", data);
   // Reset to normal selection mode
   appState.selectionMode = "normal";
 
@@ -619,7 +619,7 @@ document.getElementById("btnHclust")?.addEventListener("click", async () => {
 // ======== HEATMAP: CLICK TOOL BUTTON ========
 document.getElementById("btnHeatmap")?.addEventListener("click", async () => {
   const data = appState.data;
-
+console.log("btnHeatmap clicked, appState.data:", data);
   // Reset to normal selection mode
   appState.selectionMode = "normal";
 

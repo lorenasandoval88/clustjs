@@ -2,13 +2,10 @@ import * as d3 from "d3";
 import d3tip from "d3-tip";
 import * as hclust from "ml-hclust";
 import dist from "ml-distance-matrix";
-import {
-    distance
-} from "ml-distance";
+import {    distance} from "ml-distance";
 import irisData from "./data/irisData.js";
-import {
-    csvToJson
-} from "./otherFunctions.js";
+import { heatmap_plot } from "./heatmap.mjs";
+import {    csvToJson} from "./otherFunctions.js";
 // TODO: fix padding for left and right dendograms
 // TODO: reset/clear plots when variables are selected or deselected
 // TODO: call heat_map from heatmap.mjs
@@ -52,8 +49,8 @@ const transpose = m => m[0].map((x, i) => m.map(x => x[i]))
 function trimText(idx, arr) {
     return idx.map(e => {
         const str = String(arr[e]);
-        if (str.length > 8) {
-            return str.slice(0, 8) + "..."; // truncate to 8 characters + "..."
+        if (str.length > 12) {
+            return str.slice(0, 12) + "..."; // truncate to 12 characters + "..."
         } else {
             return str;
         }
@@ -100,11 +97,9 @@ export async function hclust_plot(options = {}) {
     const svg = d3.create("svg")
 
     const data = matrix //matrix.data ? matrix.data: matrix
-    // console.log("dendo data ***", data)
-    // console.log("dendo rownames ***", rownames)
-    // console.log("dendo colnames ***", colnames)
 
-    // Heatmap--------------------
+
+    // dendograms--------------------
     const colHclustTree = new hclust.agnes(dist(transpose(data), distance[clusteringDistanceCols]), {
         method: clusteringMethodCols,
         isDistanceMatrix: true
@@ -141,7 +136,7 @@ export async function hclust_plot(options = {}) {
     const rowNames2Lengths = d3.max(rowNames2.map(e => String(e).length))
     // console.log("rowNames2Lengths",rowNames2Lengths)
 
-    // start of heatmap
+    // start of heatmap-------------------------
     const flatValues = data.flat().filter(v => Number.isFinite(v));
     let derivedScale = heatmapColorScale;
     if (!Array.isArray(derivedScale) || derivedScale.length !== 2 || !derivedScale.every(Number.isFinite)) {
@@ -163,7 +158,7 @@ export async function hclust_plot(options = {}) {
     const labelFontSizeBottom = Math.max(cellWidth / 6, 8); // minimum 8px
 
     // Calculate bottom margin based on longest column label and font size
-    const maxColLabelLength = Math.min(d3.max(colNames2.map(c => String(c).length)), 11);
+    const maxColLabelLength = Math.min(d3.max(colNames2.map(c => String(c).length)), 13);
     const dynamicBottomMargin = Math.max(140, labelFontSizeBottom * maxColLabelLength * 0.5 + 5);
 
     // right labels: Calculate font size as half the heatmap cell height
@@ -171,7 +166,7 @@ export async function hclust_plot(options = {}) {
     const labelFontSizeRight = Math.max(cellHeight / 3, 7); // minimum 7px
 
     // Calculate right margin based on longest row label and font size
-    const maxRowLabelLength = d3.max(rowNames2.map(r => String(r).length));
+    const maxRowLabelLength =  Math.min(d3.max(rowNames2.map(r => String(r).length)), 13);
     const dynamicRightMargin = Math.max(300, labelFontSizeRight * maxRowLabelLength * 0.6 + 170); // 170 extra for legend
 
     const margin = ({
@@ -185,8 +180,7 @@ export async function hclust_plot(options = {}) {
     const innerHeight = height - margin.top - margin.bottom;
     const innerWidth = width - margin.left - margin.right;
 
-    // Recalculate font size with actual innerWidth
-    const actualLabelFontSize = Math.max(innerWidth / data[0].length / 2, 8) + "px";
+
 
     // Use indices for scale domain to avoid duplicate label issues
     const colIndices = d3.range(data[0].length);
@@ -221,33 +215,30 @@ export async function hclust_plot(options = {}) {
         .attr('transform', `translate(${margin.left}, ${margin.top})`)
 
     //text x axis (move labels to bottom)
-    const xAxis = g.append('g')
+    const x_axis = g.append('g')
         .attr('transform', `translate(0, ${innerHeight})`)
         .call(d3.axisBottom(x_scale).tickFormat(i => colNames2[i]))
         .style("font-size",  labelFontSizeBottom + "px");
 
-    xAxis.selectAll('.tick').selectAll('line').remove()
-    xAxis.selectAll("text")
-        .style("text-anchor", "end")
-        .attr("dx", "-2px")
-        .attr("dy", "1.2em")
-        .attr("transform", "rotate(-90)")
-        .attr("class", "xa")
-        .style("fill", "#000")
+    x_axis.selectAll('.tick').selectAll('line').remove()
+    x_axis.selectAll("text")
+    .style("text-anchor", "end")
+    .attr("dx", "-2px")
+    .attr("dy", "0.3em")
+    .attr("class", "xa")
+    .attr("transform", "rotate(-90)")
+    .style("fill", "#000")
 
     //text y axis (move labels to right of heatmap)
-    const heatmapWidth = width - margin.left - margin.right;
-    const yAxisX = heatmapWidth; // position right after heatmap ends
-
-    let yAxis = g.append('g')
-        .attr('transform', `translate(${yAxisX}, 0)`)
+     let y_axis = g.append('g')
+        .attr('transform', `translate(${innerWidth}, 0)`)
         .call(d3.axisRight(y_scale).tickFormat(i => rowNames2[i]))
         .style("font-size", labelFontSizeRight + "px")
         .attr("id", "ya")
 
-    yAxis.selectAll('.tick').selectAll('line').remove()
-    yAxis.selectAll("text")
-        .attr("dx", "2px")
+    y_axis.selectAll('.tick').selectAll('line').remove()
+    y_axis.selectAll("text")
+        .attr("dx", "3px")
         .attr("dy", "0.3em")
         .attr("class", "yaa")
         .style("text-anchor", "start")
@@ -288,7 +279,7 @@ export async function hclust_plot(options = {}) {
     // Color legend on the right side (START)
     const legendWidth = 30;
     const legendHeight = 300;
-    const legendX = heatmapWidth + 150; // Position after y-axis labels
+    const legendX = innerWidth + 150; // Position after y-axis labels
     const legendY = 0; // Align with top of heatmap
 
     // Create 5 discrete color boxes
@@ -362,6 +353,8 @@ export async function hclust_plot(options = {}) {
 
     // Color legend on the right side (END)
 
+
+    //################################################################
     // Top dendogram---------------------------------
 
     const dendoTooltip = d3tip()
@@ -563,6 +556,15 @@ export async function hclust_UI(options = {}) {
         console.log("hclust_UI() div ID provided, loading div:", div);
         // div.id = 'loadUI'
 
+    // Call heatmap_plot with clustered matrix and labels
+    await heatmap_plot({
+        matrix: newMatrix2,
+        rownames: rowNames2,
+        colnames: colNames2,
+        width: width - marginLeft - dynamicRightMargin,
+        height: height - marginTop - dynamicBottomMargin,
+        divid: divid // or another div id
+    });
     } else {
         console.log("hclust_UI() div NOT provided. creating div...", div);
         // create the div element here

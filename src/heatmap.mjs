@@ -21,13 +21,12 @@ const buildData = async function (matrix) {
 function trimText(arr) {
   return arr.map(label => {
     const str = String(label);
-    if (str.length > 8) {
-      return str.slice(0, 8) + "...";
+    if (str.length > 12) {
+      return str.slice(0, 12) + "...";
     }
     return str;
   });
 }
-
 
 
 
@@ -77,7 +76,7 @@ export async function heatmap_plot(options = {}) {
 
   // Calculate bottom margin based on trimmed label length (max 11 chars: 8 + "...")
   // Rotated labels need space: fontSize * charCount * 0.6 (char width) + 1.2em offset + padding
-  const maxColLabelLength = Math.min(d3.max(colnames.map(c => String(c).length)), 11);
+  const maxColLabelLength = Math.min(d3.max(colnames.map(c => String(c).length)), 13);
   console.log("maxColLabelLength:", maxColLabelLength)
   const dynamicBottomMargin = Math.max(marginBottom, labelFontSizeBottom * (maxColLabelLength * 0.5 ) + 5);
   console.log("dynamicBottomMargin:", dynamicBottomMargin)
@@ -89,7 +88,7 @@ export async function heatmap_plot(options = {}) {
   console.log("labelFontSizeRight:", labelFontSizeRight)
 
   // Calculate right margin based on longest row label and font size
-  const maxRowLabelLength = Math.min(d3.max(rownames.map(r => String(r).length)), 11);
+  const maxRowLabelLength = Math.min(d3.max(rownames.map(r => String(r).length)), 13);
   console.log("maxRowLabelLength:", maxRowLabelLength)
   const dynamicRightMargin = Math.max(marginRight, labelFontSizeRight * maxRowLabelLength * 0.6 +5);
 console.log("dynamicRightMargin:", dynamicRightMargin)
@@ -156,7 +155,8 @@ console.log("dynamicRightMargin:", dynamicRightMargin)
   x_axis.selectAll("text")
     .style("text-anchor", "end")
     .attr("dx", "-2px")
-    .attr("dy", "1.2em")
+    .attr("dy", "0.3em")
+    .attr("class", "xa")
     .attr("transform", "rotate(-90)")
     .style("fill", "#000")
 
@@ -191,11 +191,13 @@ console.log("dynamicRightMargin:", dynamicRightMargin)
         </div>`)
   svg.call(tooltip)
 
-  // create squares
+  // create heatmap squares
+  const heatMapData = await buildData(matrix)
+
   const gPoints = g.append("g").attr("class", "gPoints");
 
   gPoints.selectAll()
-    .data(await buildData(matrix))
+    .data(heatMapData)
     .enter()
     .append('rect')
     .attr('x', (d) => x_scale(d.t))
@@ -207,6 +209,86 @@ console.log("dynamicRightMargin:", dynamicRightMargin)
     .on('mouseover', tooltip.show)
     // Hide the tooltip when "mouseout"
     .on('mouseout', tooltip.hide)
+
+
+     // Color legend on the right side (START)
+    const legendWidth = 30;
+    const legendHeight = 300;
+    const legendX = width - margin.left - margin.right + 150; // Position after y-axis labels
+    const legendY = 0; // Align with top of heatmap
+
+    // Create 5 discrete color boxes
+    const minVal = derivedScale[0];
+    const maxVal = derivedScale[1];
+    const range = maxVal - minVal;
+
+    // Create gradient definition
+    const gradientId = "legend-gradient-" + Math.random().toString(36).substr(2, 9);
+    const defs = svg.append("defs");
+    const gradient = defs.append("linearGradient")
+        .attr("id", gradientId)
+        .attr("x1", "0%")
+        .attr("y1", "100%") // bottom (low values)
+        .attr("x2", "0%")
+        .attr("y2", "0%"); // top (high values)
+
+    gradient.append("stop")
+        .attr("offset", "0%")
+        .attr("stop-color", "#000080"); // navy (low)
+
+    gradient.append("stop")
+        .attr("offset", "50%")
+        .attr("stop-color", "#ffffff"); // white (middle)
+
+    gradient.append("stop")
+        .attr("offset", "100%")
+        .attr("stop-color", "#d73027"); // red (high)
+
+    // Draw gradient rectangle
+    g.append("rect")
+        .attr("x", legendX)
+        .attr("y", legendY)
+        .attr("width", legendWidth)
+        .attr("height", legendHeight)
+        .style("fill", `url(#${gradientId})`)
+        .style("stroke", "#000")
+        .style("stroke-width", "1px");
+
+    // Legend axis (scale for the values)
+    const legendScale = d3.scaleLinear()
+        .domain(derivedScale)
+        .range([legendHeight, 0]);
+
+    // Create 5 tick values for the legend
+    const numBoxes = 5;
+    const legendTickValues = [];
+    for (let i = 0; i < numBoxes; i++) {
+        legendTickValues.push(minVal + (i / (numBoxes - 1)) * range);
+    }
+
+    const legendAxis = d3.axisRight(legendScale)
+        .tickValues(legendTickValues)
+        .tickFormat(d3.format(".2f"));
+
+    const legendAxisG = g.append("g")
+        .attr("transform", `translate(${legendX + legendWidth}, ${legendY})`)
+        .call(legendAxis)
+        .style("font-size", "14px");
+
+    // Ensure tick text is visible with black fill
+    legendAxisG.selectAll("text")
+        .style("fill", "#000");
+
+    legendAxisG.selectAll("line")
+        .style("stroke", "#000");
+
+    legendAxisG.selectAll("path")
+        .style("stroke", "#000");
+
+
+    // Color legend on the right side (END)
+// END HEATMAP #########################################
+
 
   // Here we add the svg to the plot div
   // Check if the div was provided in the function call

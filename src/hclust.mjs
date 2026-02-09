@@ -153,7 +153,7 @@ export async function hclust_plot(options = {}) {
         .range(['#000080', '#ffffff', '#d73027']) // navy (low) - white (middle) - red (high)
 
     // bottom labels: Calculate font size as half the heatmap cell width
-      const legendSpace = 50; // Reserve space for legend
+      const legendSpace = 20; // Reserve space for legend
 
   const cellWidth = (width - marginLeft - marginRight - legendSpace) / data[0].length;
     const labelFontSizeBottom = Math.max(cellWidth / 6, 8); // minimum 8px

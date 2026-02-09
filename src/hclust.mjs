@@ -63,7 +63,7 @@ export async function hclust_plot(options = {}) {
 
     const {
         divid: divid = "",
-        matrix: matrix = irisData.map(obj => Object.values(obj)).map(row => row.slice(0, -1)),
+        data: data = irisData.map(obj => Object.values(obj)).map(row => row.slice(0, -1)),
         rownames: rownames = irisData.map(obj => Object.values(obj)).map((d, idx) => d[4] + idx),
         colnames: colnames = Object.keys(irisData[0]).slice(0, -1),
         width: width = 400,
@@ -95,8 +95,6 @@ export async function hclust_plot(options = {}) {
 
     // console.log("dendogram options", options)
     const svg = d3.create("svg")
-
-    const data = matrix //matrix.data ? matrix.data: matrix
 
 
     // dendograms--------------------

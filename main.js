@@ -268,7 +268,9 @@ const appState = {
   source: null,       // "file" | "builtin"
   name: null,         // filename or dataset name
   selectedColumns: [], // columns selected by user
-  selectionMode: "normal" // "normal" | "scatter" (for 2-column limit)
+  selectionMode: "normal", // "normal" | "scatter" (for 2-column limit)
+  hclustClusterRows: true,  // toggle for hclust row clustering
+  hclustClusterCols: true   // toggle for hclust column clustering
 };
 
 // ======== IRIS (your built-in sample) ========
@@ -454,6 +456,12 @@ document.getElementById("builtinData")?.addEventListener("change", (e) => {
     appState.selectedColumns = [];
     appState.data = val === "iris" ? irisData : spiralData;
 
+    // Reset hclust clustering toggles
+    appState.hclustClusterRows = true;
+    appState.hclustClusterCols = true;
+    const hclustControls = document.getElementById("hclustControls");
+    if (hclustControls) hclustControls.style.display = "none";
+
     // Optionally clear file input
     const fileInput = document.getElementById("fileInput");
     if (fileInput) fileInput.value = "";
@@ -480,6 +488,12 @@ document.getElementById("fileInput")?.addEventListener("change", (e) => {
     appState.source = "file";
     appState.name = file.name;
     appState.selectedColumns = []; // Reset selection
+
+    // Reset hclust clustering toggles
+    appState.hclustClusterRows = true;
+    appState.hclustClusterCols = true;
+    const hclustControls = document.getElementById("hclustControls");
+    if (hclustControls) hclustControls.style.display = "none";
 
     renderTableRight(appState.data, `Loaded file: ${file.name}`);
     // Clear all plot containers
@@ -558,7 +572,7 @@ const el = document.getElementById("myPCA");
 // ======== HCLUST: CLICK TOOL BUTTON ========
 document.getElementById("btnHclust")?.addEventListener("click", async () => {
   const data = appState.data;
-console.log("btnHclust clicked, appState.data:", data);
+  // console.log("btnHclust clicked, appState.data:", data);
   // Reset to normal selection mode
   appState.selectionMode = "normal";
 
@@ -597,6 +611,22 @@ console.log("btnHclust clicked, appState.data:", data);
   const matrix = data.map(row => colnames.map(k => row[k])).filter(row => row.every(v => typeof v === "number" && Number.isFinite(v)));
   const rownames = data.map((row, idx) => (labelKey ? String(row[labelKey]) : "row") + idx);
 
+  // Show hclust controls
+  const hclustControls = document.getElementById("hclustControls");
+  if (hclustControls) hclustControls.style.display = "block";
+
+  // Update button states
+  const btnRows = document.getElementById("btnHclustRows");
+  const btnCols = document.getElementById("btnHclustCols");
+  if (btnRows) {
+    btnRows.textContent = `Cluster Rows: ${appState.hclustClusterRows ? "ON" : "OFF"}`;
+    btnRows.className = `btn btn-sm ${appState.hclustClusterRows ? "btn-primary" : "btn-outline-secondary"} me-2`;
+  }
+  if (btnCols) {
+    btnCols.textContent = `Cluster Cols: ${appState.hclustClusterCols ? "ON" : "OFF"}`;
+    btnCols.className = `btn btn-sm ${appState.hclustClusterCols ? "btn-primary" : "btn-outline-secondary"}`;
+  }
+
   // Clear and mark container
   el.innerHTML = "";
   el.classList.add("has-plot");
@@ -608,11 +638,33 @@ console.log("btnHclust clicked, appState.data:", data);
     colnames,
     width,
     height,
-    clusterCols: true,
-    clusterRows: true
+    clusterCols: appState.hclustClusterCols,
+    clusterRows: appState.hclustClusterRows
   });
 });
 
+// ======== HCLUST TOGGLE BUTTONS ========
+document.getElementById("btnHclustRows")?.addEventListener("click", () => {
+  appState.hclustClusterRows = !appState.hclustClusterRows;
+  const btn = document.getElementById("btnHclustRows");
+  if (btn) {
+    btn.textContent = `Cluster Rows: ${appState.hclustClusterRows ? "ON" : "OFF"}`;
+    btn.className = `btn btn-sm ${appState.hclustClusterRows ? "btn-primary" : "btn-outline-secondary"} me-2`;
+  }
+  // Re-trigger hclust plot
+  document.getElementById("btnHclust")?.click();
+});
+
+document.getElementById("btnHclustCols")?.addEventListener("click", () => {
+  appState.hclustClusterCols = !appState.hclustClusterCols;
+  const btn = document.getElementById("btnHclustCols");
+  if (btn) {
+    btn.textContent = `Cluster Cols: ${appState.hclustClusterCols ? "ON" : "OFF"}`;
+    btn.className = `btn btn-sm ${appState.hclustClusterCols ? "btn-primary" : "btn-outline-secondary"}`;
+  }
+  // Re-trigger hclust plot
+  document.getElementById("btnHclust")?.click();
+});
 
 // ======== HEATMAP: CLICK TOOL BUTTON ========
 document.getElementById("btnHeatmap")?.addEventListener("click", async () => {

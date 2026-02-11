@@ -37,8 +37,8 @@ export async function heatmap_plot(options = {}) {
   const {
     divid: divid = "",
     data: data = irisData.map(obj => Object.values(obj)).map(row => row.slice(0, -1)),
-    rowNames: rowNames = irisData.map(obj => Object.values(obj)).map((d, idx) => d[4] + idx),
-    colNames: colNames = Object.keys(irisData[0]).slice(0, -1),
+    rownames: rownames = irisData.map(obj => Object.values(obj)).map((d, idx) => d[4] + idx),
+    colnames: colnames = Object.keys(irisData[0]).slice(0, -1),
     height: height = 900,
     width: width = 400,
     color: color = ['#000080', '#ffffff', '#d73027'], // navy (low) - white (middle) - red (high)//'#000080', //"#d62728",
@@ -74,12 +74,12 @@ export async function heatmap_plot(options = {}) {
 
   // bottom labels: Calculate font size as half the heatmap cell width
   const cellWidth = (width - marginLeft - marginRight ) / data[0].length;
-  const labelFontSizeBottom = Math.min(Math.max(cellWidth / 6, 8), 20); // clamp between 8px and 20px
-  const maxColLabelLength = Math.min(d3.max(colNames.map(c => String(c).length)), 13);
+  const labelFontSizeBottom = Math.max(cellWidth / 6, 8); // minimum 8px
+  const maxColLabelLength = Math.min(d3.max(colnames.map(c => String(c).length)), 13);
   const dynamicBottomMargin = Math.max(marginBottom, labelFontSizeBottom * maxColLabelLength * 0.5  + 5);
   const cellHeight = (height - marginTop - dynamicBottomMargin) / data.length;
-  const labelFontSizeRight = Math.min(Math.max(cellHeight / 3, 7), 20); // clamp between 7px and 20px
-  const maxRowLabelLength = Math.min(d3.max(rowNames.map(r => String(r).length)), 13);
+  const labelFontSizeRight = Math.max(cellHeight / 3, 7); // minimum 7px
+  const maxRowLabelLength = Math.min(d3.max(rownames.map(r => String(r).length)), 13);
   const dynamicRightMargin = Math.max(200, labelFontSizeRight * maxRowLabelLength * 0.6 + 100);
   const margin = ({
     top: marginTop,
@@ -90,33 +90,33 @@ export async function heatmap_plot(options = {}) {
   const innerHeight = height - margin.top - margin.bottom;
   const innerWidth = width - margin.left - margin.right;
 
-  // console.log("HEATMAP ###########################################")
+    console.log("###########################################")
 
-  // console.log("height2:", height);
-  // console.log("width2:", width);
-  // console.log("color2:", color);
-  // console.log("marginTop2:", marginTop);
-  // console.log("marginBottom2:", marginBottom);
-  // console.log("marginLeft2:", marginLeft);
-  // console.log("marginRight2:", marginRight);
-  // console.log("colorScale2:", colorScale);
-  // console.log("cellWidth2-------:", cellWidth);
-  //   console.log("cellHeight2:", cellHeight);
-  // console.log("labelFontSizeBottom2:", labelFontSizeBottom);
-  // console.log("maxColLabelLength2:", maxColLabelLength);
-  // console.log("dynamicBottomMargin2:", dynamicBottomMargin);
+  console.log("height2:", height);
+  console.log("width2:", width);
+  console.log("color2:", color);
+  console.log("marginTop2:", marginTop);
+  console.log("marginBottom2:", marginBottom);
+  console.log("marginLeft2:", marginLeft);
+  console.log("marginRight2:", marginRight);
+  console.log("colorScale2:", colorScale);
+  console.log("cellWidth2-------:", cellWidth);
+    console.log("cellHeight2:", cellHeight);
+  console.log("labelFontSizeBottom2:", labelFontSizeBottom);
+  console.log("maxColLabelLength2:", maxColLabelLength);
+  console.log("dynamicBottomMargin2:", dynamicBottomMargin);
 
-  // console.log("labelFontSizeRight2:", labelFontSizeRight);
-  // console.log("maxRowLabelLength2:", maxRowLabelLength);
-  // console.log("dynamicRightMargin2:", dynamicRightMargin);
-  // console.log("2: labelFontSizeBottom * maxColLabelLength * 0.5 + 5:", labelFontSizeBottom * maxColLabelLength * 0.5 + 5)
-  // console.log("margin2:", margin);
-  // console.log("innerHeight2:", innerHeight);
-  // console.log("innerWidth2:", innerWidth);
+  console.log("labelFontSizeRight2:", labelFontSizeRight);
+  console.log("maxRowLabelLength2:", maxRowLabelLength);
+  console.log("dynamicRightMargin2:", dynamicRightMargin);
+  console.log("2: labelFontSizeBottom * maxColLabelLength * 0.5 + 5:", labelFontSizeBottom * maxColLabelLength * 0.5 + 5)
+  console.log("margin2:", margin);
+  console.log("innerHeight2:", innerHeight);
+  console.log("innerWidth2:", innerWidth);
 
   // Trim labels to 8 characters max (for display only)
-  const trimmedColnames = trimText(colNames);
-  const trimmedRownames = trimText(rowNames);
+  const trimmedColnames = trimText(colnames);
+  const trimmedRownames = trimText(rownames);
 
   // Use indices for scale domain to avoid duplicate label issues
   const colIndices = d3.range(data[0].length);
@@ -200,7 +200,7 @@ export async function heatmap_plot(options = {}) {
     .html((event, d) => `
         <div style='float: right; color: #000;'>
            val:${d.value.toFixed(tooltip_decimal)} <br/>
-             row:${rowNames[d.n]}, col:${(colNames[d.t])} 
+             row:${rownames[d.n]}, col:${(colnames[d.t])} 
         </div>`)
   svg.call(tooltip)
 
@@ -249,15 +249,15 @@ export async function heatmap_plot(options = {}) {
 
     gradient.append("stop")
         .attr("offset", "0%")
-        .attr("stop-color", color[0]); // low
+        .attr("stop-color", "#000080"); // navy (low)
 
     gradient.append("stop")
         .attr("offset", "50%")
-        .attr("stop-color", color[1]); // middle
+        .attr("stop-color", "#ffffff"); // white (middle)
 
     gradient.append("stop")
         .attr("offset", "100%")
-        .attr("stop-color", color[2]); // high
+        .attr("stop-color", "#d73027"); // red (high)
 
     // Draw gradient rectangle
     g.append("rect")

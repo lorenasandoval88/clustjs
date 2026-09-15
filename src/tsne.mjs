@@ -32,6 +32,7 @@ export async function tsne_plot(options = {}) {
     width: width = 600,
     height: height = 300,
     colors: colors = ["red", "blue", "orange", "green", "purple", "pink", "yellow"],
+    margin: userMargin = {}, // e.g. { top: 25, right: 170, bottom: 45, left: 45 } — override any side
     perplexity: perplexity = 30,
     epsilon: epsilon = 10,
     iterations: iterations = 1000
@@ -115,7 +116,8 @@ export async function tsne_plot(options = {}) {
     top: 25,
     right: 170,
     bottom: 45,
-    left: 45
+    left: 45,
+    ...userMargin
   };
 
   // Compute padded domain for tSNE1

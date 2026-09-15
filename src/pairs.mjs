@@ -60,6 +60,7 @@ export async function pairs_plot(options = {}) {
     width: width = 1000,
     height: height = 1000,
     colors: colors = ["red", "blue", "orange", "green", "purple", "pink", "yellow"],
+    margin: userMargin = {}, // e.g. { top: 60, right: 150, bottom: 40, left: 60 } — override any side
   } = options;
   const targetDivId = divId;
 
@@ -102,7 +103,7 @@ export async function pairs_plot(options = {}) {
 
   const n = numericKeys.length;
   const cellSize = Math.min(180, (width - 100) / n);
-  const margin = { top: 60, right: 150, bottom: 40, left: 60 };
+  const margin = { top: 60, right: 150, bottom: 40, left: 60, ...userMargin };
   const plotWidth = cellSize * n + margin.left + margin.right;
   const plotHeight = cellSize * n + margin.top + margin.bottom;
 
@@ -272,7 +273,8 @@ export async function pairs_UI(options = {}) {
     width: width = 1000,
     height: height = 1000,
     colors: colors = ["red", "blue", "orange", "green", "purple", "pink", "yellow"],
+    margin: margin = {},
   } = options;
 
-  await pairs_plot({ divId, data, width, height, colors });
+  await pairs_plot({ divId, data, width, height, colors, margin });
 }

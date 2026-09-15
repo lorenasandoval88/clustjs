@@ -46,6 +46,7 @@ export async function scatter_plot(options = {}) {
     width: width = 600,
     height: height = 460,
     colors: colors = ["red", "blue", "orange", "green", "purple", "pink", "yellow"],
+    margin: userMargin = {}, // e.g. { top: 25, right: 170, bottom: 45, left: 45 } — override any side
     xCol: xCol = null,  // column name for x-axis
     yCol: yCol = null   // column name for y-axis
   } = options;
@@ -99,7 +100,8 @@ export async function scatter_plot(options = {}) {
     top: 25,
     right: 170,
     bottom: 45,
-    left: 45
+    left: 45,
+    ...userMargin
   };
 
   // Compute padded domain for x

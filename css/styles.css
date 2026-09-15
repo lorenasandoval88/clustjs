@@ -740,6 +740,16 @@ body {
   padding: 0.5rem;
 }
 
+/* Examples tab screenshots */
+.example-screenshot {
+  display: block;
+  width: 100%;
+  max-width: 720px;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  background: #ffffff;
+}
+
 /* Collapsible panels (Quick start, R comparison, Console) */
 .quickstart summary,
 .rcompare-panel summary,

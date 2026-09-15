@@ -94,6 +94,7 @@ export async function pca_plot(options = {}) {
     width: width = 600,
     height: height = 300,
     colors: colors = ["red", "blue", "orange", "green", "purple", "pink", "yellow"],
+    margin: userMargin = {}, // e.g. { top: 25, right: 170, bottom: 45, left: 45 } — override any side
   } = options;
   const targetDivId = divId;
 
@@ -122,12 +123,13 @@ export async function pca_plot(options = {}) {
 
   const fontFamily = 'monospace'
   const maxOpacity = 0.7
-  const margin = ({
+  const margin = {
     top: 25,
     right: 170,
     bottom: 45,
-    left: 45
-  })
+    left: 45,
+    ...userMargin
+  }
   // Compute padded domain once using the range for better performance and clarity
   const minPC1 = d3.min(scores, d => d.PC1);
   const maxPC1 = d3.max(scores, d => d.PC1);

@@ -1,16 +1,39 @@
-# Welcome to clustJs!
+<div align="center">
 
+# clustJs
 
-Multivariate statistical visualization (PCA, t-SNE, UMAP, clustering, heatmaps, etc) in JavaScript. 
+**Multivariate statistical visualization for the browser** — PCA, t-SNE, UMAP, hierarchical
+clustering, and heatmaps, powered by [D3.js](https://d3js.org/).
 
-live at: https://lorenasandoval88.github.io/clustjs
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Module](https://img.shields.io/badge/module-ES%20Modules-success.svg)
+![Built with D3.js](https://img.shields.io/badge/built%20with-D3.js-f68e56.svg)
+![Runtime](https://img.shields.io/badge/runtime-browser-brightgreen.svg)
 
+[**Live demo**](https://lorenasandoval88.github.io/clustjs) &middot; [**Documentation (Wiki)**](https://github.com/lorenasandoval88/clustjs/wiki) &middot; [**Issues**](https://github.com/lorenasandoval88/clustjs/issues)
 
-## Getting Started
+<img width="499" height="532" alt="clustJs PCA plot of the Iris dataset" src="https://github.com/user-attachments/assets/2739074d-12a4-4e5e-ae79-b96b68f73295" />
 
-Use Clust.js either directly from the CDN (ES modules in the browser) or as an npm package in your app.
+</div>
 
-### CDN (ES Module)
+---
+
+## Features
+
+- **Six visualizations** — PCA, hierarchical clustering with heatmaps, t-SNE, UMAP, scatter, and
+  pairs plots.
+- **Interactive by default** — D3-powered rendering with tooltips, zoom, and click-to-select.
+- **Zero build step** — import the ES module straight from a CDN, or install from npm.
+- **R-compatible clustering** — `hclust_plot` mirrors R's `scale()` &rarr; `dist()` &rarr;
+  `hclust()`, including faithful `NA` (missing-value) handling.
+- **Bring your own data** — pass an array of objects or a 2D numeric array; two sample datasets are
+  included.
+
+## Installation
+
+Use clustJs directly from the CDN (ES modules in the browser) or install it from npm.
+
+### CDN (ES module)
 
 Run in the browser console or inside an HTML `<script type="module">` block:
 
@@ -21,13 +44,10 @@ await (await import("https://lorenasandoval88.github.io/clustjs/dist/sdk.mjs"))
 
 // Step‑by‑step
 const sdk = await import("https://lorenasandoval88.github.io/clustjs/dist/sdk.mjs")
-await sdk.pca_plot({ data: sdk.irisData, divid: "myPCA", width: 600, height: 400 })
+await sdk.pca_plot({ data: sdk.irisData, divId: "myPCA", width: 600, height: 400 })
 // UI helper
-await sdk.pca_UI({ divid: "myPCA", width: 600, height: 300, loadIrisOnStart: true })
+await sdk.pca_UI({ divId: "myPCA", width: 600, height: 300, loadIrisOnStart: true })
 ```
-
-<img width="499" height="532" alt="image" src="https://github.com/user-attachments/assets/2739074d-12a4-4e5e-ae79-b96b68f73295" />
-
 
 ### npm (ESM)
 
@@ -40,53 +60,68 @@ npm install clustjs
 ```javascript
 import { pca_plot, pca_UI, irisData } from "clustjs";
 
-await pca_plot({ data: irisData, divid: "myPCA", width: 600, height: 400 });
-await pca_UI({ divid: "myPCA", width: 600, height: 300, loadIrisOnStart: true });
+await pca_plot({ data: irisData, divId: "myPCA", width: 600, height: 400 });
+await pca_UI({ divId: "myPCA", width: 600, height: 300, loadIrisOnStart: true });
 ```
 
 ### Notes
 
-- Browser/DOM required: `pca_plot` and `pca_UI` render to the DOM; use in browser apps (Vite, webpack, Next.js client components).
-- ES modules: the SDK is ESM-only; ensure your bundler/runtime supports ESM imports.
+- **Browser/DOM required** — the plot functions render to the DOM; use them in browser apps
+  (Vite, webpack, Next.js client components) or the browser console.
+- **ESM only** — the SDK ships as ES modules; ensure your bundler/runtime supports ESM imports.
 
+## Visualizations
 
-Further documentation can be found on the [wiki](https://github.com/lorenasandoval88/clustjs/wiki).
+Every visualization is available as a `*_plot()` function. Most also ship a `*_UI()` helper (which
+adds interactive controls) and a `*Dt` state object.
 
-## Project Structure
+| Plot | UI helper | State | Description |
+| --- | --- | --- | --- |
+| `pca_plot` | `pca_UI` | `pcaDt` | Principal component analysis scatter plot |
+| `hclust_plot` | &mdash; | `hclustDt` | Clustered heatmap with row & column dendrograms |
+| `heatmap_plot` | &mdash; | &mdash; | Standalone heatmap |
+| `tsne_plot` | `tsne_UI` | `tsneDt` | t-SNE dimensionality reduction |
+| `umap_plot` | `umap_UI` | `umapDt` | UMAP dimensionality reduction |
+| `scatter_plot` | `scatter_UI` | `scatterDt` | 2D scatter plot |
+| `pairs_plot` | `pairs_UI` | `pairsDt` | Scatterplot matrix (pairs plot) |
 
-### Architecture
+All plot functions take a single `options` object. Common options include `data`, `divId`,
+`width`, and `height`; see each function's source in [`src/`](src/) for the full list.
 
-- `index.html`: browser demo shell and layout.
-- `main.js`: demo app wiring (imports SDK from `./dist/sdk.mjs`, runs plots, console UI helpers).
-- `src/`: reusable source modules for plots and helpers.
-- `src/sdk.mjs`: public SDK source entrypoint (aggregates dataset + plot + utility exports).
-- `src/data/`: built-in datasets (`irisData`, `spiralData`).
-- `css/styles.css`: demo styling.
-- `dist/`: Rollup output (`dist/sdk.mjs` + sourcemap).
+## SDK exports
 
-### Build
+Public exports from [`src/sdk.mjs`](src/sdk.mjs):
 
-Run `npm run build` to generate `dist/sdk.mjs` from `src/sdk.mjs`.
+- **Datasets** — `irisData`, `spiralData`
+- **Plots / UI / state** — `pca_plot`, `pca_UI`, `pcaDt`, `hclust_plot`, `hclustDt`, `heatmap_plot`,
+  `tsne_plot`, `tsne_UI`, `tsneDt`, `umap_plot`, `umap_UI`, `umapDt`, `scatter_plot`, `scatter_UI`,
+  `scatterDt`, `pairs_plot`, `pairs_UI`, `pairsDt`
+- **Utilities** — all exports from [`otherFunctions.js`](src/otherFunctions.js)
+- **Library** — `d3` (re-exported for convenience)
+- **Metadata** — `version`
 
-### Run
+## Project structure
 
-Open `index.html` with a local static server (for example VS Code Live Server). The demo script `main.js` loads the built SDK from `./dist/sdk.mjs`.
+| Path | Purpose |
+| --- | --- |
+| `index.html` | Browser demo shell and layout |
+| `main.js` | Demo app wiring (imports the SDK from `./dist/sdk.mjs`, runs plots) |
+| `src/` | Reusable source modules for plots and helpers |
+| `src/sdk.mjs` | Public SDK entrypoint (aggregates dataset, plot, and utility exports) |
+| `src/data/` | Built-in datasets (`irisData`, `spiralData`) |
+| `css/styles.css` | Demo styling |
+| `dist/` | Rollup output (`dist/sdk.mjs` + sourcemap) |
 
-### SDK API
+## Development
 
-Public exports from `src/sdk.mjs`:
+```bash
+# Build the SDK bundle: src/sdk.mjs -> dist/sdk.mjs
+npm run build
+```
 
-- Datasets: `irisData`, `spiralData`
-- Plots/UI/state:
-    - `hclust_plot`, `hclust_UI`, `hclustDt`
-    - `pca_plot`, `pca_UI`, `pcaDt`
-    - `tsne_plot`, `tsne_UI`, `tsneDt`
-    - `umap_plot`, `umap_UI`, `umapDt`
-    - `scatter_plot`, `scatter_UI`, `scatterDt`
-    - `pairs_plot`, `pairs_UI`, `pairsDt`
-    - `heatmap_plot`
-- Utilities: all exports from `otherFunctions.js` (via `export *`)
-- Metadata: `version`
+To run the demo, open `index.html` with a local static server (for example VS Code Live Server).
+The demo script `main.js` loads the built SDK from `./dist/sdk.mjs`.
+
 
 ## Hierarchical clustering & missing values
 
@@ -129,4 +164,14 @@ simply excluded from every calculation that involves it. The pipeline runs in th
 
 See the [wiki](https://github.com/lorenasandoval88/clustjs/wiki) for the full derivation and worked
 examples.
+
+## Contributing
+
+Contributions, issues, and feature requests are welcome. Please open an
+[issue](https://github.com/lorenasandoval88/clustjs/issues) to discuss substantial changes, and run
+`npm run build` before submitting a pull request.
+
+## License
+
+Released under the [MIT License](https://opensource.org/licenses/MIT). &copy; Lorena Sandoval.
 

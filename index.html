@@ -4,7 +4,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Clust.Js Demo</title>
+  <title>clustJs — multivariate visualization</title>
+
+  <!-- Favicon (inline SVG) -->
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0d12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%233b82f6' stroke-width='3'/%3E%3Cpath d='M16 7 A9 9 0 0 1 16 25 Z' fill='%233b82f6'/%3E%3C/svg%3E" />
 
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -16,56 +20,67 @@
 <body>
 
   <!-- NAVBAR -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-    <div class="container">
-      <a class="navbar-brand fw-bold" href="#">Clust.Js</a>
+  <nav id="mainNav" class="navbar navbar-expand-lg navbar-dark shadow-sm sticky-top">
+    <div class="container-fluid px-4">
+      <span class="navbar-brand d-flex align-items-center gap-2">
+        <span class="brand-mark" aria-hidden="true">◐</span>
+        <span class="fw-bold">clustJs</span>
+      </span>
 
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+        aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
 
       <div class="collapse navbar-collapse" id="navbarContent">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link active" href="#">Tools</a></li>
+        <ul class="navbar-nav ms-auto align-items-lg-center">
+          <li class="nav-item"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#aboutModal">About</a></li>
+          <li class="nav-item"><a class="nav-link active" href="#tools">Tools</a></li>
           <li class="nav-item">
-            <a class="nav-link" href="https://github.com/lorenasandoval88/clustjs" target="_blank">Code</a>
+            <a class="nav-link" href="https://github.com/lorenasandoval88/clustjs" target="_blank" rel="noopener">Code</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="https://github.com/lorenasandoval88/clustjs/wiki" target="_blank">Docs</a>
+            <a class="nav-link" href="https://github.com/lorenasandoval88/clustjs/wiki" target="_blank" rel="noopener">Docs</a>
           </li>
         </ul>
       </div>
     </div>
   </nav>
 
+  <!-- HERO -->
+  <header class="app-hero">
+    <div class="container-fluid px-4">
+      <h1 class="app-hero-title">Multivariate statistical visualization</h1>
+      <p class="app-hero-sub">Explore your data with PCA, t-SNE, UMAP, hierarchical clustering, and heatmaps &mdash; powered by D3.js. Load a dataset, pick a tool, and go.</p>
+    </div>
+  </header>
+
   <!-- MAIN -->
   <main class="container-fluid py-4">
     <div class="row g-4">
 
-      <!-- LEFT: DATA SOURCE (top) + TOOLS (below) -->
-      <aside class="col-md-3 col-lg-2">
+      <!-- LEFT: DATA SOURCE + TOOLS -->
+      <aside class="col-md-4 col-lg-3 app-sidebar">
 
-        <!-- DATA SOURCE (moved to top) -->
-        <div class="data-panel mb-4">
-          <h6 class="mb-3 text-center">Data Source</h6>
+        <!-- DATA SOURCE -->
+        <div class="side-panel data-panel mb-4">
+          <div class="panel-title">Data source</div>
 
           <!-- File upload -->
           <div class="mb-3">
             <label class="form-label">Load file</label>
             <input type="file" class="form-control" id="fileInput" accept=".csv,.tsv,.json" />
-            <button id="btnTransposeFile" class="btn btn-sm btn-outline-secondary w-100 mt-2" type="button" disabled>
-              Transpose Loaded File
+            <button id="btnTransposeFile" class="btn btn-sm btn-outline-light w-100 mt-2" type="button" disabled>
+              Transpose loaded file
             </button>
-
-            <!-- Download sample CSV -->
             <div class="mt-2">
-              <a href="./src/data/iris2.csv" download class="btn btn-sm btn-outline-secondary w-100">
+              <a href="./src/data/iris2.csv" download class="btn btn-sm btn-outline-light w-100">
                 Download Iris CSV
               </a>
             </div>
           </div>
 
-          <hr class="my-3" />
+          <hr class="panel-divider" />
 
           <!-- Built-in dataset -->
           <div>
@@ -78,54 +93,43 @@
           </div>
         </div>
 
-        <!-- Separator -->
-        <hr class="my-4" />
-
-        <!-- TOOLS (moved below Data Source) -->
-        <div class="tool-panel">
-          <h6 class="mb-3 text-center">Tools</h6>
-          <div class="tool-square" id="btnPCA">PCA</div>
-          <div class="tool-square" id="btnTSNE">t-SNE</div>
-          <div class="tool-square" id="btnUMAP">UMAP</div>
-          <div class="tool-square" id="btnScatter">Scatter</div>
-          <div class="tool-square" id="btnPairs">Pairs</div>
-          <div class="tool-square" id="btnHclust">Hclust</div>
-          <div id="hclustControls" class="mb-2" style="display:none;">
+        <!-- TOOLS -->
+        <div class="side-panel tool-panel" id="tools">
+          <div class="panel-title">Tools</div>
+          <div class="tools-grid">
+            <button type="button" class="tool-square" id="btnPCA">PCA</button>
+            <button type="button" class="tool-square" id="btnTSNE">t-SNE</button>
+            <button type="button" class="tool-square" id="btnUMAP">UMAP</button>
+            <button type="button" class="tool-square" id="btnScatter">Scatter</button>
+            <button type="button" class="tool-square" id="btnPairs">Pairs</button>
+            <button type="button" class="tool-square" id="btnHeatmap">Heatmap</button>
+            <button type="button" class="tool-square" id="btnHclust">Hclust</button>
+          </div>
+          <div id="hclustControls" class="hclust-controls" style="display:none;">
             <button id="btnHclustRows" class="btn btn-sm btn-primary me-2">Cluster Rows: ON</button>
             <button id="btnHclustCols" class="btn btn-sm btn-primary">Cluster Cols: ON</button>
           </div>
-          <div class="tool-square" id="btnHeatmap">Heatmap</div>
         </div>
 
       </aside>
 
-      <!-- RIGHT: OUTPUT (output content -> console -> plots div) -->
-      <section class="col-md-9 col-lg-10">
-        <div class="output-panel">
+      <!-- RIGHT: OUTPUT -->
+      <section class="col-md-8 col-lg-9">
 
-          <!-- Embedded Console (moved to top) -->
-          <div id="consolePanel" class="mb-4">
-            <div id="consoleHeader">
-              <div class="fw-semibold">Console</div>
-              <div class="d-flex gap-2">
-                <button id="btnClearConsole" class="btn-console" type="button">Clear</button>
-                <button id="btnCopyConsole" class="btn-console" type="button">Copy</button>
-              </div>
+        <!-- Data preview -->
+        <div class="panel-card mb-4">
+          <div class="panel-title">Data preview</div>
+          <div id="rightData"></div>
+        </div>
+
+        <!-- Visualization / plots -->
+        <div class="panel-card mb-4">
+          <div class="panel-title">Visualization</div>
+          <div id="plotsPanel">
+            <div class="plots-empty">
+              <div class="plots-empty-icon" aria-hidden="true">▦</div>
+              <p class="mb-0">Select a dataset and a tool to render a visualization here.</p>
             </div>
-
-            <div id="consoleOut" aria-label="Embedded console output"></div>
-
-            <!-- Optional command input (press Enter to run) -->
-            <div id="consoleControls">
-              <input id="consoleCmd" type="text" placeholder="Type JS here and press Enter (demo only)" />
-            </div>
-          </div>
-
-          <!-- Output panel (data table) -->
-          <div id="rightData" class="panel-card mb-4"></div>
-          
-          <!-- Plots wrapper (right below data table) -->
-          <div id="plotsPanel" class="panel-card mb-4">
             <div id="myPCA"></div>
             <div id="myTSNE"></div>
             <div id="myUMAP"></div>
@@ -133,41 +137,57 @@
             <div id="myPairs"></div>
             <div id="myHclust"></div>
             <div id="myHeatmap"></div>
-
-            <!-- optional extra plot container you can target -->
             <div id="myPlots"></div>
           </div>
-
-          
-
         </div>
+
+        <!-- Quick start -->
+        <details class="panel-card quickstart mb-4" open>
+          <summary class="panel-title">Quick start</summary>
+          <div id="sdkExample" class="sdk-example"></div>
+        </details>
+
+        <!-- Embedded Console -->
+        <div id="consolePanel" class="mb-4">
+          <div id="consoleHeader">
+            <div class="fw-semibold">Console</div>
+            <div class="d-flex gap-2">
+              <button id="btnClearConsole" class="btn-console" type="button">Clear</button>
+              <button id="btnCopyConsole" class="btn-console" type="button">Copy</button>
+            </div>
+          </div>
+          <div id="consoleOut" aria-label="Embedded console output"></div>
+          <div id="consoleControls">
+            <input id="consoleCmd" type="text" placeholder="Type JS here and press Enter (demo only)" />
+          </div>
+        </div>
+
       </section>
 
     </div>
   </main>
 
-  <!-- SDK Usage Example moved to lower part of body -->
-  <div id="sdkExample" class="sdk-example"></div>
+  <!-- Populate the Quick start snippet (its #sdkExample div lives in the output column) -->
   <script>
     document.getElementById("sdkExample").innerHTML =
-      `<div class="title">Select data & tool (left) or run the following in the console:</div>
+      `<div class="title">Select data & tool (left) or run the functions in the built in console:</div>
 <div class="medium text-muted mb-0">One-liner:</div>
 
 <div class="d-flex align-items-start gap-2 mb-0">
   <pre class="mb-0"><code id="sdkOneLiner">await (await import("https://lorenasandoval88.github.io/clustjs/dist/sdk.mjs")).pca_plot({ width: 600, height: 400 })</code></pre>
-  <button id="copySdkOneLinerBtn" class="btn btn-sm btn-outline-secondary" type="button">Copy</button>
+  <button id="copySdkOneLinerBtn" class="btn btn-sm btn-outline-light" type="button">Copy</button>
 </div>
 
 <div class="medium text-muted mb-0">Step-by-step (enter each line):</div>
 
 <pre><code id="sdkStepByStep">const sdk = await import("https://lorenasandoval88.github.io/clustjs/dist/sdk.mjs")
-await sdk.pca_plot({ width: 600, height: 400 })</code></pre>
+await sdk.pca_plot({ data: sdk.irisData, divId: "myPCA", width: 600, height: 400 })</code></pre>
 
 <div class="medium text-muted mb-0">Localhost One-liner:</div>
 
 <div class="d-flex align-items-start gap-2 mb-0">
   <pre class="mb-0"><code id="localSdkOneLiner">await (await import("./dist/sdk.mjs")).hclust_plot({ width: 600, height: 400 })</code></pre>
-  <button id="copyLocalOneLinerBtn" class="btn btn-sm btn-outline-secondary copy-snippet-btn" type="button">Copy</button>
+  <button id="copyLocalOneLinerBtn" class="btn btn-sm btn-outline-light copy-snippet-btn" type="button">Copy</button>
 </div>`;
 
 
@@ -291,7 +311,7 @@ await sdk.pca_plot({ width: 600, height: 400 })</code></pre>
           if (line.trim().length > 0) {
             const btn = document.createElement("button");
             btn.type = "button";
-            btn.className = "btn btn-sm btn-outline-secondary copy-line-btn";
+            btn.className = "btn btn-sm btn-outline-light copy-line-btn";
             btn.textContent = "Copy";
             btn.addEventListener("click", async () => {
               const text = line;
@@ -317,6 +337,45 @@ await sdk.pca_plot({ width: 600, height: 400 })</code></pre>
       });
     })();
   </script>
+
+  <!-- ABOUT MODAL -->
+  <div class="modal fade" id="aboutModal" tabindex="-1" aria-labelledby="aboutModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content app-about-modal">
+        <div class="modal-header">
+          <h5 class="modal-title" id="aboutModalLabel">About clustJs</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="app-about-text">
+            clustJs is a lightweight JavaScript library for multivariate statistical visualization in the
+            browser. It brings PCA, t-SNE, UMAP, hierarchical clustering, and heatmaps together behind a
+            simple ES-module API &mdash; powered by D3.js. Its hierarchical clustering faithfully reproduces
+            R's <code>scale()</code> &rarr; <code>dist()</code> &rarr; <code>hclust()</code> pipeline,
+            including the way R handles missing values.
+          </p>
+          <p class="app-about-text mb-0">
+            Load a CSV or a built-in dataset, pick a tool on the left, or call the SDK directly from the
+            console. See the
+            <a href="https://github.com/lorenasandoval88/clustjs/wiki" target="_blank" rel="noopener">documentation</a>
+            for details.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="app-footer">
+    <div class="container-fluid px-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <span>clustJs &mdash; multivariate statistical visualization, powered by D3.js</span>
+      <span class="app-footer-links">
+        <a href="https://github.com/lorenasandoval88/clustjs" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/lorenasandoval88/clustjs/wiki" target="_blank" rel="noopener">Docs</a>
+        <a href="https://lorenasandoval88.github.io/clustjs" target="_blank" rel="noopener">Live demo</a>
+      </span>
+    </div>
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 

@@ -297,7 +297,11 @@ function clearMyPlots() {
 
 function showPlotLoading(el, label = "Loading...") {
   if (!el) return;
-  el.innerHTML = `<div class="text-center text-muted p-4">${label}</div>`;
+  const isLoading = /^Loading/i.test(label);
+  const spinner = isLoading
+    ? `<div class="spinner-border text-primary mb-3" role="status" aria-hidden="true"></div>`
+    : "";
+  el.innerHTML = `<div class="d-flex flex-column align-items-center justify-content-center text-center text-muted p-4">${spinner}<div>${label}</div></div>`;
   el.classList.add("has-plot");
 }
 
@@ -728,7 +732,28 @@ updateTransposeButtonState();
 
 ["btnPCA", "btnTSNE", "btnUMAP", "btnScatter", "btnPairs", "btnHclust", "btnHeatmap", "btnHclustRows", "btnHclustCols", "btnTransposeFile"].forEach(id => {
   document.getElementById(id)?.addEventListener("click", () => {
-    clearMyPlots();
+    resetAllPlots();
+  });
+});
+
+// Highlight the currently selected tool
+const toolButtonIds = ["btnPCA", "btnTSNE", "btnUMAP", "btnScatter", "btnPairs", "btnHclust", "btnHeatmap"];
+toolButtonIds.forEach(id => {
+  document.getElementById(id)?.addEventListener("click", () => {
+    toolButtonIds.forEach(otherId => document.getElementById(otherId)?.classList.remove("is-active"));
+    document.getElementById(id)?.classList.add("is-active");
+  });
+});
+
+// Leaving Scatter for another tool: restore full column selection
+["btnPCA", "btnTSNE", "btnUMAP", "btnPairs", "btnHclust", "btnHeatmap"].forEach(id => {
+  document.getElementById(id)?.addEventListener("click", () => {
+    if (appState.selectionMode !== "scatter") return;
+    const data = appState.data;
+    if (!data || data.length === 0) return;
+    appState.selectionMode = "normal";
+    appState.selectedColumns = Object.keys(data[0] || {});
+    renderTableRight(data, appState.name ? `${appState.name} (${appState.source})` : "Dataset Preview");
   });
 });
 

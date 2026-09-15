@@ -680,9 +680,39 @@ document.getElementById("builtinData")?.addEventListener("change", (e) => {
 
     updateTransposeButtonState();
 
+    const btnDownloadBuiltin = document.getElementById("btnDownloadBuiltin");
+    if (btnDownloadBuiltin) btnDownloadBuiltin.disabled = false;
+
     console.log(`Built-in ${appState.name} data selected`);
     renderTableRight(appState.data, `${appState.name} (built-in)`);
   }
+});
+
+// ======== GUI: DOWNLOAD BUILT-IN DATASET AS CSV ========
+function jsonToCsv(data) {
+  const cols = Object.keys(data[0] || {});
+  const escape = (v) => {
+    const s = v == null ? "" : String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const lines = [cols.map(escape).join(",")];
+  data.forEach(row => lines.push(cols.map(c => escape(row[c])).join(",")));
+  return lines.join("\n");
+}
+
+document.getElementById("btnDownloadBuiltin")?.addEventListener("click", () => {
+  const val = document.getElementById("builtinData")?.value;
+  const data = val === "iris" ? irisData : val === "spiral" ? spiralData : null;
+  if (!data) return;
+  const blob = new Blob([jsonToCsv(data)], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${val}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 });
 
 

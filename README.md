@@ -24,8 +24,8 @@ clustering, and heatmaps, powered by [D3.js](https://d3js.org/).
   pairs plots.
 - **Interactive by default** — D3-powered rendering with tooltips, zoom, and click-to-select.
 - **Zero build step** — import the ES module straight from a CDN, or install from npm.
-- **R-compatible clustering** — `hclust_plot` mirrors R's `scale()` &rarr; `dist()` &rarr;
-  `hclust()`, including faithful `NA` (missing-value) handling.
+- **R-compatible clustering** — `hclust_plot` mirrors R's [`scale()`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/scale.html) &rarr; [`dist()`](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/dist.html) &rarr;
+  [`hclust()`](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/hclust.html), including faithful `NA` (missing-value) handling.
 - **Bring your own data** — pass an array of objects or a 2D numeric array; two sample datasets are
   included.
 
@@ -125,7 +125,7 @@ The demo script `main.js` loads the built SDK from `./dist/sdk.mjs`.
 
 ## Hierarchical clustering & missing values
 
-`hclust_plot` reproduces R's `scale()` → `dist()` → `hclust()` pipeline, including the way R
+`hclust_plot` reproduces R's [`scale()`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/scale.html) → [`dist()`](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/dist.html) → [`hclust()`](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/hclust.html) pipeline, including the way R
 handles missing values (`NA`). A missing entry is **never** replaced by a numeric value; it is
 simply excluded from every calculation that involves it. The pipeline runs in three stages:
 

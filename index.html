@@ -187,6 +187,23 @@
           </div>
         </div>
 
+        <!-- R comparison (webR) -->
+        <div class="panel-card rcompare-panel mb-4" id="rcompare">
+          <div class="panel-title">R comparison (webR)</div>
+          <p class="text-muted small mb-2">
+            Equivalent base-R code for the selected tool and current dataset, run entirely in your browser via
+            <a href="https://docs.r-wasm.org/webr/latest/" target="_blank" rel="noopener">webR</a>.
+            Run it and compare R's output with the clustJs plot above. The first run downloads the webR
+            runtime (~15&nbsp;MB), so it may take a moment.
+          </p>
+          <div class="d-flex gap-2 mb-2 align-items-center">
+            <button id="btnRunR" class="btn btn-sm btn-outline-light" type="button">Run in webR</button>
+            <span id="rStatus" class="text-muted small"></span>
+          </div>
+          <pre class="sdk-example mb-2 r-code-pre"><code id="rCode">Click a tool to generate the equivalent R code.</code></pre>
+          <div id="rPlotOut" class="r-plot-out"></div>
+        </div>
+
         <!-- Quick start -->
         <details class="panel-card quickstart mb-4" open>
           <summary class="panel-title">Quick start using the SDK functions</summary>
@@ -222,9 +239,75 @@
             clustJs is a lightweight JavaScript library for high-dimensional data visualization in the
             browser. It brings PCA, t-SNE, UMAP, hierarchical clustering, and heatmaps together behind a
             simple ES-module API &mdash; powered by D3.js. Its hierarchical clustering faithfully reproduces
-            R's <code>scale()</code> &rarr; <code>dist()</code> &rarr; <code>hclust()</code> pipeline,
+            R's <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/scale.html" target="_blank" rel="noopener"><code>scale()</code></a>
+            &rarr; <a href="https://stat.ethz.ch/R-manual/R-devel/library/stats/html/dist.html" target="_blank" rel="noopener"><code>dist()</code></a>
+            &rarr; <a href="https://stat.ethz.ch/R-manual/R-devel/library/stats/html/hclust.html" target="_blank" rel="noopener"><code>hclust()</code></a> pipeline,
             including the way R handles missing values.
           </p>
+
+          <div class="panel-title">Hierarchical clustering, comparable to R</div>
+          <p class="app-about-text">
+            <code>hclust_plot()</code> is designed so that the same matrix produces the same dendrograms
+            and leaf order you would get in R:
+          </p>
+          <ul class="app-about-text">
+            <li>
+              <strong>Column standardization like <code>scale()</code>.</strong> Each column is centered and
+              scaled using only its observed values (mean and sample standard deviation), so
+              <code>NA</code>s never distort the statistics. Set <code>scaleData: false</code> to cluster raw
+              values, like <code>hclust(dist(x))</code> on unscaled data.
+            </li>
+            <li>
+              <strong>Distances like <code>dist()</code>.</strong> Pairwise euclidean (or manhattan)
+              distances are computed from jointly-observed dimensions only, then rescaled by
+              <code>P / q</code> (total dimensions over observed dimensions) &mdash; exactly R's missing-value
+              correction. If a pair of rows shares no observed dimensions, clustJs refuses to invent a
+              distance and reports it, rather than silently fabricating one.
+            </li>
+            <li>
+              <strong>Linkage like <code>hclust()</code>.</strong> Agglomeration runs on the precomputed
+              distance matrix (via <code>ml-hclust</code>'s agnes) with selectable methods
+              (<code>complete</code> by default, plus single, average, ward and others) for rows and columns
+              independently &mdash; matching <code>hclust(d, method = ...)</code>.
+            </li>
+            <li>
+              <strong>Display like <code>pheatmap()</code>.</strong> By default the heatmap shows the scaled
+              values with rows and columns reordered by the dendrograms; missing cells are rendered
+              explicitly instead of being dropped. A separate <code>displayData</code> matrix can be supplied
+              to show raw values while clustering on scaled ones.
+            </li>
+          </ul>
+
+          <div class="panel-title">Interactive dendrograms</div>
+          <p class="app-about-text">
+            Dendrogram branches are clickable: selecting a branch highlights it down to its leaves and
+            outlines the corresponding rows or columns in the heatmap. <em>Plot selection</em> re-clusters
+            and re-renders just that subset (larger cells and labels), and <em>Show all</em> returns to the
+            full plot. The same selection is available programmatically via the
+            <code>onSelectionChange</code> callback and the returned node's
+            <code>hclust.getSelection()</code>, <code>hclust.plotSelection()</code> and
+            <code>hclust.clearSelection()</code> methods.
+          </p>
+
+          <div class="panel-title">Everything runs in the browser</div>
+          <p class="app-about-text">
+            No server, no install: the SDK is a single ES module you can import from a CDN or bundle
+            yourself. All computation &mdash; scaling, distances, clustering, projections &mdash; happens
+            client-side, so your data never leaves the page.
+          </p>
+
+          <div class="panel-title">A note on dataset size</div>
+          <p class="app-about-text">
+            clustJs is built for small-to-medium datasets (roughly up to a few thousand rows) &mdash; the
+            typical size where interactive, in-browser exploration shines. Hierarchical clustering is
+            O(n&sup2;) in memory and time, and every cell is rendered as an SVG element, so very large
+            matrices will get slow. For larger datasets, consider
+            <a href="https://docs.r-wasm.org/webr/latest/" target="_blank" rel="noopener">webR</a>
+            (R compiled to WebAssembly), which runs R's native <code>hclust()</code> in the browser with
+            better performance at scale &mdash; and since clustJs mirrors R's pipeline, results carry over
+            directly.
+          </p>
+
           <p class="app-about-text mb-0">
             Load a CSV or a built-in dataset, pick a tool on the left, or call the SDK directly from the
             console. See the

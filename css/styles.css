@@ -654,6 +654,32 @@ body {
   border-top: 1px solid var(--border-soft);
 }
 
+/* R comparison (webR) panel */
+.rcompare-panel {
+  --panel-accent: #38bdf8;
+}
+
+.r-code-pre {
+  white-space: pre;
+  overflow-x: auto;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.r-plot-out {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.r-plot-out canvas {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  max-width: 100%;
+  height: auto;
+}
+
 .tool-square {
   background: var(--bg-elev-2);
   border: 1px solid var(--border);

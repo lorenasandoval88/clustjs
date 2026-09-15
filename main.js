@@ -274,7 +274,8 @@ const appState = {
   hclustClusterRows: true,  // toggle for hclust row clustering
   hclustClusterCols: true,  // toggle for hclust column clustering
   distanceRows: true,       // toggle for distance matrix on rows
-  distanceCols: true        // toggle for distance matrix on columns
+  distanceCols: true,       // toggle for distance matrix on columns
+  currentTool: null         // last clicked tool button id (drives the R comparison panel)
 };
 
 const plotContainerIds = ["myPCA", "myHclust", "myHeatmap", "myUMAP", "myTSNE", "myScatter", "myPairs", "myDistanceRows", "myDistanceCols", "myPlots"];
@@ -357,6 +358,8 @@ function resetDatasetUiState() {
     btnDistCols.textContent = "Distance Cols: ON";
     btnDistCols.className = "btn btn-sm btn-primary";
   }
+
+  updateRCode();
 }
 
 // ======== IRIS (your built-in sample) ========
@@ -942,7 +945,156 @@ toolButtonIds.forEach(id => {
   document.getElementById(id)?.addEventListener("click", () => {
     toolButtonIds.forEach(otherId => document.getElementById(otherId)?.classList.remove("is-active"));
     document.getElementById(id)?.classList.add("is-active");
+    appState.currentTool = id;
+    updateRCode();
   });
+});
+
+// ======== R COMPARISON (webR) ========
+function rNum(v) {
+  return (typeof v === "number" && Number.isFinite(v)) ? String(v) : "NA";
+}
+
+// Serialize the current dataset (numeric columns + optional label column) as R code
+function buildRDataCode() {
+  const data = appState.data;
+  if (!Array.isArray(data) || data.length === 0) return null;
+  const sample = data[0] || {};
+  let keys = Object.keys(sample);
+  if (appState.selectedColumns.length > 0) {
+    keys = appState.selectedColumns.filter(k => k in sample);
+  }
+  const numericKeys = keys.filter(k => typeof sample[k] === "number");
+  if (numericKeys.length === 0) return null;
+  const labelKey = Object.keys(sample).find(k => typeof sample[k] !== "number");
+
+  const maxRows = 500;
+  const rows = data.slice(0, maxRows);
+  const lines = rows.map(r => "  " + numericKeys.map(k => rNum(r[k])).join(", "));
+  const truncNote = data.length > maxRows ? ` (first ${maxRows} of ${data.length} rows)` : "";
+
+  let code = `# Data: ${appState.name ?? "dataset"}${truncNote}\n`;
+  code += `m <- matrix(c(\n${lines.join(",\n")}\n), nrow = ${rows.length}, byrow = TRUE)\n`;
+  code += `colnames(m) <- c(${numericKeys.map(k => JSON.stringify(k)).join(", ")})\n`;
+  if (labelKey) {
+    code += `labs <- factor(c(${rows.map(r => JSON.stringify(String(r[labelKey]))).join(", ")}))\n`;
+  } else {
+    code += `labs <- factor(rep("all", nrow(m)))\n`;
+  }
+  return code;
+}
+
+const R_HEAT_COLS = `col = hcl.colors(50, "RdYlBu", rev = TRUE)`;
+
+function buildRToolCode() {
+  switch (appState.currentTool) {
+    case "btnPCA":
+      return `p <- prcomp(scale(m))\nplot(p$x[, 1], p$x[, 2], col = labs, pch = 19,\n     xlab = "PC1", ylab = "PC2", main = "PCA (R)")\nlegend("topright", legend = levels(labs), col = seq_along(levels(labs)), pch = 19)`;
+    case "btnScatter":
+      return `plot(m[, 1], m[, 2], col = labs, pch = 19,\n     xlab = colnames(m)[1], ylab = colnames(m)[2], main = "Scatter (R)")\nlegend("topright", legend = levels(labs), col = seq_along(levels(labs)), pch = 19)`;
+    case "btnPairs":
+      return `pairs(m, col = labs, pch = 19, main = "Pairs (R)")`;
+    case "btnHeatmap":
+      return `heatmap(m, Rowv = NA, Colv = NA, scale = "none",\n        ${R_HEAT_COLS}, main = "Heatmap (R)")`;
+    case "btnHclust": {
+      const rowv = appState.hclustClusterRows ? `as.dendrogram(hclust(dist(xs)))` : "NA";
+      const colv = appState.hclustClusterCols ? `as.dendrogram(hclust(dist(t(xs))))` : "NA";
+      return `xs <- scale(m)  # scale() -> dist() -> hclust(), same pipeline as clustJs\nheatmap(xs, Rowv = ${rowv}, Colv = ${colv},\n        scale = "none", ${R_HEAT_COLS}, main = "hclust heatmap (R)")`;
+    }
+    case "btnDistance": {
+      const parts = [`xs <- scale(m)`];
+      if (appState.distanceRows) {
+        parts.push(`heatmap(as.matrix(dist(xs)), Rowv = NA, Colv = NA, scale = "none",\n        ${R_HEAT_COLS}, main = "Row distances (R)")`);
+      }
+      if (appState.distanceCols) {
+        parts.push(`heatmap(as.matrix(dist(t(xs))), Rowv = NA, Colv = NA, scale = "none",\n        ${R_HEAT_COLS}, main = "Column distances (R)")`);
+      }
+      return parts.join("\n");
+    }
+    case "btnTSNE":
+      return `webr::install("Rtsne")  # downloads the wasm package on first run\nlibrary(Rtsne)\nset.seed(42)\nfit <- Rtsne(scale(m), perplexity = min(30, floor((nrow(m) - 1) / 3)), check_duplicates = FALSE)\nplot(fit$Y, col = labs, pch = 19, xlab = "tSNE 1", ylab = "tSNE 2", main = "t-SNE (R)")`;
+    case "btnUMAP":
+      return `webr::install("uwot")  # downloads the wasm package on first run\nlibrary(uwot)\nset.seed(42)\nfit <- umap(scale(m))\nplot(fit, col = labs, pch = 19, xlab = "UMAP 1", ylab = "UMAP 2", main = "UMAP (R)")`;
+    default:
+      return null;
+  }
+}
+
+function buildRCode() {
+  const dataCode = buildRDataCode();
+  const toolCode = buildRToolCode();
+  if (!dataCode || !toolCode) return null;
+  return `${dataCode}\n${toolCode}\n`;
+}
+
+function updateRCode() {
+  const el = document.getElementById("rCode");
+  if (!el) return;
+  el.textContent = buildRCode()
+    ?? "Load a dataset with numeric columns and click a tool to generate the equivalent R code.";
+}
+
+let webRPromise = null;
+function ensureWebR() {
+  if (!webRPromise) {
+    webRPromise = (async () => {
+      const { WebR } = await import("https://webr.r-wasm.org/latest/webr.mjs");
+      const webR = new WebR();
+      await webR.init();
+      return webR;
+    })().catch(err => { webRPromise = null; throw err; });
+  }
+  return webRPromise;
+}
+
+document.getElementById("btnRunR")?.addEventListener("click", async () => {
+  const statusEl = document.getElementById("rStatus");
+  const outEl = document.getElementById("rPlotOut");
+  const btn = document.getElementById("btnRunR");
+  updateRCode();
+  const code = buildRCode();
+  if (!code) {
+    if (statusEl) statusEl.textContent = "Load a dataset with numeric columns and click a tool first.";
+    return;
+  }
+  btn.disabled = true;
+  try {
+    if (statusEl) statusEl.textContent = "Loading webR runtime\u2026 (first run downloads ~15 MB)";
+    const webR = await ensureWebR();
+    if (statusEl) statusEl.textContent = "Running R code\u2026";
+    const shelter = await new webR.Shelter();
+    try {
+      const result = await shelter.captureR(code, {
+        captureGraphics: { width: 900, height: 560 }
+      });
+      result.output.forEach(line => {
+        if (line.type === "stdout") console.log("R:", line.data);
+        else if (line.type === "stderr") console.warn("R:", line.data);
+      });
+      if (outEl) {
+        outEl.innerHTML = "";
+        for (const img of result.images) {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          canvas.getContext("2d").drawImage(img, 0, 0);
+          outEl.appendChild(canvas);
+        }
+      }
+      if (statusEl) {
+        statusEl.textContent = result.images.length
+          ? "Done \u2014 compare R's output with the clustJs plot above."
+          : "Finished, but R produced no plot (see console).";
+      }
+    } finally {
+      shelter.purge();
+    }
+  } catch (err) {
+    console.error("webR failed:", err);
+    if (statusEl) statusEl.textContent = `webR error: ${err.message ?? err}`;
+  } finally {
+    btn.disabled = false;
+  }
 });
 
 // Leaving Scatter for another tool: restore full column selection

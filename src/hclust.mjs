@@ -295,6 +295,9 @@ export async function hclust_plot(options = {}) {
         showResetButton: showResetButton = true,
         hoverHighlight: hoverHighlight = true,
         clickSelect: clickSelect = true,
+        // called with the current selection whenever a dendrogram branch is (de)selected:
+        // { rowIndices, colIndices, rowNames, colNames }
+        onSelectionChange: onSelectionChange = null,
     } = options;
     const targetDivId = divId;
 
@@ -712,6 +715,60 @@ export async function hclust_plot(options = {}) {
         selectedColNode = null;
         selectedRowNode = null;
         applyBranchHighlight();
+        notifySelection();
+    }
+
+    // Current selection mapped back to the caller's data: original row/col indices and names
+    function getSelection() {
+        const rowOrders = [...selectedRows].sort((a, b) => a - b);
+        const colOrders = [...selectedCols].sort((a, b) => a - b);
+        const rowIndices = rowOrders.map(o => rowIdx[o]);
+        const colIndices = colOrders.map(o => colIdx[o]);
+        return {
+            rowIndices,
+            colIndices,
+            rowNames: rowIndices.map(i => rowNames[i]),
+            colNames: colIndices.map(i => colNames[i])
+        };
+    }
+
+    function notifySelection() {
+        if (typeof onSelectionChange === "function") {
+            try { onSelectionChange(getSelection()); } catch (err) { console.error("onSelectionChange failed:", err); }
+        }
+    }
+
+    // Re-render the plot using only the branch-selected rows/columns (drill-down)
+    async function plotSelection() {
+        if (selectedRows.size === 0 && selectedCols.size === 0) {
+            console.warn("hclust_plot(): click a dendrogram branch first to select rows/columns.");
+            return null;
+        }
+        const subRowIdx = selectedRows.size > 0
+            ? [...selectedRows].sort((a, b) => a - b).map(o => rowIdx[o])
+            : d3.range(data.length);
+        const subColIdx = selectedCols.size > 0
+            ? [...selectedCols].sort((a, b) => a - b).map(o => colIdx[o])
+            : d3.range(data[0].length);
+        if (subRowIdx.length < 2 && subColIdx.length < 2) {
+            console.warn("hclust_plot(): selection too small to cluster.");
+            return null;
+        }
+        const subData = subRowIdx.map(r => subColIdx.map(c => data[r][c]));
+        return hclust_plot({
+            ...options,
+            data: subData,
+            displayData: null,
+            rowNames: subRowIdx.map(r => rowNames[r]),
+            colNames: subColIdx.map(c => colNames[c]),
+            // subset was already scaled/filtered above; don't re-apply
+            scaleData: false,
+            missingValue: null,
+            removeMissingBy: "none",
+            clusterRows: clusterRows && subRowIdx.length > 1,
+            clusterCols: clusterCols && subColIdx.length > 1,
+            _fullOptions: options._fullOptions ?? options
+        });
     }
 
     //################################################################
@@ -813,6 +870,7 @@ export async function hclust_plot(options = {}) {
                         collectLeafOrders(node).forEach(o => selectedCols.add(o));
                     }
                     applyBranchHighlight();
+                    notifySelection();
                 })
         })
     }
@@ -892,6 +950,7 @@ export async function hclust_plot(options = {}) {
                         collectLeafOrders(node).forEach(o => selectedRows.add(o));
                     }
                     applyBranchHighlight();
+                    notifySelection();
                 })
         })
     }
@@ -932,6 +991,22 @@ export async function hclust_plot(options = {}) {
                 clearBranchSelection();
             };
             buttonBar.appendChild(clearButton);
+
+            // Re-render the plot using only the branch-selected rows/columns
+            const plotSelButton = document.createElement("button");
+            plotSelButton.textContent = "Plot selection";
+            plotSelButton.style.cssText = "padding:3px 10px;cursor:pointer;";
+            plotSelButton.onclick = () => plotSelection();
+            buttonBar.appendChild(plotSelButton);
+        }
+
+        // When showing a drilled-down subset, offer a way back to the full plot
+        if (options._fullOptions) {
+            const showAllButton = document.createElement("button");
+            showAllButton.textContent = "Show all";
+            showAllButton.style.cssText = "padding:3px 10px;cursor:pointer;";
+            showAllButton.onclick = () => hclust_plot(options._fullOptions);
+            buttonBar.appendChild(showAllButton);
         }
 
         if (buttonBar.children.length > 0) div.appendChild(buttonBar);
@@ -957,7 +1032,15 @@ export async function hclust_plot(options = {}) {
     }
     // console.log("svg", svg.node())
 
-    return svg.node()
+    // Selection API: part of the exported hclust_plot contract.
+    // const node = await hclust_plot({...}); node.hclust.getSelection() / .clearSelection() / .plotSelection()
+    const svgNode = svg.node();
+    svgNode.hclust = {
+        getSelection,
+        clearSelection: clearBranchSelection,
+        plotSelection
+    };
+    return svgNode
 }
 
 

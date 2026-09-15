@@ -359,6 +359,12 @@ function resetDatasetUiState() {
     btnDistCols.className = "btn btn-sm btn-primary";
   }
 
+  // Reset the webR comparison output (stale plots belong to the previous dataset)
+  const rPlotOut = document.getElementById("rPlotOut");
+  if (rPlotOut) rPlotOut.innerHTML = "";
+  const rStatus = document.getElementById("rStatus");
+  if (rStatus) rStatus.textContent = "";
+
   updateRCode();
 }
 
@@ -981,7 +987,26 @@ function buildRDataCode() {
   } else {
     code += `labs <- factor(rep("all", nrow(m)))\n`;
   }
+  code += `rownames(m) <- paste0(as.character(labs), seq_len(nrow(m)))\n`;
   return code;
+}
+
+// Compact summary of the data for the displayed code (the full matrix is injected when run)
+function buildRDataStub() {
+  const data = appState.data;
+  if (!Array.isArray(data) || data.length === 0) return null;
+  const sample = data[0] || {};
+  let keys = Object.keys(sample);
+  if (appState.selectedColumns.length > 0) {
+    keys = appState.selectedColumns.filter(k => k in sample);
+  }
+  const numericKeys = keys.filter(k => typeof sample[k] === "number");
+  if (numericKeys.length === 0) return null;
+  const labelKey = Object.keys(sample).find(k => typeof sample[k] !== "number");
+  const nRows = Math.min(data.length, 500);
+  return `# Data: ${appState.name ?? "dataset"} \u2014 injected automatically when run\n`
+    + `# m: ${nRows} \u00d7 ${numericKeys.length} numeric matrix (${numericKeys.join(", ")}), rownames = label + row number\n`
+    + `# labs: factor of ${labelKey ? JSON.stringify(labelKey) : "row labels"}\n`;
 }
 
 const R_HEAT_COLS = `col = hcl.colors(50, "RdYlBu", rev = TRUE)`;
@@ -995,19 +1020,19 @@ function buildRToolCode() {
     case "btnPairs":
       return `pairs(m, col = labs, pch = 19, main = "Pairs (R)")`;
     case "btnHeatmap":
-      return `heatmap(m, Rowv = NA, Colv = NA, scale = "none",\n        ${R_HEAT_COLS}, main = "Heatmap (R)")`;
+      return `heatmap(m, Rowv = NA, Colv = NA, scale = "none", margins = c(9, 7),\n        ${R_HEAT_COLS}, main = "Heatmap (R)")`;
     case "btnHclust": {
       const rowv = appState.hclustClusterRows ? `as.dendrogram(hclust(dist(xs)))` : "NA";
       const colv = appState.hclustClusterCols ? `as.dendrogram(hclust(dist(t(xs))))` : "NA";
-      return `xs <- scale(m)  # scale() -> dist() -> hclust(), same pipeline as clustJs\nheatmap(xs, Rowv = ${rowv}, Colv = ${colv},\n        scale = "none", ${R_HEAT_COLS}, main = "hclust heatmap (R)")`;
+      return `xs <- scale(m)  # scale() -> dist() -> hclust(), same pipeline as clustJs\nheatmap(xs, Rowv = ${rowv}, Colv = ${colv},\n        scale = "none", margins = c(9, 7), ${R_HEAT_COLS}, main = "hclust heatmap (R)")`;
     }
     case "btnDistance": {
       const parts = [`xs <- scale(m)`];
       if (appState.distanceRows) {
-        parts.push(`heatmap(as.matrix(dist(xs)), Rowv = NA, Colv = NA, scale = "none",\n        ${R_HEAT_COLS}, main = "Row distances (R)")`);
+        parts.push(`heatmap(as.matrix(dist(xs)), Rowv = NA, Colv = NA, scale = "none", margins = c(9, 7),\n        ${R_HEAT_COLS}, main = "Row distances (R)")`);
       }
       if (appState.distanceCols) {
-        parts.push(`heatmap(as.matrix(dist(t(xs))), Rowv = NA, Colv = NA, scale = "none",\n        ${R_HEAT_COLS}, main = "Column distances (R)")`);
+        parts.push(`heatmap(as.matrix(dist(t(xs))), Rowv = NA, Colv = NA, scale = "none", margins = c(9, 7),\n        ${R_HEAT_COLS}, main = "Column distances (R)")`);
       }
       return parts.join("\n");
     }
@@ -1020,8 +1045,8 @@ function buildRToolCode() {
   }
 }
 
-function buildRCode() {
-  const dataCode = buildRDataCode();
+function buildRCode({ forDisplay = false } = {}) {
+  const dataCode = forDisplay ? buildRDataStub() : buildRDataCode();
   const toolCode = buildRToolCode();
   if (!dataCode || !toolCode) return null;
   return `${dataCode}\n${toolCode}\n`;
@@ -1030,7 +1055,7 @@ function buildRCode() {
 function updateRCode() {
   const el = document.getElementById("rCode");
   if (!el) return;
-  el.textContent = buildRCode()
+  el.textContent = buildRCode({ forDisplay: true })
     ?? "Load a dataset with numeric columns and click a tool to generate the equivalent R code.";
 }
 

@@ -185,11 +185,13 @@ document.addEventListener("click", (e) => {
 // };
 
 // Console controls
-document.getElementById("btnClearConsole")?.addEventListener("click", () => {
+document.getElementById("btnClearConsole")?.addEventListener("click", (e) => {
+  e.preventDefault(); // don't toggle the surrounding <details>
   if (consoleOut) consoleOut.innerHTML = "";
 });
 
-document.getElementById("btnCopyConsole")?.addEventListener("click", () => {
+document.getElementById("btnCopyConsole")?.addEventListener("click", (e) => {
+  e.preventDefault(); // don't toggle the surrounding <details>
   if (consoleOut) {
     navigator.clipboard.writeText(consoleOut.textContent)
       .then(() => displayInConsole(['📋 Copied to clipboard'], 'meta'))

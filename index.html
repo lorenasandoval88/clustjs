@@ -35,12 +35,16 @@
       <div class="collapse navbar-collapse" id="navbarContent">
         <ul class="navbar-nav ms-auto align-items-lg-center">
           <li class="nav-item"><a class="nav-link" href="#" id="navAbout">About</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" id="navExamples">Examples</a></li>
           <li class="nav-item"><a class="nav-link active" href="#tools" id="navTools">Tools</a></li>
           <li class="nav-item">
             <a class="nav-link" href="https://github.com/lorenasandoval88/clustjs" target="_blank" rel="noopener">Code</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="https://github.com/lorenasandoval88/clustjs/wiki" target="_blank" rel="noopener">Docs</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/lorenasandoval88/clustjs/issues" target="_blank" rel="noopener">Report issues</a>
           </li>
         </ul>
       </div>
@@ -51,7 +55,7 @@
   <header class="app-hero">
     <div class="container-fluid px-4">
       <h1 class="app-hero-title">High-dimensional data visualization</h1>
-      <p class="app-hero-sub">Explore your data with PCA, t-SNE, UMAP, hierarchical clustering, and heatmaps &mdash; powered by D3.js. Load a dataset, pick a tool, and go.</p>
+      <p class="app-hero-sub">Explore your data with PCA, t-SNE, UMAP, hierarchical clustering, and heatmaps. Load a dataset, pick a tool, and go.</p>
     </div>
   </header>
 
@@ -187,8 +191,8 @@
         </div>
 
         <!-- R comparison (webR) -->
-        <div class="panel-card rcompare-panel mb-4" id="rcompare">
-          <div class="panel-title">R comparison (webR)</div>
+        <details class="panel-card rcompare-panel mb-4" id="rcompare">
+          <summary class="panel-title">R comparison (webR)</summary>
           <p class="text-muted small mb-2">
             Compare the selected plot with R's, run in your browser via
             <a href="https://docs.r-wasm.org/webr/latest/" target="_blank" rel="noopener">webR</a>.
@@ -214,7 +218,7 @@
           </div>
           <pre class="sdk-example mb-2 r-code-pre"><code id="rCode">Click a tool to generate the equivalent R code.</code></pre>
           <div id="rPlotOut" class="r-plot-out"></div>
-        </div>
+        </details>
 
         <!-- Quick start -->
         <details class="panel-card quickstart mb-4">
@@ -223,19 +227,20 @@
         </details>
 
         <!-- Embedded Console -->
-        <div id="consolePanel" class="mb-4">
-          <div id="consoleHeader">
+        <details id="consolePanel" class="mb-4">
+          <summary id="consoleHeader">
             <div class="fw-semibold">Console</div>
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 align-items-center">
               <button id="btnClearConsole" class="btn-console" type="button">Clear</button>
               <button id="btnCopyConsole" class="btn-console" type="button">Copy</button>
+              <span class="console-caret" aria-hidden="true">▾</span>
             </div>
-          </div>
+          </summary>
           <div id="consoleOut" aria-label="Embedded console output"></div>
           <div id="consoleControls">
             <input id="consoleCmd" type="text" placeholder="Type JS here and press Enter (demo only)" />
           </div>
-        </div>
+        </details>
 
         <!-- Console output plot -->
         <div class="plot-card" data-plot="Plot">
@@ -331,6 +336,49 @@
             console. See the
             <a href="https://github.com/lorenasandoval88/clustjs/wiki" target="_blank" rel="noopener">documentation</a>
             for details.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXAMPLES VIEW -->
+  <section id="examplesView" class="container-fluid py-4" hidden>
+    <div class="row justify-content-center">
+      <div class="col-lg-8 col-xl-7">
+        <div class="side-panel">
+          <div class="panel-title">Example use cases</div>
+          <p class="app-about-text">
+            Real-world applications built on clustJs and the same in-browser, no-server philosophy.
+          </p>
+
+          <div class="panel-title">Diseasome — clustering polygenic risk scores</div>
+          <p class="app-about-text">
+            <a href="https://episphere.github.io/diseasome/" target="_blank" rel="noopener">Diseasome</a>
+            computes polygenic risk score (PRS) profiles from 23andMe reports using risk models from the
+            <a href="https://www.pgscatalog.org/" target="_blank" rel="noopener">PGS Catalog</a>, then uses
+            clustJs-style hierarchical clustering to compare risk profiles across individuals and traits —
+            an interactive clustered heatmap of users &times; risk models. All genomic data stays in the
+            browser; nothing is uploaded to a server.
+          </p>
+          <p class="app-about-text">            Its <em>Cluster PRS Results</em> step is <code>hclust_plot()</code> in action:
+          </p>
+          <ul class="app-about-text">
+            <li><strong>Cluster by</strong> rows (users), columns (PGS models), or both, with dendrograms on each axis.</li>
+            <li><strong>Linkage</strong> selectable per plot &mdash; complete, single, average, or Ward.</li>
+            <li><strong>Distance</strong> in euclidean, manhattan, or cosine metrics.</li>
+            <li><strong>Scaling</strong> as raw PRS or z-score per PGS column, so no single model dominates; missing values shown explicitly in gray.</li>
+            <li><strong>Interactive selection</strong> &mdash; click a dendrogram branch to highlight it, then <em>Plot selection</em> to re-cluster just that subset, with zoom and reset.</li>
+          </ul>
+          <p class="app-about-text">            <a class="btn btn-sm btn-outline-light" href="https://episphere.github.io/diseasome/" target="_blank" rel="noopener">Open Diseasome →</a>
+            <a class="btn btn-sm btn-outline-light ms-2" href="https://github.com/lorenasandoval88/diseasome" target="_blank" rel="noopener">Code</a>
+            <a class="btn btn-sm btn-outline-light ms-2" href="https://observablehq.com/@lorenasandoval88/polygenic-risk-scores-sdk-examples" target="_blank" rel="noopener">Notebook</a>
+          </p>
+
+          <p class="app-about-text mb-0">
+            Built something with clustJs? Open an issue or PR on
+            <a href="https://github.com/lorenasandoval88/clustjs" target="_blank" rel="noopener">GitHub</a>
+            to get it listed here.
           </p>
         </div>
       </div>
@@ -520,26 +568,30 @@ await sdk.pca_plot({ data: sdk.irisData, divId: "myPCA", width: 600, height: 400
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- About / Tools tab switching -->
+  <!-- About / Examples / Tools tab switching -->
   <script>
     (function () {
-      const navAbout = document.getElementById("navAbout");
-      const navTools = document.getElementById("navTools");
       const mainView = document.querySelector("main");
-      const aboutView = document.getElementById("aboutView");
+      const tabs = [
+        { nav: document.getElementById("navAbout"), view: document.getElementById("aboutView") },
+        { nav: document.getElementById("navExamples"), view: document.getElementById("examplesView") },
+        { nav: document.getElementById("navTools"), view: mainView },
+      ];
 
-      function showAbout(show) {
-        aboutView.hidden = !show;
-        mainView.hidden = show;
-        navAbout.classList.toggle("active", show);
-        navTools.classList.toggle("active", !show);
+      function show(activeTab) {
+        tabs.forEach(({ nav, view }) => {
+          const isActive = nav === activeTab;
+          view.hidden = !isActive;
+          nav.classList.toggle("active", isActive);
+        });
       }
 
-      navAbout.addEventListener("click", (e) => {
-        e.preventDefault();
-        showAbout(true);
+      tabs.forEach(({ nav, view }) => {
+        nav.addEventListener("click", (e) => {
+          if (view !== mainView) e.preventDefault();
+          show(nav);
+        });
       });
-      navTools.addEventListener("click", () => showAbout(false));
     })();
   </script>
 

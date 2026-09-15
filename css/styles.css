@@ -740,32 +740,50 @@ body {
   padding: 0.5rem;
 }
 
-/* Quick start (collapsible) */
-.quickstart summary {
+/* Collapsible panels (Quick start, R comparison, Console) */
+.quickstart summary,
+.rcompare-panel summary,
+#consolePanel summary {
   cursor: pointer;
   list-style: none;
 }
 
-.quickstart summary::-webkit-details-marker {
+.quickstart summary::-webkit-details-marker,
+.rcompare-panel summary::-webkit-details-marker,
+#consolePanel summary::-webkit-details-marker {
   display: none;
 }
 
-.quickstart summary.panel-title {
+.quickstart summary.panel-title,
+.rcompare-panel summary.panel-title {
   margin-bottom: 0;
 }
 
-.quickstart summary.panel-title::after {
+.quickstart summary.panel-title::after,
+.rcompare-panel summary.panel-title::after {
   content: "▾";
   margin-left: auto;
   color: var(--text-muted);
   transition: transform 0.2s ease;
 }
 
-.quickstart[open] summary.panel-title {
+.quickstart[open] summary.panel-title,
+.rcompare-panel[open] summary.panel-title {
   margin-bottom: 0.9rem;
 }
 
-.quickstart[open] summary.panel-title::after {
+.quickstart[open] summary.panel-title::after,
+.rcompare-panel[open] summary.panel-title::after {
+  transform: rotate(180deg);
+}
+
+/* Console dropdown caret */
+#consoleHeader .console-caret {
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+#consolePanel[open] .console-caret {
   transform: rotate(180deg);
 }
 

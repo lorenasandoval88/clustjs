@@ -57,6 +57,9 @@ export async function heatmap_plot(options = {}) {
     bottomLabelAngle: bottomLabelAngle = -90,
     // maximum characters shown for row/column tick labels before truncation with an ellipsis
     maxLabelLength: maxLabelLength = 20,
+    // arrays of row/col indices to highlight with a violet outline (like hclust selection)
+    highlightRows: highlightRows = null,
+    highlightCols: highlightCols = null,
          // hover tooltip
         tooltip_decimal: tooltip_decimal = 2,
         tooltip_fontFamily: tooltip_fontFamily = 'monospace',
@@ -319,6 +322,54 @@ if (typeof colorScale === "function") {
     .on('mouseover', tooltip.show)
     // Hide the tooltip when "mouseout"
     .on('mouseout', tooltip.hide)
+
+  // Optional highlight: outline the selected rows/cols in violet, like hclust's
+  // branch selection. Non-contiguous selections get one box per contiguous run.
+  const HIGHLIGHT = "#7c3aed"; // same vivid violet as hclust
+  const rowHi = Array.isArray(highlightRows) && highlightRows.length ? highlightRows : null;
+  const colHi = Array.isArray(highlightCols) && highlightCols.length ? highlightCols : null;
+  if (rowHi || colHi) {
+    // group sorted indices into contiguous runs, e.g. [1,2,3,7,8] -> [[1,3],[7,8]]
+    const runs = idx => {
+      const sorted = [...new Set(idx)].sort((a, b) => a - b);
+      const out = [];
+      for (const i of sorted) {
+        const last = out[out.length - 1];
+        if (last && i === last[1] + 1) last[1] = i;
+        else out.push([i, i]);
+      }
+      return out;
+    };
+    const rowRuns = rowHi ? runs(rowHi) : [[0, data.length - 1]];
+    const colRuns = colHi ? runs(colHi) : [[0, (data[0]?.length ?? 1) - 1]];
+    const bands = g.append("g").attr("class", "heatmap-highlight");
+    for (const [r0, r1] of rowRuns) {
+      for (const [c0, c1] of colRuns) {
+        bands.append("rect")
+          .attr("x", x_scale(c0))
+          .attr("y", y_scale(r0))
+          .attr("width", x_scale(c1) + x_scale.bandwidth() - x_scale(c0))
+          .attr("height", y_scale(r1) + y_scale.bandwidth() - y_scale(r0))
+          .attr("fill", "none")
+          .attr("stroke", HIGHLIGHT)
+          .attr("stroke-width", 3)
+          .style("pointer-events", "none");
+      }
+    }
+    // Emphasize the selected labels in the same violet
+    if (colHi) {
+      const set = new Set(colHi);
+      x_axis.selectAll("text")
+        .style("fill", i => (set.has(i) ? HIGHLIGHT : "#000"))
+        .style("font-weight", i => (set.has(i) ? "bold" : null));
+    }
+    if (rowHi) {
+      const set = new Set(rowHi);
+      y_axis.selectAll("text")
+        .style("fill", i => (set.has(i) ? HIGHLIGHT : "#000"))
+        .style("font-weight", i => (set.has(i) ? "bold" : null));
+    }
+  }
 
 
      // Color legend on the right side (START)

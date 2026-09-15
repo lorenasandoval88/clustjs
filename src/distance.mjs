@@ -159,7 +159,10 @@ export async function distance_plot(options = {}) {
 }
 
 // Linked hclust + distance view: renders an hclust plot and a distance heatmap that
-// updates to show only the rows/columns currently selected on the dendrograms.
+// Linked hclust + distance view: renders an hclust plot and a distance heatmap.
+// Clicking a dendrogram branch outlines the same rows/columns in violet on the
+// distance heatmap (like hclust's own selection) and shows a "Plot selection"
+// button on the distance plot to drill down to the selected subset.
 // Clearing the selection restores the full-data distance plot.
 // Note: selection indices map to the original data, so this assumes hclust's default
 // removeMissingBy: "none" (no rows/columns dropped before clustering).
@@ -175,6 +178,7 @@ export async function hclust_distance_plot(options = {}) {
     standardize = true,
     distanceOptions = {},    // extra options forwarded to distance_plot (width, color, ...)
     onSelectionChange = null, // still called with the hclust selection
+    onPlotSelection = null,   // still called when "Plot selection" is clicked
     ...hclustOptions          // everything else forwarded to hclust_plot
   } = options;
 
@@ -198,35 +202,63 @@ export async function hclust_distance_plot(options = {}) {
     else document.body.appendChild(distDiv);
   }
 
-  const renderDistance = async selection => {
-    const allRows = matrix.map((_, i) => i);
-    const allCols = (matrix[0] ?? []).map((_, j) => j);
-    const useRows = selection?.rowIndices?.length ? selection.rowIndices : allRows;
-    const useCols = selection?.colIndices?.length ? selection.colIndices : allCols;
+  const autoTitle = suffix => distanceOptions.title !== undefined
+    ? distanceOptions.title
+    : `${axis === "rows" ? "Row" : "Column"} distances (${metric}${standardize ? ", standardized" : ""})${suffix}`;
 
-    const subMatrix = useRows.map(r => useCols.map(c => prepared[r][c]));
+  const base = {
+    divId: distDiv.id,
+    axis,
+    metric,
+    standardize: false, // 'prepared' already carries full-data z-scores
+    ...distanceOptions
+  };
 
-    const isSubset = useRows.length !== allRows.length || useCols.length !== allCols.length;
-    const suffix = isSubset ? ` — selection (${useRows.length}×${useCols.length})` : "";
-    const title = distanceOptions.title !== undefined
-      ? distanceOptions.title
-      : `${axis === "rows" ? "Row" : "Column"} distances (${metric}${standardize ? ", standardized" : ""})${suffix}`;
+  const addButton = (label, onClick) => {
+    const bar = document.createElement("div");
+    bar.style.cssText = "display:flex;gap:6px;margin-bottom:4px;";
+    const btn = document.createElement("button");
+    btn.textContent = label;
+    btn.style.cssText = "padding:3px 10px;cursor:pointer;"; // match hclust's buttons
+    btn.onclick = onClick;
+    bar.appendChild(btn);
+    distDiv.prepend(bar);
+  };
 
+  // Full matrix; the selected rows/cols are outlined in violet like hclust,
+  // with a "Plot selection" button to drill down
+  const renderFull = async selection => {
+    const sel = axis === "rows" ? selection?.rowIndices : selection?.colIndices;
+    const hasHighlight = Array.isArray(sel) && sel.length > 0;
     await distance_plot({
-      divId: distDiv.id,
+      ...base,
+      data: prepared,
+      rowNames,
+      colNames,
+      highlightRows: hasHighlight ? sel : null,
+      highlightCols: hasHighlight ? sel : null,
+      title: autoTitle(hasHighlight ? ` — ${sel.length} selected` : "")
+    });
+    if (hasHighlight) addButton("Plot selection", () => renderSubset(selection));
+  };
+
+  // Subset drill-down: (selected rows or all) × (selected cols or all)
+  const renderSubset = async selection => {
+    const useRows = selection?.rowIndices?.length ? selection.rowIndices : matrix.map((_, i) => i);
+    const useCols = selection?.colIndices?.length ? selection.colIndices : (matrix[0] ?? []).map((_, j) => j);
+    const subMatrix = useRows.map(r => useCols.map(c => prepared[r][c]));
+    await distance_plot({
+      ...base,
       data: subMatrix,
       rowNames: useRows.map(r => rowNames[r]),
       colNames: useCols.map(c => colNames[c]),
-      axis,
-      metric,
-      standardize: false, // already standardized on the full data above
-      ...distanceOptions,
-      title
+      title: autoTitle(` — selection (${useRows.length}×${useCols.length})`)
     });
+    addButton("Show all", () => renderFull(selection));
   };
 
   // Initial distance plot on the full data
-  await renderDistance(null);
+  await renderFull(null);
 
   return hclust_plot({
     divId,
@@ -234,9 +266,15 @@ export async function hclust_distance_plot(options = {}) {
     rowNames: inputRowNames,
     colNames: inputColNames,
     ...hclustOptions,
+    // Branch click: highlight the same rows/cols on the distance heatmap
     onSelectionChange: selection => {
-      renderDistance(selection);
+      renderFull(selection);
       if (typeof onSelectionChange === "function") onSelectionChange(selection);
+    },
+    // "Plot selection": drill the distance heatmap down to the subset, like hclust
+    onPlotSelection: selection => {
+      renderSubset(selection);
+      if (typeof onPlotSelection === "function") onPlotSelection(selection);
     }
   });
 }

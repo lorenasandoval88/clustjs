@@ -1413,21 +1413,26 @@ document.getElementById("btnHclust")?.addEventListener("click", async () => {
   // Read width after the card is visible so the default matches the reset width
   const width = Math.max(520, el.clientWidth - 24);
 
-  await hclust_plot({
-    divId: "myHclust",
-    data: matrix,
-    rowNames: rowNames,
-    colNames: colNames,
-    width,
-    //height,
-    clusterCols: appState.hclustClusterCols,
-    clusterRows: appState.hclustClusterRows,
-    // Linked view: show distance matrices for the rows/cols selected on the dendrograms.
-    // Row and col selections are independent and combine as an intersection:
-    // the subset is (selected rows or all) × (selected cols or all).
-    onSelectionChange: async selection => {
-      const rowSel = selection.rowIndices ?? [];
-      const colSel = selection.colIndices ?? [];
+  // Linked distance cards. mode "highlight": full matrix with the hclust selection
+  // outlined in purple + a "Plot selection" button. mode "subset": drill down to
+  // the selected rows/cols (full-data z-scores) + a "Show all" button.
+  const renderLinkedDistanceCards = async (selection, mode) => {
+    const rowSel = selection?.rowIndices ?? [];
+    const colSel = selection?.colIndices ?? [];
+    const hasSel = rowSel.length > 0 || colSel.length > 0;
+
+    const addButton = (cardEl, label, onClick) => {
+      const bar = document.createElement("div");
+      bar.style.cssText = "display:flex;gap:6px;margin-bottom:4px;";
+      const btn = document.createElement("button");
+      btn.textContent = label;
+      btn.style.cssText = "padding:3px 10px;cursor:pointer;"; // match hclust's buttons
+      btn.onclick = onClick;
+      bar.appendChild(btn);
+      cardEl.prepend(bar);
+    };
+
+    if (mode === "subset" && hasSel) {
       const useRows = rowSel.length ? rowSel : matrix.map((_, i) => i);
       const useCols = colSel.length ? colSel : colNames.map((_, j) => j);
       // Standardize on the FULL data, then subset — selections reuse the same
@@ -1436,12 +1441,6 @@ document.getElementById("btnHclust")?.addEventListener("click", async () => {
       const subMatrix = useRows.map(r => useCols.map(c => stdMatrix[r][c]));
       const subRowNames = useRows.map(r => rowNames[r]);
       const subColNames = useCols.map(c => colNames[c]);
-
-      // e.g. "12 rows × 3 cols", "12 rows", "3 cols"
-      const selectionLabel = [
-        rowSel.length ? `${rowSel.length} rows` : null,
-        colSel.length ? `${colSel.length} cols` : null
-      ].filter(Boolean).join(" × ");
 
       // Unambiguous titles: what is compared vs. what it is computed over, e.g.
       // rows: "Row distances of 11 selected rows (using 2 selected cols)"
@@ -1457,23 +1456,15 @@ document.getElementById("btnHclust")?.addEventListener("click", async () => {
         return `Column distances ${subject}${basis}`;
       };
 
-      const renderCard = async (el, axis, axisSelected) => {
-        if (!el) return;
-        if (!selectionLabel) {
-          // Nothing selected on either axis: restore full data if the card is
-          // showing, otherwise leave it hidden
-          if (!el.classList.contains("has-plot")) return;
-          const w = Math.max(520, el.clientWidth - 24);
-          await distance_plot({ divId: el.id, data: matrix, rowNames, colNames, axis, width: w });
-          return;
-        }
+      const renderCard = async (cardEl, axis, axisSelected) => {
+        if (!cardEl) return;
         // Only auto-open a card when its own axis is selected; but if it is
         // already open, keep it in sync with the other axis's selection too
-        if (!axisSelected && !el.classList.contains("has-plot")) return;
-        showPlotLoading(el, "Loading...");
-        const w = Math.max(520, el.clientWidth - 24);
+        if (!axisSelected && !cardEl.classList.contains("has-plot")) return;
+        showPlotLoading(cardEl, "Loading...");
+        const w = Math.max(520, cardEl.clientWidth - 24);
         await distance_plot({
-          divId: el.id,
+          divId: cardEl.id,
           data: subMatrix,
           rowNames: subRowNames,
           colNames: subColNames,
@@ -1482,11 +1473,59 @@ document.getElementById("btnHclust")?.addEventListener("click", async () => {
           standardize: false, // subMatrix already carries full-data z-scores
           title: cardTitle(axis)
         });
+        addButton(cardEl, "Show all", () => renderLinkedDistanceCards(selection, "highlight"));
       };
 
       await renderCard(document.getElementById("myDistanceRows"), "rows", rowSel.length > 0);
       await renderCard(document.getElementById("myDistanceCols"), "cols", colSel.length > 0);
+      return;
     }
+
+    // "highlight" mode (or selection cleared)
+    const renderCard = async (cardEl, axis, sel) => {
+      if (!cardEl) return;
+      if (!sel.length) {
+        // No selection on this axis: restore the plain full plot if the card
+        // is showing, otherwise leave it hidden
+        if (!cardEl.classList.contains("has-plot")) return;
+        const w = Math.max(520, cardEl.clientWidth - 24);
+        await distance_plot({ divId: cardEl.id, data: matrix, rowNames, colNames, axis, width: w });
+        return;
+      }
+      showPlotLoading(cardEl, "Loading...");
+      const w = Math.max(520, cardEl.clientWidth - 24);
+      await distance_plot({
+        divId: cardEl.id,
+        data: matrix,
+        rowNames,
+        colNames,
+        axis,
+        width: w,
+        highlightRows: sel,
+        highlightCols: sel,
+        title: `${axis === "rows" ? "Row" : "Column"} distances — ${sel.length} ${axis} selected`
+      });
+      addButton(cardEl, "Plot selection", () => renderLinkedDistanceCards(selection, "subset"));
+    };
+
+    await renderCard(document.getElementById("myDistanceRows"), "rows", rowSel);
+    await renderCard(document.getElementById("myDistanceCols"), "cols", colSel);
+  };
+
+  await hclust_plot({
+    divId: "myHclust",
+    data: matrix,
+    rowNames: rowNames,
+    colNames: colNames,
+    width,
+    //height,
+    clusterCols: appState.hclustClusterCols,
+    clusterRows: appState.hclustClusterRows,
+    // Linked view: clicking a dendrogram branch outlines the same rows/cols in
+    // purple on the distance heatmaps; "Plot selection" (on either card) drills
+    // the distance cards down to the subset.
+    onSelectionChange: selection => renderLinkedDistanceCards(selection, "highlight"),
+    onPlotSelection: selection => renderLinkedDistanceCards(selection, "subset")
   });
 });
 

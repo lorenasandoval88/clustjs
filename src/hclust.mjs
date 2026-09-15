@@ -299,6 +299,8 @@ export async function hclust_plot(options = {}) {
         // called with the current selection whenever a dendrogram branch is (de)selected:
         // { rowIndices, colIndices, rowNames, colNames }
         onSelectionChange: onSelectionChange = null,
+        // called with the current selection when "Plot selection" drills down to the subset
+        onPlotSelection: onPlotSelection = null,
     } = options;
     const targetDivId = divId;
 
@@ -771,6 +773,9 @@ export async function hclust_plot(options = {}) {
             return null;
         }
         const subData = subRowIdx.map(r => subColIdx.map(c => data[r][c]));
+        if (typeof onPlotSelection === "function") {
+            try { onPlotSelection(getSelection()); } catch (err) { console.error("onPlotSelection failed:", err); }
+        }
         return hclust_plot({
             ...options,
             data: subData,

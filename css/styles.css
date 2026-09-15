@@ -641,6 +641,19 @@ body {
   gap: 0.55rem;
 }
 
+/* Full-width labelled separator inside the tools grid (groups row/col views) */
+.tools-group-label {
+  grid-column: 1 / -1;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-top: 0.35rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border-soft);
+}
+
 .tool-square {
   background: var(--bg-elev-2);
   border: 1px solid var(--border);
@@ -669,6 +682,9 @@ body {
 
 .hclust-controls {
   margin-top: 0.75rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
 }
 
 /* Data preview */
@@ -809,16 +825,14 @@ body {
   box-shadow: 0 0 0 1px var(--accent) inset, 0 6px 16px rgba(59, 130, 246, 0.22);
 }
 
-/* Hclust cluster controls: full-width, stacked under Hclust */
+/* Hclust / Distance row-col toggles: 2-column grid (Rows | Cols) */
 .hclust-controls .btn {
-  display: block;
   width: 100%;
-  margin-right: 0 !important;
-  margin-bottom: 0.5rem;
-}
-
-.hclust-controls .btn:last-child {
-  margin-bottom: 0;
+  margin: 0 !important;
+  font-size: 0.78rem;
+  padding-left: 0.4rem;
+  padding-right: 0.4rem;
+  white-space: nowrap;
 }
 
 /* Visualization empty state */
@@ -950,5 +964,96 @@ body {
   background: var(--panel-accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--panel-accent) 22%, transparent);
 }
+
+/* =========================================================
+   Multi-plot cards (stackable, click to highlight / remove)
+   ========================================================= */
+.plot-card {
+  display: none; /* shown only once it holds a rendered plot */
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  margin-bottom: 1rem;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.plot-card:last-child {
+  margin-bottom: 0;
+}
+
+/* A card becomes visible once its body has a plot */
+.plot-card:has(.plot-body.has-plot) {
+  display: block;
+}
+
+.plot-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.75rem;
+  background: var(--bg-elev-2);
+  border-bottom: 1px solid var(--border-soft);
+  cursor: pointer;
+  user-select: none;
+}
+
+.plot-card-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.plot-card.is-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.plot-card.is-selected .plot-card-head {
+  background: rgba(59, 130, 246, 0.18);
+}
+
+.plot-card-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.plot-action {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.3rem;
+}
+
+.plot-action:hover {
+  color: #ffffff;
+  background: rgba(59, 130, 246, 0.3);
+}
+
+.plot-remove {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.3rem;
+}
+
+.plot-remove:hover {
+  color: #ffffff;
+  background: rgba(239, 68, 68, 0.3);
+}
+
+.plot-body {
+  background: #ffffff;
+  overflow: auto;
+}
+
 
     

@@ -1,4 +1,4 @@
-import { irisData, spiralData, pca_plot, hclust_plot, heatmap_plot, umap_plot, tsne_plot, scatter_plot, pairs_plot } from "./dist/sdk.mjs"; // adjust path
+import { irisData, spiralData, pca_plot, hclust_plot, heatmap_plot, umap_plot, tsne_plot, scatter_plot, pairs_plot, distance_plot } from "./dist/sdk.mjs"; // adjust path
 
 // ======== EMBEDDED CONSOLE ========
 const consoleOut = document.getElementById("consoleOut");
@@ -272,10 +272,12 @@ const appState = {
   selectedColumns: [], // columns selected by user
   selectionMode: "normal", // "normal" | "scatter" (for 2-column limit)
   hclustClusterRows: true,  // toggle for hclust row clustering
-  hclustClusterCols: true   // toggle for hclust column clustering
+  hclustClusterCols: true,  // toggle for hclust column clustering
+  distanceRows: true,       // toggle for distance matrix on rows
+  distanceCols: true        // toggle for distance matrix on columns
 };
 
-const plotContainerIds = ["myPCA", "myHclust", "myHeatmap", "myUMAP", "myTSNE", "myScatter", "myPairs", "myPlots"];
+const plotContainerIds = ["myPCA", "myHclust", "myHeatmap", "myUMAP", "myTSNE", "myScatter", "myPairs", "myDistanceRows", "myDistanceCols", "myPlots"];
 const defaultPlotHeight = 410;
 const defaultPairsHeight = 900;
 
@@ -323,9 +325,14 @@ function resetDatasetUiState() {
   appState.selectionMode = "normal";
   appState.hclustClusterRows = true;
   appState.hclustClusterCols = true;
+  appState.distanceRows = true;
+  appState.distanceCols = true;
 
   const hclustControls = document.getElementById("hclustControls");
   if (hclustControls) hclustControls.style.display = "none";
+
+  const distanceControls = document.getElementById("distanceControls");
+  if (distanceControls) distanceControls.style.display = "none";
 
   const btnRows = document.getElementById("btnHclustRows");
   if (btnRows) {
@@ -337,6 +344,18 @@ function resetDatasetUiState() {
   if (btnCols) {
     btnCols.textContent = "Cluster Cols: ON";
     btnCols.className = "btn btn-sm btn-primary";
+  }
+
+  const btnDistRows = document.getElementById("btnDistRows");
+  if (btnDistRows) {
+    btnDistRows.textContent = "Distance Rows: ON";
+    btnDistRows.className = "btn btn-sm btn-primary me-2";
+  }
+
+  const btnDistCols = document.getElementById("btnDistCols");
+  if (btnDistCols) {
+    btnDistCols.textContent = "Distance Cols: ON";
+    btnDistCols.className = "btn btn-sm btn-primary";
   }
 }
 
@@ -620,9 +639,9 @@ function transposeObjectRows(data) {
 function updateTransposeButtonState() {
   const btnTranspose = document.getElementById("btnTransposeFile");
   if (!btnTranspose) return;
-  const enabled = appState.source === "file" && Array.isArray(appState.data) && appState.data.length > 0;
+  const enabled = Array.isArray(appState.data) && appState.data.length > 0;
   btnTranspose.disabled = !enabled;
-  btnTranspose.textContent = appState.fileIsTransposed ? "Restore Original File" : "Transpose Loaded File";
+  btnTranspose.textContent = appState.fileIsTransposed ? "Restore original data" : "Transpose data";
 }
 
 // ======== GUI: BUILT-IN DATASET SELECT ========
@@ -636,10 +655,10 @@ document.getElementById("builtinData")?.addEventListener("change", (e) => {
     // Reset loaded file info
     appState.source = "builtin";
     appState.name = val === "iris" ? "Iris" : "Spiral";
-    appState.fileOriginalData = null;
+    appState.data = val === "iris" ? irisData : spiralData;
+    appState.fileOriginalData = appState.data.map(row => ({ ...row }));
     appState.fileIsTransposed = false;
     appState.selectedColumns = [];
-    appState.data = val === "iris" ? irisData : spiralData;
 
     // Reset tool/UI state
     resetDatasetUiState();
@@ -702,8 +721,8 @@ document.getElementById("fileInput")?.addEventListener("change", (e) => {
 });
 
 document.getElementById("btnTransposeFile")?.addEventListener("click", () => {
-  if (appState.source !== "file" || !Array.isArray(appState.data) || appState.data.length === 0) {
-    console.warn("Load a file first to use transpose.");
+  if (!Array.isArray(appState.data) || appState.data.length === 0) {
+    console.warn("Load or select a dataset first to use transpose.");
     updateTransposeButtonState();
     return;
   }
@@ -712,14 +731,18 @@ document.getElementById("btnTransposeFile")?.addEventListener("click", () => {
     appState.fileOriginalData = appState.data.map(row => ({ ...row }));
   }
 
+  const baseTitle = appState.source === "builtin"
+    ? `${appState.name} (built-in)`
+    : `Loaded file: ${appState.name}`;
+
   if (appState.fileIsTransposed) {
     appState.data = appState.fileOriginalData.map(row => ({ ...row }));
     appState.fileIsTransposed = false;
-    renderTableRight(appState.data, `Loaded file: ${appState.name}`);
+    renderTableRight(appState.data, baseTitle);
   } else {
     appState.data = transposeObjectRows(appState.fileOriginalData);
     appState.fileIsTransposed = true;
-    renderTableRight(appState.data, `Loaded file (transposed): ${appState.name}`);
+    renderTableRight(appState.data, `${baseTitle} — transposed`);
   }
 
   appState.selectedColumns = [];
@@ -732,12 +755,113 @@ updateTransposeButtonState();
 
 ["btnPCA", "btnTSNE", "btnUMAP", "btnScatter", "btnPairs", "btnHclust", "btnHeatmap", "btnHclustRows", "btnHclustCols", "btnTransposeFile"].forEach(id => {
   document.getElementById(id)?.addEventListener("click", () => {
-    resetAllPlots();
+    // Tools now stack: each renders into its own card without clearing the others.
+  });
+});
+
+// Plot cards: click the title bar to highlight, click again (or ✕) to remove.
+function removePlotCard(card) {
+  const body = card.querySelector(".plot-body");
+  if (body) {
+    body.innerHTML = "";
+    body.classList.remove("has-plot");
+  }
+  card.classList.remove("is-selected");
+}
+
+// Each plot body maps to the tool button that (re)renders it, used by the Reset action.
+const plotToolMap = {
+  myPCA: "btnPCA",
+  myTSNE: "btnTSNE",
+  myUMAP: "btnUMAP",
+  myScatter: "btnScatter",
+  myPairs: "btnPairs",
+  myHeatmap: "btnHeatmap",
+  myHclust: "btnHclust",
+  myDistanceRows: "btnDistance",
+  myDistanceCols: "btnDistance"
+};
+
+function resetPlotCard(card) {
+  const bodyId = card.querySelector(".plot-body")?.id;
+  const btnId = plotToolMap[bodyId];
+  if (btnId) document.getElementById(btnId)?.click();
+}
+
+function downloadPlotSvg(card) {
+  const svg = card.querySelector(".plot-body svg");
+  if (!svg) {
+    console.warn("Nothing to download yet — render this plot first.");
+    return;
+  }
+  const clone = svg.cloneNode(true);
+  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  clone.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+  const source = '<?xml version="1.0" standalone="no"?>\r\n' + new XMLSerializer().serializeToString(clone);
+  const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${(card.getAttribute("data-plot") || "plot").replace(/[^\w.-]+/g, "_")}.svg`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+document.querySelectorAll(".plot-card").forEach(card => {
+  const head = card.querySelector(".plot-card-head");
+  const removeBtn = card.querySelector(".plot-remove");
+
+  // Inject Reset + Download actions into the header, grouped with the remove button.
+  if (head && removeBtn) {
+    const actions = document.createElement("span");
+    actions.className = "plot-card-actions";
+
+    const resetBtn = document.createElement("button");
+    resetBtn.type = "button";
+    resetBtn.className = "plot-action plot-reset";
+    resetBtn.title = "Reset plot";
+    resetBtn.setAttribute("aria-label", "Reset plot");
+    resetBtn.textContent = "↻";
+
+    const downloadBtn = document.createElement("button");
+    downloadBtn.type = "button";
+    downloadBtn.className = "plot-action plot-download";
+    downloadBtn.title = "Download SVG";
+    downloadBtn.setAttribute("aria-label", "Download SVG");
+    downloadBtn.textContent = "⭳";
+
+    actions.appendChild(resetBtn);
+    actions.appendChild(downloadBtn);
+    head.appendChild(actions);
+    actions.appendChild(removeBtn); // relocate the existing remove button into the group
+
+    resetBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      resetPlotCard(card);
+    });
+    downloadBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      downloadPlotSvg(card);
+    });
+  }
+
+  removeBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    removePlotCard(card);
+  });
+  head?.addEventListener("click", () => {
+    if (card.classList.contains("is-selected")) {
+      removePlotCard(card);
+    } else {
+      card.classList.add("is-selected");
+    }
   });
 });
 
 // Highlight the currently selected tool
-const toolButtonIds = ["btnPCA", "btnTSNE", "btnUMAP", "btnScatter", "btnPairs", "btnHclust", "btnHeatmap"];
+const toolButtonIds = ["btnPCA", "btnTSNE", "btnUMAP", "btnScatter", "btnPairs", "btnDistance", "btnHclust", "btnHeatmap"];
 toolButtonIds.forEach(id => {
   document.getElementById(id)?.addEventListener("click", () => {
     toolButtonIds.forEach(otherId => document.getElementById(otherId)?.classList.remove("is-active"));
@@ -746,7 +870,7 @@ toolButtonIds.forEach(id => {
 });
 
 // Leaving Scatter for another tool: restore full column selection
-["btnPCA", "btnTSNE", "btnUMAP", "btnPairs", "btnHclust", "btnHeatmap"].forEach(id => {
+["btnPCA", "btnTSNE", "btnUMAP", "btnPairs", "btnDistance", "btnHclust", "btnHeatmap"].forEach(id => {
   document.getElementById(id)?.addEventListener("click", () => {
     if (appState.selectionMode !== "scatter") return;
     const data = appState.data;
@@ -884,6 +1008,13 @@ document.getElementById("btnHclust")?.addEventListener("click", async () => {
     btnCols.className = `btn btn-sm ${appState.hclustClusterCols ? "btn-primary" : "btn-outline-secondary"}`;
   }
 
+  // Show the clustered axes in the plot title, like the distance cards
+  const hclustAxes = [];
+  if (appState.hclustClusterRows) hclustAxes.push("rows");
+  if (appState.hclustClusterCols) hclustAxes.push("cols");
+  const hclustTitleEl = document.querySelector('.plot-card[data-plot="Hclust"] .plot-card-title');
+  if (hclustTitleEl) hclustTitleEl.textContent = hclustAxes.length ? `Hclust (${hclustAxes.join(" & ")})` : "Hclust";
+
   showPlotLoading(el, "Loading...");
 
   await hclust_plot({
@@ -976,6 +1107,124 @@ document.getElementById("btnHeatmap")?.addEventListener("click", async () => {
     width,
     //height,
   });
+});
+
+
+// ======== DISTANCE: CLICK TOOL BUTTON ========
+document.getElementById("btnDistance")?.addEventListener("click", async () => {
+  const data = appState.data;
+  // Reset to normal selection mode
+  appState.selectionMode = "normal";
+
+  if (!data || data.length === 0) {
+    const rightPanel = document.getElementById("rightData");
+    if (rightPanel) {
+      rightPanel.innerHTML = `
+        <div class="text-muted">
+          Load a file or select a built-in dataset (Iris) first.
+        </div>
+      `;
+    }
+    return;
+  }
+
+  // Derive numeric columns and labels (respect selected columns)
+  const sample = data[0] || {};
+  let keys = Object.keys(sample);
+  if (appState.selectedColumns.length > 0) {
+    keys = appState.selectedColumns;
+    console.log(`Using ${appState.selectedColumns.length} selected columns for Distance`);
+  }
+
+  const numericKeys = keys.filter(k => typeof sample[k] === "number");
+  const labelKey = keys.find(k => typeof sample[k] !== "number");
+  const colNames = numericKeys.length ? numericKeys : keys.filter(k => k !== labelKey);
+
+  if (colNames.length === 0) {
+    console.warn("Distance requires at least one numeric column. Please select a numeric column.");
+    return;
+  }
+
+  const matrix = data.map(row => colNames.map(k => {
+    const value = row[k];
+    return typeof value === "number" && Number.isFinite(value) ? value : null;
+  }));
+  const rowNames = data.map((row, idx) => (labelKey ? String(row[labelKey]) : "row") + idx);
+
+  // Show distance controls
+  const distanceControls = document.getElementById("distanceControls");
+  if (distanceControls) distanceControls.style.display = "block";
+
+  // Update toggle button states
+  const btnDistRows = document.getElementById("btnDistRows");
+  const btnDistCols = document.getElementById("btnDistCols");
+  if (btnDistRows) {
+    btnDistRows.textContent = `Distance Rows: ${appState.distanceRows ? "ON" : "OFF"}`;
+    btnDistRows.className = `btn btn-sm ${appState.distanceRows ? "btn-primary" : "btn-outline-secondary"} me-2`;
+  }
+  if (btnDistCols) {
+    btnDistCols.textContent = `Distance Cols: ${appState.distanceCols ? "ON" : "OFF"}`;
+    btnDistCols.className = `btn btn-sm ${appState.distanceCols ? "btn-primary" : "btn-outline-secondary"}`;
+  }
+
+  // Row-to-row distance matrix
+  const rowsEl = document.getElementById("myDistanceRows");
+  if (appState.distanceRows && rowsEl) {
+    showPlotLoading(rowsEl, "Loading...");
+    const width = Math.max(520, rowsEl.clientWidth - 24);
+    await distance_plot({
+      divId: "myDistanceRows",
+      data: matrix,
+      rowNames,
+      colNames,
+      axis: "rows",
+      width
+    });
+  } else if (rowsEl) {
+    rowsEl.innerHTML = "";
+    rowsEl.classList.remove("has-plot");
+  }
+
+  // Column-to-column distance matrix
+  const colsEl = document.getElementById("myDistanceCols");
+  if (appState.distanceCols && colsEl) {
+    showPlotLoading(colsEl, "Loading...");
+    const width = Math.max(520, colsEl.clientWidth - 24);
+    await distance_plot({
+      divId: "myDistanceCols",
+      data: matrix,
+      rowNames,
+      colNames,
+      axis: "cols",
+      width
+    });
+  } else if (colsEl) {
+    colsEl.innerHTML = "";
+    colsEl.classList.remove("has-plot");
+  }
+});
+
+// ======== DISTANCE TOGGLE BUTTONS ========
+document.getElementById("btnDistRows")?.addEventListener("click", () => {
+  appState.distanceRows = !appState.distanceRows;
+  const btn = document.getElementById("btnDistRows");
+  if (btn) {
+    btn.textContent = `Distance Rows: ${appState.distanceRows ? "ON" : "OFF"}`;
+    btn.className = `btn btn-sm ${appState.distanceRows ? "btn-primary" : "btn-outline-secondary"} me-2`;
+  }
+  // Re-trigger distance plot
+  document.getElementById("btnDistance")?.click();
+});
+
+document.getElementById("btnDistCols")?.addEventListener("click", () => {
+  appState.distanceCols = !appState.distanceCols;
+  const btn = document.getElementById("btnDistCols");
+  if (btn) {
+    btn.textContent = `Distance Cols: ${appState.distanceCols ? "ON" : "OFF"}`;
+    btn.className = `btn btn-sm ${appState.distanceCols ? "btn-primary" : "btn-outline-secondary"}`;
+  }
+  // Re-trigger distance plot
+  document.getElementById("btnDistance")?.click();
 });
 
 

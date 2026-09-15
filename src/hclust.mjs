@@ -269,7 +269,7 @@ export async function hclust_plot(options = {}) {
         // bottomdendogram color
         rowDendoColor: rowDendoColor = "black",
         // heatmap color (array of 3 colors: low, middle, high)
-        heatmapColor: heatmapColor = ['#000080', '#ffffff', '#d73027'],
+        heatmapColor: heatmapColor = ['#4575b4', '#ffffbf', '#d73027'],
         heatmapColorScale: heatmapColorScale = null,
         missingValue: missingValue = null,
         removeMissingBy: removeMissingBy = "none",

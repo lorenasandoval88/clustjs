@@ -65,8 +65,8 @@ export async function heatmap_plot(options = {}) {
   } = options
         const targetDivId = divId;
 
-  // Default color palette: navy (low) → white (middle) → red (high)
-  const color = inputColor ?? ['#000080', '#ffffff', '#d73027'];
+  // Default color palette: blue (low) → yellow (middle) → red (high)
+  const color = inputColor ?? ['#4575b4', '#ffffbf', '#d73027'];
 
   const maxAutoSize = 500; // maximum size for auto-scaling to prevent excessively large plots
   const colCount = data[0]?.length ?? 0;

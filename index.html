@@ -70,9 +70,6 @@
           <div class="mb-3">
             <label class="form-label">Load file</label>
             <input type="file" class="form-control" id="fileInput" accept=".csv,.tsv,.json" />
-            <button id="btnTransposeFile" class="btn btn-sm btn-outline-light w-100 mt-2" type="button" disabled>
-              Transpose loaded file
-            </button>
             <div class="mt-2">
               <a href="./src/data/iris2.csv" download class="btn btn-sm btn-outline-light w-100">
                 Download Iris CSV
@@ -91,6 +88,13 @@
               <option value="spiral">Spiral</option>
             </select>
           </div>
+
+          <hr class="panel-divider" />
+
+          <!-- Transpose toggle -->
+          <button id="btnTransposeFile" class="btn btn-sm btn-outline-light w-100" type="button" disabled>
+            Transpose data
+          </button>
         </div>
 
         <!-- TOOLS -->
@@ -103,7 +107,13 @@
             <button type="button" class="tool-square" id="btnScatter">Scatter</button>
             <button type="button" class="tool-square" id="btnPairs">Pairs</button>
             <button type="button" class="tool-square" id="btnHeatmap">Heatmap</button>
+            <div class="tools-group-label">Row / column views</div>
             <button type="button" class="tool-square" id="btnHclust">Hclust</button>
+            <button type="button" class="tool-square" id="btnDistance">Distance</button>
+          </div>
+          <div id="distanceControls" class="hclust-controls" style="display:none;">
+            <button id="btnDistRows" class="btn btn-sm btn-primary me-2">Distance Rows: ON</button>
+            <button id="btnDistCols" class="btn btn-sm btn-primary">Distance Cols: ON</button>
           </div>
           <div id="hclustControls" class="hclust-controls" style="display:none;">
             <button id="btnHclustRows" class="btn btn-sm btn-primary me-2">Cluster Rows: ON</button>
@@ -128,22 +138,56 @@
           <div id="plotsPanel">
             <div class="plots-empty">
               <div class="plots-empty-icon" aria-hidden="true">▦</div>
-              <p class="mb-0">Select a dataset and a tool to render a visualization here.</p>
+              <p class="mb-0">Select a dataset and a tool to render a visualization here.
+                Each tool adds its own plot &mdash; click a plot's title bar to highlight it, click again (or ✕) to remove it.</p>
             </div>
-            <div id="myPCA"></div>
-            <div id="myTSNE"></div>
-            <div id="myUMAP"></div>
-            <div id="myScatter"></div>
-            <div id="myPairs"></div>
-            <div id="myHclust"></div>
-            <div id="myHeatmap"></div>
-            <div id="myPlots"></div>
+
+            <div class="plot-card" data-plot="PCA">
+              <div class="plot-card-head"><span class="plot-card-title">PCA</span><button type="button" class="plot-remove" title="Remove plot" aria-label="Remove plot">✕</button></div>
+              <div id="myPCA" class="plot-body"></div>
+            </div>
+            <div class="plot-card" data-plot="t-SNE">
+              <div class="plot-card-head"><span class="plot-card-title">t-SNE</span><button type="button" class="plot-remove" title="Remove plot" aria-label="Remove plot">✕</button></div>
+              <div id="myTSNE" class="plot-body"></div>
+            </div>
+            <div class="plot-card" data-plot="UMAP">
+              <div class="plot-card-head"><span class="plot-card-title">UMAP</span><button type="button" class="plot-remove" title="Remove plot" aria-label="Remove plot">✕</button></div>
+              <div id="myUMAP" class="plot-body"></div>
+            </div>
+            <div class="plot-card" data-plot="Scatter">
+              <div class="plot-card-head"><span class="plot-card-title">Scatter</span><button type="button" class="plot-remove" title="Remove plot" aria-label="Remove plot">✕</button></div>
+              <div id="myScatter" class="plot-body"></div>
+            </div>
+            <div class="plot-card" data-plot="Pairs">
+              <div class="plot-card-head"><span class="plot-card-title">Pairs</span><button type="button" class="plot-remove" title="Remove plot" aria-label="Remove plot">✕</button></div>
+              <div id="myPairs" class="plot-body"></div>
+            </div>
+            <div class="plot-card" data-plot="Heatmap">
+              <div class="plot-card-head"><span class="plot-card-title">Heatmap</span><button type="button" class="plot-remove" title="Remove plot" aria-label="Remove plot">✕</button></div>
+              <div id="myHeatmap" class="plot-body"></div>
+            </div>
+            <div class="plot-card" data-plot="Distance (rows)">
+              <div class="plot-card-head"><span class="plot-card-title">Distance (rows)</span><button type="button" class="plot-remove" title="Remove plot" aria-label="Remove plot">✕</button></div>
+              <div id="myDistanceRows" class="plot-body"></div>
+            </div>
+            <div class="plot-card" data-plot="Distance (cols)">
+              <div class="plot-card-head"><span class="plot-card-title">Distance (cols)</span><button type="button" class="plot-remove" title="Remove plot" aria-label="Remove plot">✕</button></div>
+              <div id="myDistanceCols" class="plot-body"></div>
+            </div>
+            <div class="plot-card" data-plot="Hclust">
+              <div class="plot-card-head"><span class="plot-card-title">Hclust</span><button type="button" class="plot-remove" title="Remove plot" aria-label="Remove plot">✕</button></div>
+              <div id="myHclust" class="plot-body"></div>
+            </div>
+            <div class="plot-card" data-plot="Plot">
+              <div class="plot-card-head"><span class="plot-card-title">Plot</span><button type="button" class="plot-remove" title="Remove plot" aria-label="Remove plot">✕</button></div>
+              <div id="myPlots" class="plot-body"></div>
+            </div>
           </div>
         </div>
 
         <!-- Quick start -->
         <details class="panel-card quickstart mb-4" open>
-          <summary class="panel-title">Quick start</summary>
+          <summary class="panel-title">Quick start using the SDK functions</summary>
           <div id="sdkExample" class="sdk-example"></div>
         </details>
 

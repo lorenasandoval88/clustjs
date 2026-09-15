@@ -93,7 +93,7 @@ export async function pca_plot(options = {}) {
     data: data = irisData, 
     width: width = 600,
     height: height = 300,
-    colors: colors = ["red", "blue", "green", "orange", "purple", "pink", "yellow"],
+    colors: colors = ["yellow", "red", "blue", "orange", "green", "purple", "pink"],
   } = options;
   const targetDivId = divId;
 
@@ -292,7 +292,7 @@ export async function pca_UI(options = {}) {
     data: data = irisData, 
     width: width = 600,
     height: height = 300,
-    colors: colors = ["red", "blue", "green", "orange", "purple", "pink", "yellow"],
+    colors: colors = ["yellow", "red", "blue", "orange", "green", "purple", "pink"],
     loadIrisOnStart: loadIrisOnStart = false,
   } = options;
   const targetDivId = divId;

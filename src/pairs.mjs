@@ -59,7 +59,7 @@ export async function pairs_plot(options = {}) {
     data: data = irisData,
     width: width = 1000,
     height: height = 1000,
-    colors: colors = ["red", "blue", "green", "orange", "purple", "pink", "yellow"],
+    colors: colors = ["yellow", "red", "blue", "orange", "green", "purple", "pink"],
   } = options;
   const targetDivId = divId;
 
@@ -271,7 +271,7 @@ export async function pairs_UI(options = {}) {
     data: data = irisData,
     width: width = 1000,
     height: height = 1000,
-    colors: colors = ["red", "blue", "green", "orange", "purple", "pink", "yellow"],
+    colors: colors = ["yellow", "red", "blue", "orange", "green", "purple", "pink"],
   } = options;
 
   await pairs_plot({ divId, data, width, height, colors });

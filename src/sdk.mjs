@@ -20,6 +20,7 @@ export { umap_plot, umap_UI, umapDt } from "./umap.mjs";
 export { scatter_plot, scatter_UI, scatterDt } from "./scatter.mjs";
 export { pairs_plot, pairs_UI, pairsDt } from "./pairs.mjs";
 export { heatmap_plot } from "./heatmap.mjs";
+export { distance_plot, distanceMatrix } from "./distance.mjs";
 // export { hclust_plot } from "./plots/hclust.mjs";
 // optionally also export helpers
 export * from "./otherFunctions.js";

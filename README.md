@@ -87,7 +87,10 @@ adds interactive controls) and a `*Dt` state object.
 | `pairs_plot` | `pairs_UI` | `pairsDt` | Scatterplot matrix (pairs plot) |
 
 All plot functions take a single `options` object. Common options include `data`, `divId`,
-`width`, and `height`; see each function's source in [`src/`](src/) for the full list.
+`width`, `height`, `colors`, and `margin` (merge-style — override only the sides you need,
+e.g. `margin: { right: 100 }`). See the
+[Plot Functions & Parameters](https://github.com/lorenasandoval88/clustjs/wiki/Plot-Functions)
+wiki page for the full per-function reference.
 
 ## SDK exports
 

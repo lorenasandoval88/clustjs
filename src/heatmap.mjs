@@ -391,7 +391,7 @@ g.append("rect")
 g.append("text")
   .attr("x", legendX + 20)
   .attr("y", legendY + legendHeight + 32)
-  .text(`Missing (${missingValue})`)
+  .text(Number.isFinite(missingValue) ? `Missing (${missingValue})` : "Missing")
   .style("font-size", "12px")
   .style("fill", "#000");
 

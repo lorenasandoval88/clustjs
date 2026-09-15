@@ -839,7 +839,7 @@ document.getElementById("btnHclust")?.addEventListener("click", async () => {
 
   const matrix = data.map(row => colNames.map(k => {
     const value = row[k];
-    return typeof value === "number" && Number.isFinite(value) ? value : -1;
+    return typeof value === "number" && Number.isFinite(value) ? value : null;
   }));
   const rowNames = data.map((row, idx) => (labelKey ? String(row[labelKey]) : "row") + idx);
 

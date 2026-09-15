@@ -87,3 +87,46 @@ Public exports from `src/sdk.mjs`:
     - `heatmap_plot`
 - Utilities: all exports from `otherFunctions.js` (via `export *`)
 - Metadata: `version`
+
+## Hierarchical clustering & missing values
+
+`hclust_plot` reproduces R's `scale()` → `dist()` → `hclust()` pipeline, including the way R
+handles missing values (`NA`). A missing entry is **never** replaced by a numeric value; it is
+simply excluded from every calculation that involves it. The pipeline runs in three stages:
+
+1. **Scaling (optional, on by default).** Each column is standardized using only its observed
+   values — mean and sample standard deviation (`n − 1` denominator), matching R's `scale()`.
+   Missing values stay missing, and a constant (zero-variance) column becomes missing so it never
+   produces an invalid z-score. Set `scaleData: false` to cluster raw values like base
+   `hclust(dist(x))`.
+
+2. **Pairwise distance.** For every pair of rows, only the variables observed in *both* rows
+   contribute. The accumulated difference is rescaled by `P / q` (total variables / jointly
+   observed variables) to compensate for the excluded dimensions:
+
+   ```
+   d(i, j) = sqrt( (P / q) · Σ (z_ik − z_jk)²  over variables observed in both i and j )
+   ```
+
+   When every variable is observed, `P / q = 1` and this reduces to ordinary Euclidean distance.
+   Shared missing values contribute nothing and never make two rows look similar. If a pair has no
+   jointly observed variables (or fewer than `minOverlapRatio`), the distance is undefined and
+   `hclust_plot` throws instead of inventing a value — matching R's `NA`.
+
+3. **Clustering.** The precomputed row and column distance matrices are handed to `ml-hclust`
+   (`agnes`) and drawn as dendrograms; the heatmap still shows the original `NA` cells as
+   "missing".
+
+### Missing-value options
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `scaleData` | `true` | Standardize columns (R's `scale()`) before clustering. |
+| `missingValue` | `null` | Value treated as missing in the input (e.g. set `-1` if your data encodes missing as `-1`). |
+| `clusteringDistanceRows` / `clusteringDistanceCols` | `"euclidean"` | Distance metric. Supported: `euclidean`, `manhattan` (`cityblock`). Unsupported metrics throw. |
+| `removeMissingBy` | `"none"` | `"row"` or `"col"` drops rows/columns containing any missing value before clustering. |
+| `minOverlapRatio` | `0` | Extension: require at least this fraction (`q / P`) of jointly observed variables per pair; pairs below it are rejected. `0` reproduces R behavior (only fully unobservable pairs are rejected). |
+
+See the [wiki](https://github.com/lorenasandoval88/clustjs/wiki) for the full derivation and worked
+examples.
+

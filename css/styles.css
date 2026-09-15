@@ -681,10 +681,17 @@ body {
 }
 
 .hclust-controls {
-  margin-top: 0.75rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.4rem;
+}
+
+/* Two columns of toggles aligned under the Hclust and Distance buttons */
+.rowcol-controls {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
+  gap: 0.55rem;
+  margin-top: 0.55rem;
 }
 
 /* Data preview */

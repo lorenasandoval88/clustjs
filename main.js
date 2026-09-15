@@ -860,6 +860,82 @@ document.querySelectorAll(".plot-card").forEach(card => {
   });
 });
 
+// ======== ZOOM / PAN FOR ALL PLOTS (like Hclust) ========
+// Lightweight, dependency-free zoom: wheel to zoom toward the cursor, drag to pan.
+// Wraps the SVG's contents in a <g> and transforms it. Hclust is excluded because
+// it already ships its own d3 zoom.
+function enableSvgZoom(svg, { minScale = 0.5, maxScale = 12 } = {}) {
+  if (!svg || svg.__zoomEnabled) return;
+  svg.__zoomEnabled = true;
+
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const layer = document.createElementNS(SVGNS, "g");
+  layer.setAttribute("class", "zoom-layer");
+  while (svg.firstChild) layer.appendChild(svg.firstChild);
+  svg.appendChild(layer);
+
+  const state = { scale: 1, x: 0, y: 0 };
+  const apply = () => {
+    layer.setAttribute("transform", `translate(${state.x}, ${state.y}) scale(${state.scale})`);
+  };
+  svg.__resetZoom = () => { state.scale = 1; state.x = 0; state.y = 0; apply(); };
+  svg.style.cursor = "grab";
+  svg.style.touchAction = "none";
+
+  svg.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    const rect = svg.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+    const newScale = Math.min(maxScale, Math.max(minScale, state.scale * factor));
+    const k = newScale / state.scale;
+    state.x = mx - k * (mx - state.x);
+    state.y = my - k * (my - state.y);
+    state.scale = newScale;
+    apply();
+  }, { passive: false });
+
+  let dragging = false, lastX = 0, lastY = 0;
+  svg.addEventListener("pointerdown", (e) => {
+    dragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    svg.style.cursor = "grabbing";
+    svg.setPointerCapture?.(e.pointerId);
+  });
+  svg.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    state.x += e.clientX - lastX;
+    state.y += e.clientY - lastY;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    apply();
+  });
+  const endDrag = (e) => {
+    dragging = false;
+    svg.style.cursor = "grab";
+    svg.releasePointerCapture?.(e.pointerId);
+  };
+  svg.addEventListener("pointerup", endDrag);
+  svg.addEventListener("pointercancel", endDrag);
+}
+
+// Watch each plot body and (re-)attach zoom whenever a new SVG is rendered.
+["myPCA", "myTSNE", "myUMAP", "myScatter", "myPairs", "myHeatmap", "myDistanceRows", "myDistanceCols", "myPlots"].forEach(id => {
+  const container = document.getElementById(id);
+  if (!container) return;
+  let timer = null;
+  const observer = new MutationObserver(() => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      const svg = container.querySelector("svg");
+      if (svg && !svg.__zoomEnabled) enableSvgZoom(svg);
+    }, 80);
+  });
+  observer.observe(container, { childList: true, subtree: true });
+});
+
 // Highlight the currently selected tool
 const toolButtonIds = ["btnPCA", "btnTSNE", "btnUMAP", "btnScatter", "btnPairs", "btnDistance", "btnHclust", "btnHeatmap"];
 toolButtonIds.forEach(id => {
@@ -962,7 +1038,6 @@ document.getElementById("btnHclust")?.addEventListener("click", async () => {
   const el = document.getElementById("myHclust");
   if (!el) return;
 
-  const width = Math.max(520, el.clientWidth - 24);
  // const height =  900;
 
   // Derive numeric columns and labels
@@ -994,7 +1069,7 @@ document.getElementById("btnHclust")?.addEventListener("click", async () => {
 
   // Show hclust controls
   const hclustControls = document.getElementById("hclustControls");
-  if (hclustControls) hclustControls.style.display = "block";
+  if (hclustControls) hclustControls.style.display = "grid";
 
   // Update button states
   const btnRows = document.getElementById("btnHclustRows");
@@ -1016,6 +1091,9 @@ document.getElementById("btnHclust")?.addEventListener("click", async () => {
   if (hclustTitleEl) hclustTitleEl.textContent = hclustAxes.length ? `Hclust (${hclustAxes.join(" & ")})` : "Hclust";
 
   showPlotLoading(el, "Loading...");
+
+  // Read width after the card is visible so the default matches the reset width
+  const width = Math.max(520, el.clientWidth - 24);
 
   await hclust_plot({
     divId: "myHclust",
@@ -1153,7 +1231,7 @@ document.getElementById("btnDistance")?.addEventListener("click", async () => {
 
   // Show distance controls
   const distanceControls = document.getElementById("distanceControls");
-  if (distanceControls) distanceControls.style.display = "block";
+  if (distanceControls) distanceControls.style.display = "grid";
 
   // Update toggle button states
   const btnDistRows = document.getElementById("btnDistRows");

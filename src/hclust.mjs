@@ -603,6 +603,117 @@ export async function hclust_plot(options = {}) {
         }
     }
 
+    // ---- Branch selection: click a dendrogram branch to select its rows/cols ----
+    const selectedCols = new Set();
+    const selectedRows = new Set();
+    let selectedColNode = null;
+    let selectedRowNode = null;
+
+    function collectLeafOrders(node) {
+        const s = new Set();
+        node.leaves().forEach(l => { if (l.order != null) s.add(l.order); });
+        return s;
+    }
+
+    function nodeAndDescendants(node) {
+        const s = new Set();
+        if (node) node.descendants().forEach(n => s.add(n));
+        return s;
+    }
+
+    function applyBranchHighlight() {
+        const HIGHLIGHT = "#7c3aed"; // vivid violet so selected branches stand out from black
+        const hasCol = selectedCols.size > 0;
+        const hasRow = selectedRows.size > 0;
+        const cells = svg.selectAll(".gPoints rect");
+        if (!hasCol && !hasRow) {
+            cells.style("opacity", 1);
+        } else {
+            cells.style("opacity", d => {
+                const colOk = !hasCol || selectedCols.has(d.t);
+                const rowOk = !hasRow || selectedRows.has(d.n);
+                return (colOk && rowOk) ? 1 : 0.15;
+            });
+        }
+
+        // Draw a clear outline band around the selected rows / columns
+        const gPointsNode = svg.select(".gPoints").node();
+        if (gPointsNode) {
+            const heatG = d3.select(gPointsNode.parentNode);
+            heatG.select(".selection-bands").remove();
+            if (hasCol || hasRow) {
+                const bands = heatG.append("g").attr("class", "selection-bands");
+                let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+                cells.each(function () {
+                    const x = +this.getAttribute("x");
+                    const y = +this.getAttribute("y");
+                    const w = +this.getAttribute("width");
+                    const h = +this.getAttribute("height");
+                    if (x < minX) minX = x;
+                    if (x + w > maxX) maxX = x + w;
+                    if (y < minY) minY = y;
+                    if (y + h > maxY) maxY = y + h;
+                });
+                if (hasRow) {
+                    let y0 = Infinity, y1 = -Infinity;
+                    cells.filter(d => selectedRows.has(d.n)).each(function () {
+                        const y = +this.getAttribute("y");
+                        const h = +this.getAttribute("height");
+                        if (y < y0) y0 = y;
+                        if (y + h > y1) y1 = y + h;
+                    });
+                    if (y0 < y1) {
+                        bands.append("rect")
+                            .attr("x", minX).attr("y", y0)
+                            .attr("width", maxX - minX).attr("height", y1 - y0)
+                            .attr("fill", "none").attr("stroke", HIGHLIGHT).attr("stroke-width", 3);
+                    }
+                }
+                if (hasCol) {
+                    let x0 = Infinity, x1 = -Infinity;
+                    cells.filter(d => selectedCols.has(d.t)).each(function () {
+                        const x = +this.getAttribute("x");
+                        const w = +this.getAttribute("width");
+                        if (x < x0) x0 = x;
+                        if (x + w > x1) x1 = x + w;
+                    });
+                    if (x0 < x1) {
+                        bands.append("rect")
+                            .attr("x", x0).attr("y", minY)
+                            .attr("width", x1 - x0).attr("height", maxY - minY)
+                            .attr("fill", "none").attr("stroke", HIGHLIGHT).attr("stroke-width", 3);
+                    }
+                }
+            }
+        }
+
+        const colSel = nodeAndDescendants(selectedColNode);
+        svg.selectAll("path.col-link").each(function (d) {
+            const on = selectedColNode && colSel.has(d.target);
+            const sel = d3.select(this)
+                .attr("stroke-width", on ? "6px" : "3px")
+                .attr("stroke", on ? HIGHLIGHT : (d.source.color || `${colDendoColor}`));
+            if (on) sel.raise();
+        });
+
+        const rowSel = nodeAndDescendants(selectedRowNode);
+        svg.selectAll("path.row-link").each(function (d) {
+            const on = selectedRowNode && rowSel.has(d.target);
+            const sel = d3.select(this)
+                .attr("stroke-width", on ? "6px" : "3px")
+                .attr("stroke", on ? HIGHLIGHT : (d.source.color || `${rowDendoColor}`));
+            if (on) sel.raise();
+        });
+    }
+
+    function clearBranchSelection() {
+        selectedCols.clear();
+        selectedRows.clear();
+        selectedColNode = null;
+        selectedRowNode = null;
+        applyBranchHighlight();
+    }
+
     //################################################################
     // Top dendogram---------------------------------
 
@@ -660,7 +771,7 @@ export async function hclust_plot(options = {}) {
         //const leafHeight = (width-margin.left)/ leafs.length// spacing between leaves
         const leafHeight = heatmapInnerWidth / leafs.length // spacing between leaves (matches x_scale range)
 
-        leafs.forEach((d, i) => d.x = i * leafHeight + leafHeight / 2)
+        leafs.forEach((d, i) => { d.x = i * leafHeight + leafHeight / 2; d.order = i; })
 
         allNodes.forEach(node => {
             if (node.children) {
@@ -680,15 +791,29 @@ export async function hclust_plot(options = {}) {
             zoomLayer
                 .append("path")
                 .datum(link)
-                .attr("class", "link")
+                .attr("class", "link col-link")
                 .attr("stroke", link.source.color || `${colDendoColor}`)
                 .attr("stroke-width", `${3}px`)
                 .attr("fill", 'none')
+                .style("cursor", (interactive && clickSelect) ? "pointer" : "default")
                 .attr("transform", `translate(${margin.left}, ${colDendroY})`)
                 .attr("d", colElbow(link))
                 .on('mouseover', dendoTooltip.show)
                 // Hide the tooltip when "mouseout"
                 .on('mouseout', dendoTooltip.hide)
+                .on('click', (event, d) => {
+                    if (!(interactive && clickSelect)) return;
+                    event.stopPropagation();
+                    const node = d.target;
+                    selectedCols.clear();
+                    if (selectedColNode === node) {
+                        selectedColNode = null;
+                    } else {
+                        selectedColNode = node;
+                        collectLeafOrders(node).forEach(o => selectedCols.add(o));
+                    }
+                    applyBranchHighlight();
+                })
         })
     }
 
@@ -728,7 +853,7 @@ export async function hclust_plot(options = {}) {
         const leafs2 = allNodes2.filter(d => !d.children)
         leafs2.sort((a, b) => a.x - b.x)
         const leafHeight2 = heatmapInnerHeight / leafs2.length
-        leafs2.forEach((d, i) => d.x = i * leafHeight2 + leafHeight2 / 2)
+        leafs2.forEach((d, i) => { d.x = i * leafHeight2 + leafHeight2 / 2; d.order = i; })
 
         allNodes2.forEach(node => {
             if (node.children) {
@@ -745,18 +870,30 @@ export async function hclust_plot(options = {}) {
             zoomLayer
                 .append("path")
                 .datum(link)
-                .attr("class", "link")
+                .attr("class", "link row-link")
                 .attr("stroke", link.source.color || `${rowDendoColor}`)
                 .attr("stroke-width", `${3}px`)
                 .attr("fill", 'none')
+                .style("cursor", (interactive && clickSelect) ? "pointer" : "default")
                 .attr(`transform`, `translate(0,${margin.top})`) // position row dendrogram at left edge of heatmap, below top dendrogram if present
                 .attr("d", rowElbow(link))
                 .on('mouseover', dendoTooltip.show)
                 // Hide the tooltip when "mouseout"
                 .on('mouseout', dendoTooltip.hide)
+                .on('click', (event, d) => {
+                    if (!(interactive && clickSelect)) return;
+                    event.stopPropagation();
+                    const node = d.target;
+                    selectedRows.clear();
+                    if (selectedRowNode === node) {
+                        selectedRowNode = null;
+                    } else {
+                        selectedRowNode = node;
+                        collectLeafOrders(node).forEach(o => selectedRows.add(o));
+                    }
+                    applyBranchHighlight();
+                })
         })
-        svg.selectAll('path')
-            .data(root2.links())
     }
 
 
@@ -792,6 +929,7 @@ export async function hclust_plot(options = {}) {
                 d3.selectAll(".heatmap-cell")
                     .style("opacity", 1)
                     .style("stroke", "none");
+                clearBranchSelection();
             };
             buttonBar.appendChild(clearButton);
         }

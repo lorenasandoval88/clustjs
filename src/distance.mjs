@@ -115,6 +115,8 @@ export async function distance_plot(options = {}) {
     width,
     height,
     color = null,
+    title: inputTitle, // string, null to hide; default is auto-generated
+    marginLeft = 20,   // breathing room on the left edge
     ...heatmapOptions
   } = options;
 
@@ -135,6 +137,11 @@ export async function distance_plot(options = {}) {
 
   const dist = distanceMatrix(vectors, metric);
 
+  // Auto title, e.g. "Row distances (euclidean, standardized)"
+  const title = inputTitle !== undefined
+    ? inputTitle
+    : `${axis === "rows" ? "Row" : "Column"} distances (${metric}${standardize ? ", standardized" : ""})`;
+
   return heatmap_plot({
     divId,
     data: dist,
@@ -143,6 +150,8 @@ export async function distance_plot(options = {}) {
     width,
     height,
     color,
+    title,
+    marginLeft,
     missingValue: null,
     ...heatmapOptions
   });

@@ -1502,6 +1502,7 @@ document.getElementById("btnHeatmap")?.addEventListener("click", async () => {
     data: matrix,
     rowNames: rowNames,
     colNames: colNames,
+    title: appState.name ? `Heatmap — ${appState.name}` : "Heatmap",
     width,
     //height,
   });

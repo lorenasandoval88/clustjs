@@ -257,7 +257,8 @@ export async function hclust_plot(options = {}) {
         clusteringDistanceCols: clusteringDistanceCols = "euclidean",
         clusteringMethodCols: clusteringMethodCols = "complete",
         clusteringMethodRows: clusteringMethodRows = "complete",
-        marginTop: marginTop = clusterCols ? 100 : 53, // top margin (100) increased to accomodate top dendogram
+        title: title = "Hierarchical Clustering", // string, or null/"" to hide
+        marginTop: marginTopInput = clusterCols ? 100 : 53, // top margin (100) increased to accomodate top dendogram
         marginRight: marginRight = 0,
         marginBottom: marginBottom = 0,
         marginLeft: marginLeft = clusterRows ? 200 : 80, // left margin (200) increased to accomodate left dendogram
@@ -300,6 +301,9 @@ export async function hclust_plot(options = {}) {
         onSelectionChange: onSelectionChange = null,
     } = options;
     const targetDivId = divId;
+
+    // Reserve room above the top dendrogram for the title
+    const marginTop = title ? marginTopInput + 28 : marginTopInput;
 
 
     //Normalize both matrices to ensure they are in the correct format and dimensions match. 'data' is used for clustering and 'displayData' is used for the heatmap (can be the same as 'data' if 'displayData' is not provided).
@@ -551,6 +555,17 @@ export async function hclust_plot(options = {}) {
         .attr('height', height)
         .attr('fill', '#ffffff');
 
+    // Title, centered over the heatmap area (outside the zoom layer so it stays put)
+    if (title) {
+        svg.append('text')
+            .attr('x', margin.left + heatmapInnerWidth / 2)
+            .attr('y', 20)
+            .attr('text-anchor', 'middle')
+            .style('font-size', '16px')
+            .style('font-family', 'sans-serif')
+            .text(title);
+    }
+
     // Zoom wrapper layer — everything inside zooms/pans together
     const zoomLayer = svg.append("g");
 
@@ -583,6 +598,7 @@ export async function hclust_plot(options = {}) {
     marginLeft: 0,
     marginRight: margin.right,
     marginBottom: margin.bottom,
+    title: null, // hclust draws its own title
     legendOffsetX,
     color: heatmapColor,
     colorScale: heatmapColorScale,

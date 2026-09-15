@@ -61,6 +61,7 @@ export async function pairs_plot(options = {}) {
     height: height = 1000,
     colors: colors = ["red", "blue", "orange", "green", "purple", "pink", "yellow"],
     margin: userMargin = {}, // e.g. { top: 60, right: 150, bottom: 40, left: 60 } — override any side
+    title: title = "Pairs Plot", // string, or null/"" to hide
   } = options;
   const targetDivId = divId;
 
@@ -113,13 +114,13 @@ export async function pairs_plot(options = {}) {
     .style("background", "white");
 
   // Title
-  svg.append("text")
+  if (title) svg.append("text")
     .attr("x", plotWidth / 2)
     .attr("y", margin.top / 2)
     .attr("text-anchor", "middle")
     .style("font-size", "16px")
     .style("font-weight", "bold")
-    .text("Pairs Plot");
+    .text(title);
 
   const g = svg.append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);

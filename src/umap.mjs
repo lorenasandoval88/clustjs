@@ -42,6 +42,7 @@ export async function umap_plot(options = {}) {
     height: height = 300,
     colors: colors = ["red", "blue", "orange", "green", "purple", "pink", "yellow"],
     margin: userMargin = {}, // e.g. { top: 25, right: 170, bottom: 45, left: 45 } — override any side
+    title: title = "UMAP Plot", // string, or null/"" to hide
     nNeighbors: nNeighbors = 15,
     minDist: minDist = 0.1,
     nComponents: nComponents = 2
@@ -169,13 +170,13 @@ export async function umap_plot(options = {}) {
   svg.attr("id", "svgid_umap");
 
   // Title
-  svg.append("text")
+  if (title) svg.append("text")
     .attr("x", width / 2 - margin.left)
     .attr("y", margin.top / 2)
     .attr("text-anchor", "middle")
     .style("font-size", "16px")
     .style("font-family", "sans-serif")
-    .text("UMAP Plot");
+    .text(title);
 
   const g = svg
     .attr('width', width)

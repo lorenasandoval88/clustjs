@@ -47,6 +47,7 @@ export async function heatmap_plot(options = {}) {
     marginLeft: marginLeft = 0,
     marginRight: marginRight = 0,
     legendOffsetX: legendOffsetX = 0,
+    title: title = "Heatmap", // optional plot title rendered above the heatmap; null/"" to hide
 
     colorScale: colorScale = null,
     missingValue: missingValue = -1,
@@ -78,6 +79,9 @@ export async function heatmap_plot(options = {}) {
   const height = Number.isFinite(inputHeight) && inputHeight > 0 ? inputHeight : autoHeight;
 
   console.log("heatmap_plot dimensions:", { width, height });
+
+  // Reserve room for the title above the heatmap
+  const effectiveMarginTop = title ? Math.max(marginTop, 34) : marginTop;
 
   // start of heatmap
 let color_scale;
@@ -121,14 +125,14 @@ if (typeof colorScale === "function") {
     marginBottom,
     Math.abs(Math.sin(bottomAngleRad)) * bottomLabelTextWidth + labelFontSizeBottom + 5
   );
-  const cellHeight = (height - marginTop - dynamicBottomMargin) / data.length;
+  const cellHeight = (height - effectiveMarginTop - dynamicBottomMargin) / data.length;
   const rowDensityBoost = rowNames.length > denseLabelThreshold ? denseLabelBoost : 1;
   let labelFontSizeRight = Math.min(Math.max(cellHeight / 3, 7), 20); // clamp between 7px and 20px
   labelFontSizeRight = Math.min(labelFontSizeRight * rowDensityBoost, 24);
   const maxRowLabelLength = Math.min(d3.max(rowNames.map(r => String(r).length)), maxLabelLength);
   const dynamicRightMargin = Math.max(200, labelFontSizeRight * maxRowLabelLength * 0.6 + 100);
   const margin = ({
-    top: marginTop,
+    top: effectiveMarginTop,
     bottom: dynamicBottomMargin,
     left: marginLeft,
     right: dynamicRightMargin
@@ -218,6 +222,19 @@ if (typeof colorScale === "function") {
     .attr('width', width)
     .attr('height', height)
     .attr('fill', '#ffffff');
+
+  // Optional title, centered over the heatmap area
+  if (title) {
+    svg.append('text')
+      .attr('x', margin.left + innerWidth / 2)
+      .attr('y', Math.max(20, margin.top - 12))
+      .attr('text-anchor', 'middle')
+      .attr('font-family', 'sans-serif')
+      .attr('font-size', '15px')
+      .attr('font-weight', '600')
+      .attr('fill', '#111111')
+      .text(title);
+  }
 
 
         // ...existing code...

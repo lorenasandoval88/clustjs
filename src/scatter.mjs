@@ -47,6 +47,7 @@ export async function scatter_plot(options = {}) {
     height: height = 460,
     colors: colors = ["red", "blue", "orange", "green", "purple", "pink", "yellow"],
     margin: userMargin = {}, // e.g. { top: 25, right: 170, bottom: 45, left: 45 } — override any side
+    title: title = "Scatter Plot", // string, or null/"" to hide
     xCol: xCol = null,  // column name for x-axis
     yCol: yCol = null   // column name for y-axis
   } = options;
@@ -166,13 +167,13 @@ export async function scatter_plot(options = {}) {
   svg.attr("id", "svgid_scatter");
 
   // Title
-  svg.append("text")
+  if (title) svg.append("text")
     .attr("x", width / 2 - margin.left)
     .attr("y", margin.top / 2)
     .attr("text-anchor", "middle")
     .style("font-size", "16px")
     .style("font-family", "sans-serif")
-    .text("Scatter Plot");
+    .text(title);
 
   const g = svg
     .attr('width', width)

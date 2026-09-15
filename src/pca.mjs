@@ -95,6 +95,7 @@ export async function pca_plot(options = {}) {
     height: height = 300,
     colors: colors = ["red", "blue", "orange", "green", "purple", "pink", "yellow"],
     margin: userMargin = {}, // e.g. { top: 25, right: 170, bottom: 45, left: 45 } — override any side
+    title: title = "PCA Plot", // string, or null/"" to hide
   } = options;
   const targetDivId = divId;
 
@@ -195,13 +196,13 @@ svg.attr("id", "svgid");
   // const g = d3.select(DOM.svg(width, height));
 
   // title
-  svg.append("text")
+  if (title) svg.append("text")
     .attr("x", width / 2 - margin.left)
     .attr("y", margin.top / 2)
     .attr("text-anchor", "middle")
     .style("font-size", "16px")
     .style("font-family", "sans-serif")
-    .text("PCA Plot");
+    .text(title);
 
   const g = svg
     .attr('width', width)

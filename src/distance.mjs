@@ -1,6 +1,7 @@
 import * as d3 from "d3";
 import irisData from "./data/irisData.js";
 import { heatmap_plot } from "./heatmap.mjs";
+import { hclust_plot } from "./hclust.mjs";
 
 // Convert a value to a finite number or null (missing).
 const toFiniteNumber = value => {
@@ -154,5 +155,84 @@ export async function distance_plot(options = {}) {
     marginLeft,
     missingValue: null,
     ...heatmapOptions
+  });
+}
+
+// Linked hclust + distance view: renders an hclust plot and a distance heatmap that
+// updates to show only the rows/columns currently selected on the dendrograms.
+// Clearing the selection restores the full-data distance plot.
+// Note: selection indices map to the original data, so this assumes hclust's default
+// removeMissingBy: "none" (no rows/columns dropped before clustering).
+export async function hclust_distance_plot(options = {}) {
+  const {
+    divId = "",              // hclust container
+    distanceDivId = "",      // distance heatmap container; created right after the hclust div if omitted
+    data = irisData,
+    rowNames: inputRowNames,
+    colNames: inputColNames,
+    axis = "rows",           // which distances to show: "rows" or "cols"
+    metric = "euclidean",
+    standardize = true,
+    distanceOptions = {},    // extra options forwarded to distance_plot (width, color, ...)
+    onSelectionChange = null, // still called with the hclust selection
+    ...hclustOptions          // everything else forwarded to hclust_plot
+  } = options;
+
+  const { matrix, rowNames, colNames } = coerceMatrix({
+    data,
+    rowNames: inputRowNames,
+    colNames: inputColNames
+  });
+
+  // Resolve or create the distance container
+  let distDiv = distanceDivId ? document.getElementById(distanceDivId) : null;
+  if (!distDiv) {
+    distDiv = document.createElement("div");
+    distDiv.id = distanceDivId || `hclustDistance_${Math.random().toString(36).slice(2, 8)}`;
+    const host = divId ? document.getElementById(divId) : null;
+    if (host && host.parentNode) host.parentNode.insertBefore(distDiv, host.nextSibling);
+    else document.body.appendChild(distDiv);
+  }
+
+  const renderDistance = async selection => {
+    const allRows = matrix.map((_, i) => i);
+    const allCols = (matrix[0] ?? []).map((_, j) => j);
+    const useRows = selection?.rowIndices?.length ? selection.rowIndices : allRows;
+    const useCols = selection?.colIndices?.length ? selection.colIndices : allCols;
+
+    const subMatrix = useRows.map(r => useCols.map(c => matrix[r][c]));
+
+    const isSubset = useRows.length !== allRows.length || useCols.length !== allCols.length;
+    const suffix = isSubset ? ` — selection (${useRows.length}×${useCols.length})` : "";
+    const title = distanceOptions.title !== undefined
+      ? distanceOptions.title
+      : `${axis === "rows" ? "Row" : "Column"} distances (${metric}${standardize ? ", standardized" : ""})${suffix}`;
+
+    await distance_plot({
+      divId: distDiv.id,
+      data: subMatrix,
+      rowNames: useRows.map(r => rowNames[r]),
+      colNames: useCols.map(c => colNames[c]),
+      axis,
+      metric,
+      standardize,
+      ...distanceOptions,
+      title
+    });
+  };
+
+  // Initial distance plot on the full data
+  await renderDistance(null);
+
+  return hclust_plot({
+    divId,
+    data,
+    rowNames: inputRowNames,
+    colNames: inputColNames,
+    ...hclustOptions,
+    onSelectionChange: selection => {
+      renderDistance(selection);
+      if (typeof onSelectionChange === "function") onSelectionChange(selection);
+    }
   });
 }

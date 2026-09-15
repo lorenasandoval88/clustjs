@@ -1421,7 +1421,68 @@ document.getElementById("btnHclust")?.addEventListener("click", async () => {
     width,
     //height,
     clusterCols: appState.hclustClusterCols,
-    clusterRows: appState.hclustClusterRows
+    clusterRows: appState.hclustClusterRows,
+    // Linked view: show distance matrices for the rows/cols selected on the dendrograms.
+    // Row and col selections are independent and combine as an intersection:
+    // the subset is (selected rows or all) × (selected cols or all).
+    onSelectionChange: async selection => {
+      const rowSel = selection.rowIndices ?? [];
+      const colSel = selection.colIndices ?? [];
+      const useRows = rowSel.length ? rowSel : matrix.map((_, i) => i);
+      const useCols = colSel.length ? colSel : colNames.map((_, j) => j);
+      const subMatrix = useRows.map(r => useCols.map(c => matrix[r][c]));
+      const subRowNames = useRows.map(r => rowNames[r]);
+      const subColNames = useCols.map(c => colNames[c]);
+
+      // e.g. "12 rows × 3 cols", "12 rows", "3 cols"
+      const selectionLabel = [
+        rowSel.length ? `${rowSel.length} rows` : null,
+        colSel.length ? `${colSel.length} cols` : null
+      ].filter(Boolean).join(" × ");
+
+      // Unambiguous titles: what is compared vs. what it is computed over, e.g.
+      // rows: "Row distances of 11 selected rows (using 2 selected cols)"
+      // cols: "Column distances of 2 selected cols (over 11 selected rows)"
+      const cardTitle = axis => {
+        if (axis === "rows") {
+          const subject = rowSel.length ? `of ${rowSel.length} selected rows` : "of all rows";
+          const basis = colSel.length ? ` (using ${colSel.length} selected cols)` : "";
+          return `Row distances ${subject}${basis}`;
+        }
+        const subject = colSel.length ? `of ${colSel.length} selected cols` : "of all cols";
+        const basis = rowSel.length ? ` (over ${rowSel.length} selected rows)` : "";
+        return `Column distances ${subject}${basis}`;
+      };
+
+      const renderCard = async (el, axis, axisSelected) => {
+        if (!el) return;
+        if (!selectionLabel) {
+          // Nothing selected on either axis: restore full data if the card is
+          // showing, otherwise leave it hidden
+          if (!el.classList.contains("has-plot")) return;
+          const w = Math.max(520, el.clientWidth - 24);
+          await distance_plot({ divId: el.id, data: matrix, rowNames, colNames, axis, width: w });
+          return;
+        }
+        // Only auto-open a card when its own axis is selected; but if it is
+        // already open, keep it in sync with the other axis's selection too
+        if (!axisSelected && !el.classList.contains("has-plot")) return;
+        showPlotLoading(el, "Loading...");
+        const w = Math.max(520, el.clientWidth - 24);
+        await distance_plot({
+          divId: el.id,
+          data: subMatrix,
+          rowNames: subRowNames,
+          colNames: subColNames,
+          axis,
+          width: w,
+          title: cardTitle(axis)
+        });
+      };
+
+      await renderCard(document.getElementById("myDistanceRows"), "rows", rowSel.length > 0);
+      await renderCard(document.getElementById("myDistanceCols"), "cols", colSel.length > 0);
+    }
   });
 });
 

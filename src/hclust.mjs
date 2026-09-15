@@ -694,7 +694,7 @@ export async function hclust_plot(options = {}) {
         svg.selectAll("path.col-link").each(function (d) {
             const on = selectedColNode && colSel.has(d.target);
             const sel = d3.select(this)
-                .attr("stroke-width", on ? "6px" : "3px")
+                .attr("stroke-width", on ? "7px" : "4px")
                 .attr("stroke", on ? HIGHLIGHT : (d.source.color || `${colDendoColor}`));
             if (on) sel.raise();
         });
@@ -703,7 +703,7 @@ export async function hclust_plot(options = {}) {
         svg.selectAll("path.row-link").each(function (d) {
             const on = selectedRowNode && rowSel.has(d.target);
             const sel = d3.select(this)
-                .attr("stroke-width", on ? "6px" : "3px")
+                .attr("stroke-width", on ? "7px" : "4px")
                 .attr("stroke", on ? HIGHLIGHT : (d.source.color || `${rowDendoColor}`));
             if (on) sel.raise();
         });
@@ -850,7 +850,18 @@ export async function hclust_plot(options = {}) {
                 .datum(link)
                 .attr("class", "link col-link")
                 .attr("stroke", link.source.color || `${colDendoColor}`)
-                .attr("stroke-width", `${3}px`)
+                .attr("stroke-width", `${4}px`)
+                .attr("fill", 'none')
+                .style("pointer-events", "none") // interaction handled by the wide hit path below
+                .attr("transform", `translate(${margin.left}, ${colDendroY})`)
+                .attr("d", colElbow(link))
+            // Invisible wide path on top: a generous click/hover target
+            zoomLayer
+                .append("path")
+                .datum(link)
+                .attr("class", "link-hit col-link-hit")
+                .attr("stroke", "transparent")
+                .attr("stroke-width", `${14}px`)
                 .attr("fill", 'none')
                 .style("cursor", (interactive && clickSelect) ? "pointer" : "default")
                 .attr("transform", `translate(${margin.left}, ${colDendroY})`)
@@ -930,10 +941,21 @@ export async function hclust_plot(options = {}) {
                 .datum(link)
                 .attr("class", "link row-link")
                 .attr("stroke", link.source.color || `${rowDendoColor}`)
-                .attr("stroke-width", `${3}px`)
+                .attr("stroke-width", `${4}px`)
+                .attr("fill", 'none')
+                .style("pointer-events", "none") // interaction handled by the wide hit path below
+                .attr(`transform`, `translate(0,${margin.top})`) // position row dendrogram at left edge of heatmap, below top dendrogram if present
+                .attr("d", rowElbow(link))
+            // Invisible wide path on top: a generous click/hover target
+            zoomLayer
+                .append("path")
+                .datum(link)
+                .attr("class", "link-hit row-link-hit")
+                .attr("stroke", "transparent")
+                .attr("stroke-width", `${14}px`)
                 .attr("fill", 'none')
                 .style("cursor", (interactive && clickSelect) ? "pointer" : "default")
-                .attr(`transform`, `translate(0,${margin.top})`) // position row dendrogram at left edge of heatmap, below top dendrogram if present
+                .attr(`transform`, `translate(0,${margin.top})`)
                 .attr("d", rowElbow(link))
                 .on('mouseover', dendoTooltip.show)
                 // Hide the tooltip when "mouseout"

@@ -680,6 +680,16 @@ body {
   height: auto;
 }
 
+.r-plot-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.r-plot-item .r-plot-download {
+  align-self: flex-start;
+}
+
 .tool-square {
   background: var(--bg-elev-2);
   border: 1px solid var(--border);
@@ -1065,6 +1075,12 @@ body {
 .plot-action:hover {
   color: #ffffff;
   background: rgba(59, 130, 246, 0.3);
+}
+
+.plot-zoom-reset {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .plot-remove {

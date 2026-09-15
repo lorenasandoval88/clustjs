@@ -121,6 +121,7 @@
               <button id="btnDistCols" class="btn btn-sm btn-primary">Distance Cols: ON</button>
             </div>
           </div>
+          <button id="btnClearTools" class="btn btn-sm btn-outline-secondary w-100 mt-2" type="button">Clear all plots</button>
         </div>
 
       </aside>
@@ -136,7 +137,9 @@
 
         <!-- Visualization / plots -->
         <div class="panel-card viz-panel mb-4">
-          <div class="panel-title">Visualization</div>
+          <div class="panel-title">Visualization
+            <button id="btnClearPlots" class="btn btn-sm btn-outline-secondary ms-auto" type="button">Clear all</button>
+          </div>
           <div id="plotsPanel">
             <div class="plots-empty">
               <div class="plots-empty-icon" aria-hidden="true">▦</div>
@@ -180,10 +183,6 @@
               <div class="plot-card-head"><span class="plot-card-title">Hclust</span><button type="button" class="plot-remove" title="Remove plot" aria-label="Remove plot">✕</button></div>
               <div id="myHclust" class="plot-body"></div>
             </div>
-            <div class="plot-card" data-plot="Plot">
-              <div class="plot-card-head"><span class="plot-card-title">Plot</span><button type="button" class="plot-remove" title="Remove plot" aria-label="Remove plot">✕</button></div>
-              <div id="myPlots" class="plot-body"></div>
-            </div>
           </div>
         </div>
 
@@ -191,13 +190,26 @@
         <div class="panel-card rcompare-panel mb-4" id="rcompare">
           <div class="panel-title">R comparison (webR)</div>
           <p class="text-muted small mb-2">
-            Equivalent base-R code for the selected tool and current dataset, run entirely in your browser via
+            Compare the selected plot with R's, run in your browser via
             <a href="https://docs.r-wasm.org/webr/latest/" target="_blank" rel="noopener">webR</a>.
-            Run it and compare R's output with the clustJs plot above. The first run downloads the webR
-            runtime (~15&nbsp;MB), so it may take a moment.
+            First run downloads ~15&nbsp;MB. webR runs the code for one tool at a time — it follows
+            the last tool you clicked, or pick one here.
           </p>
-          <div class="d-flex gap-2 mb-2 align-items-center">
+          <div class="d-flex gap-2 mb-2 align-items-center flex-wrap">
+            <label for="rToolSelect" class="text-muted small mb-0">Tool:</label>
+            <select id="rToolSelect" class="form-select form-select-sm w-auto">
+              <option value="">— select a tool —</option>
+              <option value="btnPCA">PCA</option>
+              <option value="btnTSNE">t-SNE</option>
+              <option value="btnUMAP">UMAP</option>
+              <option value="btnScatter">Scatter</option>
+              <option value="btnPairs">Pairs</option>
+              <option value="btnHeatmap">Heatmap</option>
+              <option value="btnHclust">Hclust</option>
+              <option value="btnDistance">Distance</option>
+            </select>
             <button id="btnRunR" class="btn btn-sm btn-outline-light" type="button">Run in webR</button>
+            <button id="btnCopyRCode" class="btn btn-sm btn-outline-light" type="button">Copy R code</button>
             <span id="rStatus" class="text-muted small"></span>
           </div>
           <pre class="sdk-example mb-2 r-code-pre"><code id="rCode">Click a tool to generate the equivalent R code.</code></pre>
@@ -205,7 +217,7 @@
         </div>
 
         <!-- Quick start -->
-        <details class="panel-card quickstart mb-4" open>
+        <details class="panel-card quickstart mb-4">
           <summary class="panel-title">Quick start using the SDK functions</summary>
           <div id="sdkExample" class="sdk-example"></div>
         </details>
@@ -223,6 +235,12 @@
           <div id="consoleControls">
             <input id="consoleCmd" type="text" placeholder="Type JS here and press Enter (demo only)" />
           </div>
+        </div>
+
+        <!-- Console output plot -->
+        <div class="plot-card" data-plot="Plot">
+          <div class="plot-card-head"><span class="plot-card-title">Plot</span><button type="button" class="plot-remove" title="Remove plot" aria-label="Remove plot">✕</button></div>
+          <div id="myPlots" class="plot-body"></div>
         </div>
 
       </section>

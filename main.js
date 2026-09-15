@@ -834,6 +834,13 @@ document.querySelectorAll(".plot-card").forEach(card => {
     resetBtn.setAttribute("aria-label", "Reset plot");
     resetBtn.textContent = "↻";
 
+    const zoomResetBtn = document.createElement("button");
+    zoomResetBtn.type = "button";
+    zoomResetBtn.className = "plot-action plot-zoom-reset";
+    zoomResetBtn.title = "Reset zoom";
+    zoomResetBtn.setAttribute("aria-label", "Reset zoom");
+    zoomResetBtn.textContent = "1:1";
+
     const downloadBtn = document.createElement("button");
     downloadBtn.type = "button";
     downloadBtn.className = "plot-action plot-download";
@@ -841,11 +848,24 @@ document.querySelectorAll(".plot-card").forEach(card => {
     downloadBtn.setAttribute("aria-label", "Download SVG");
     downloadBtn.textContent = "⭳";
 
+    actions.appendChild(zoomResetBtn);
     actions.appendChild(resetBtn);
     actions.appendChild(downloadBtn);
     head.appendChild(actions);
     actions.appendChild(removeBtn); // relocate the existing remove button into the group
 
+    zoomResetBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const svg = card.querySelector(".plot-body svg");
+      if (svg?.__resetZoom) {
+        svg.__resetZoom();
+        return;
+      }
+      // Hclust ships its own d3 zoom with an in-plot "Reset zoom" button — trigger it.
+      const innerReset = [...card.querySelectorAll(".plot-body button")]
+        .find(b => b.textContent.trim() === "Reset zoom");
+      innerReset?.click();
+    });
     resetBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       resetPlotCard(card);
@@ -947,14 +967,44 @@ function enableSvgZoom(svg, { minScale = 0.5, maxScale = 12 } = {}) {
 
 // Highlight the currently selected tool
 const toolButtonIds = ["btnPCA", "btnTSNE", "btnUMAP", "btnScatter", "btnPairs", "btnDistance", "btnHclust", "btnHeatmap"];
+const toolScrollTargets = {
+  btnPCA: "myPCA", btnTSNE: "myTSNE", btnUMAP: "myUMAP", btnScatter: "myScatter",
+  btnPairs: "myPairs", btnHeatmap: "myHeatmap", btnDistance: "myDistanceRows", btnHclust: "myHclust"
+};
 toolButtonIds.forEach(id => {
   document.getElementById(id)?.addEventListener("click", () => {
     toolButtonIds.forEach(otherId => document.getElementById(otherId)?.classList.remove("is-active"));
     document.getElementById(id)?.classList.add("is-active");
     appState.currentTool = id;
+    const rToolSelect = document.getElementById("rToolSelect");
+    if (rToolSelect) rToolSelect.value = id;
     updateRCode();
+    // Bring the (possibly newly added) plot card into view
+    setTimeout(() => {
+      document.getElementById(toolScrollTargets[id])
+        ?.closest(".plot-card")
+        ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 250);
   });
 });
+
+// Clear all rendered plots at once
+function clearAllPlotsUi() {
+  resetAllPlots();
+  document.querySelectorAll(".plot-card.is-selected").forEach(card => card.classList.remove("is-selected"));
+  toolButtonIds.forEach(id => document.getElementById(id)?.classList.remove("is-active"));
+  // Clear the webR comparison output as well
+  const rPlotOut = document.getElementById("rPlotOut");
+  if (rPlotOut) rPlotOut.innerHTML = "";
+  const rStatus = document.getElementById("rStatus");
+  if (rStatus) rStatus.textContent = "";
+  appState.currentTool = null;
+  const rToolSelect = document.getElementById("rToolSelect");
+  if (rToolSelect) rToolSelect.value = "";
+  updateRCode();
+}
+document.getElementById("btnClearPlots")?.addEventListener("click", clearAllPlotsUi);
+document.getElementById("btnClearTools")?.addEventListener("click", clearAllPlotsUi);
 
 // ======== R COMPARISON (webR) ========
 function rNum(v) {
@@ -980,6 +1030,8 @@ function buildRDataCode() {
   const truncNote = data.length > maxRows ? ` (first ${maxRows} of ${data.length} rows)` : "";
 
   let code = `# Data: ${appState.name ?? "dataset"}${truncNote}\n`;
+  code += `# Size: ${rows.length} rows \u00d7 ${numericKeys.length} numeric columns\n`;
+  code += R_LOCAL_LOAD_NOTE;
   code += `m <- matrix(c(\n${lines.join(",\n")}\n), nrow = ${rows.length}, byrow = TRUE)\n`;
   code += `colnames(m) <- c(${numericKeys.map(k => JSON.stringify(k)).join(", ")})\n`;
   if (labelKey) {
@@ -990,6 +1042,15 @@ function buildRDataCode() {
   code += `rownames(m) <- paste0(as.character(labs), seq_len(nrow(m)))\n`;
   return code;
 }
+
+// Commented example for running the code in desktop R with a local file
+// (webR in the browser cannot read local paths, so this stays commented out)
+const R_LOCAL_LOAD_NOTE = `# To use your own file in desktop R instead, uncomment and adjust:
+# df <- read.csv(
+#   "C:/Users/you/Downloads/your_data.csv",
+#   check.names = FALSE
+# )
+`;
 
 // Compact summary of the data for the displayed code (the full matrix is injected when run)
 function buildRDataStub() {
@@ -1005,8 +1066,10 @@ function buildRDataStub() {
   const labelKey = Object.keys(sample).find(k => typeof sample[k] !== "number");
   const nRows = Math.min(data.length, 500);
   return `# Data: ${appState.name ?? "dataset"} \u2014 injected automatically when run\n`
-    + `# m: ${nRows} \u00d7 ${numericKeys.length} numeric matrix (${numericKeys.join(", ")}), rownames = label + row number\n`
-    + `# labs: factor of ${labelKey ? JSON.stringify(labelKey) : "row labels"}\n`;
+    + `# Size: ${nRows} rows \u00d7 ${numericKeys.length} numeric columns\n`
+    + `# m: numeric matrix (${numericKeys.join(", ")}), rownames = label + row number\n`
+    + `# labs: factor of ${labelKey ? JSON.stringify(labelKey) : "row labels"}\n`
+    + R_LOCAL_LOAD_NOTE;
 }
 
 const R_HEAT_COLS = `col = hcl.colors(50, "RdYlBu", rev = TRUE)`;
@@ -1059,6 +1122,30 @@ function updateRCode() {
     ?? "Load a dataset with numeric columns and click a tool to generate the equivalent R code.";
 }
 
+// The webR tool dropdown mirrors (and can override) the last-clicked tool
+document.getElementById("rToolSelect")?.addEventListener("change", (e) => {
+  appState.currentTool = e.target.value || null;
+  updateRCode();
+});
+
+// Copy the full runnable R code (with the data embedded, unlike the displayed stub)
+document.getElementById("btnCopyRCode")?.addEventListener("click", async () => {
+  const btn = document.getElementById("btnCopyRCode");
+  const code = buildRCode();
+  if (!code) {
+    console.warn("Load a dataset with numeric columns and click a tool first.");
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(code);
+    btn.textContent = "Copied!";
+  } catch (err) {
+    console.error("Copy failed:", err);
+    btn.textContent = "Copy failed";
+  }
+  setTimeout(() => { btn.textContent = "Copy R code"; }, 1500);
+});
+
 let webRPromise = null;
 function ensureWebR() {
   if (!webRPromise) {
@@ -1098,17 +1185,38 @@ document.getElementById("btnRunR")?.addEventListener("click", async () => {
       });
       if (outEl) {
         outEl.innerHTML = "";
-        for (const img of result.images) {
+        const toolName = document.getElementById("rToolSelect")?.selectedOptions?.[0]?.textContent?.trim() || "plot";
+        result.images.forEach((img, i) => {
+          const wrap = document.createElement("div");
+          wrap.className = "r-plot-item";
+
           const canvas = document.createElement("canvas");
           canvas.width = img.width;
           canvas.height = img.height;
           canvas.getContext("2d").drawImage(img, 0, 0);
-          outEl.appendChild(canvas);
-        }
+          wrap.appendChild(canvas);
+
+          const dlBtn = document.createElement("button");
+          dlBtn.type = "button";
+          dlBtn.className = "btn btn-sm btn-outline-light r-plot-download";
+          dlBtn.textContent = "Download PNG";
+          dlBtn.addEventListener("click", () => {
+            const suffix = result.images.length > 1 ? `_${i + 1}` : "";
+            const a = document.createElement("a");
+            a.href = canvas.toDataURL("image/png");
+            a.download = `webR_${toolName.replace(/[^\w.-]+/g, "_")}${suffix}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          });
+          wrap.appendChild(dlBtn);
+
+          outEl.appendChild(wrap);
+        });
       }
       if (statusEl) {
         statusEl.textContent = result.images.length
-          ? "Done \u2014 compare R's output with the clustJs plot above."
+          ? "Done."
           : "Finished, but R produced no plot (see console).";
       }
     } finally {
@@ -1178,11 +1286,12 @@ document.getElementById("btnPCA")?.addEventListener("click", async () => {
 
 const el = document.getElementById("myPCA");
 
-  // Use container size (with safe minimums)
-  const width = Math.max(520, el.clientWidth - 24);
   const height = defaultPlotHeight;
 
   showPlotLoading(el, getSlowMatrixWarningLabel(data, "Loading..."));
+
+  // Read width after the card is visible so it matches the other plots
+  const width = Math.max(520, el.clientWidth - 24);
 
   await pca_plot({
     data,
@@ -1329,7 +1438,6 @@ document.getElementById("btnHeatmap")?.addEventListener("click", async () => {
   const el = document.getElementById("myHeatmap");
   if (!el) return;
 
-  const width = Math.max(520, el.clientWidth - 24);
  // const height =  900;
 
   // Derive numeric columns and labels
@@ -1353,6 +1461,9 @@ document.getElementById("btnHeatmap")?.addEventListener("click", async () => {
   const rowNames = data.map((row, idx) => (labelKey ? String(row[labelKey]) : "row") + idx);
 
   showPlotLoading(el, "Loading...");
+
+  // Read width after the card is visible so it matches the other plots
+  const width = Math.max(520, el.clientWidth - 24);
 
   await heatmap_plot({
     divId: "myHeatmap",
@@ -1526,10 +1637,12 @@ document.getElementById("btnUMAP")?.addEventListener("click", async () => {
   const el = document.getElementById("myUMAP");
   if (!el) return;
 
-  const width = Math.max(520, el.clientWidth - 24);
   const height = defaultPlotHeight;
 
   showPlotLoading(el, getSlowMatrixWarningLabel(data, "Loading..."));
+
+  // Read width after the card is visible so it matches the other plots
+  const width = Math.max(520, el.clientWidth - 24);
 
   await umap_plot({
     data,
@@ -1582,10 +1695,12 @@ document.getElementById("btnTSNE")?.addEventListener("click", async () => {
   const el = document.getElementById("myTSNE");
   if (!el) return;
 
-  const width = Math.max(520, el.clientWidth - 24);
   const height = defaultPlotHeight;
 
   showPlotLoading(el, getSlowMatrixWarningLabel(data, "Loading..."));
+
+  // Read width after the card is visible so it matches the other plots
+  const width = Math.max(520, el.clientWidth - 24);
 
   await tsne_plot({
     data,
@@ -1667,10 +1782,12 @@ document.getElementById("btnScatter")?.addEventListener("click", async () => {
   const el = document.getElementById("myScatter");
   if (!el) return;
 
-  const width = Math.max(520, el.clientWidth - 24);
   const height = defaultPlotHeight;
 
   showPlotLoading(el, "Loading...");
+
+  // Read width after the card is visible so it matches the other plots
+  const width = Math.max(520, el.clientWidth - 24);
 
   await scatter_plot({
     data,
@@ -1723,10 +1840,12 @@ document.getElementById("btnPairs")?.addEventListener("click", async () => {
   const el = document.getElementById("myPairs");
   if (!el) return;
 
-  const width = Math.max(900, el.clientWidth - 24);
   const height = defaultPairsHeight;
 
   showPlotLoading(el, "Loading...");
+
+  // Read width after the card is visible so it matches the other plots
+  const width = Math.max(520, el.clientWidth - 24);
 
   await pairs_plot({
     data,

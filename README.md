@@ -21,7 +21,7 @@ clustering, and heatmaps, powered by [D3.js](https://d3js.org/).
 
 ## Features
 
-- **Six visualizations** — PCA, hierarchical clustering with heatmaps, t-SNE, UMAP, scatter, and
+- **Six visualizations** — PCA, distance, hierarchical clustering with heatmaps, t-SNE, UMAP, scatter, and
   pairs plots.
 - **Interactive by default** — D3-powered rendering with tooltips, zoom, and click-to-select.
 - **Zero build step** — import the ES module straight from a CDN, or install from npm.

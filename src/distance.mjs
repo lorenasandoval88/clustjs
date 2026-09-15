@@ -47,7 +47,7 @@ const coerceMatrix = ({ data, rowNames, colNames }) => {
 };
 
 // Standardize each column to zero mean / unit sd (ignoring missing), like R's scale().
-const standardizeColumns = matrix => {
+export const standardizeColumns = matrix => {
   const rowCount = matrix.length;
   const colCount = matrix[0]?.length ?? 0;
   const scaled = matrix.map(row => row.slice());
@@ -184,6 +184,10 @@ export async function hclust_distance_plot(options = {}) {
     colNames: inputColNames
   });
 
+  // Standardize ONCE on the full data: subset distance plots reuse these z-scores
+  // instead of re-standardizing within the selection.
+  const prepared = standardize ? standardizeColumns(matrix) : matrix;
+
   // Resolve or create the distance container
   let distDiv = distanceDivId ? document.getElementById(distanceDivId) : null;
   if (!distDiv) {
@@ -200,7 +204,7 @@ export async function hclust_distance_plot(options = {}) {
     const useRows = selection?.rowIndices?.length ? selection.rowIndices : allRows;
     const useCols = selection?.colIndices?.length ? selection.colIndices : allCols;
 
-    const subMatrix = useRows.map(r => useCols.map(c => matrix[r][c]));
+    const subMatrix = useRows.map(r => useCols.map(c => prepared[r][c]));
 
     const isSubset = useRows.length !== allRows.length || useCols.length !== allCols.length;
     const suffix = isSubset ? ` — selection (${useRows.length}×${useCols.length})` : "";
@@ -215,7 +219,7 @@ export async function hclust_distance_plot(options = {}) {
       colNames: useCols.map(c => colNames[c]),
       axis,
       metric,
-      standardize,
+      standardize: false, // already standardized on the full data above
       ...distanceOptions,
       title
     });

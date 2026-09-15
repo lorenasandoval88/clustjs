@@ -1,4 +1,4 @@
-import { irisData, spiralData, pca_plot, hclust_plot, heatmap_plot, umap_plot, tsne_plot, scatter_plot, pairs_plot, distance_plot } from "./dist/sdk.mjs"; // adjust path
+import { irisData, spiralData, pca_plot, hclust_plot, heatmap_plot, umap_plot, tsne_plot, scatter_plot, pairs_plot, distance_plot, standardizeColumns } from "./dist/sdk.mjs"; // adjust path
 
 // ======== EMBEDDED CONSOLE ========
 const consoleOut = document.getElementById("consoleOut");
@@ -1430,7 +1430,10 @@ document.getElementById("btnHclust")?.addEventListener("click", async () => {
       const colSel = selection.colIndices ?? [];
       const useRows = rowSel.length ? rowSel : matrix.map((_, i) => i);
       const useCols = colSel.length ? colSel : colNames.map((_, j) => j);
-      const subMatrix = useRows.map(r => useCols.map(c => matrix[r][c]));
+      // Standardize on the FULL data, then subset — selections reuse the same
+      // z-scores instead of being re-standardized within the subset
+      const stdMatrix = standardizeColumns(matrix);
+      const subMatrix = useRows.map(r => useCols.map(c => stdMatrix[r][c]));
       const subRowNames = useRows.map(r => rowNames[r]);
       const subColNames = useCols.map(c => colNames[c]);
 
@@ -1476,6 +1479,7 @@ document.getElementById("btnHclust")?.addEventListener("click", async () => {
           colNames: subColNames,
           axis,
           width: w,
+          standardize: false, // subMatrix already carries full-data z-scores
           title: cardTitle(axis)
         });
       };

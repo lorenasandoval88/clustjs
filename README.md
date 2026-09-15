@@ -12,7 +12,8 @@ clustering, and heatmaps, powered by [D3.js](https://d3js.org/).
 
 [**Live demo**](https://lorenasandoval88.github.io/clustjs) &middot; [**Documentation (Wiki)**](https://github.com/lorenasandoval88/clustjs/wiki) &middot; [**Issues**](https://github.com/lorenasandoval88/clustjs/issues)
 
-<img width="499" height="532" alt="clustJs PCA plot of the Iris dataset" src="https://github.com/user-attachments/assets/2739074d-12a4-4e5e-ae79-b96b68f73295" />
+<img width="552" height="398" alt="image" src="https://github.com/user-attachments/assets/81c77ae7-27fb-400a-afaa-521cb89dca21" />
+
 
 </div>
 

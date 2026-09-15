@@ -2,7 +2,7 @@
 
 # clustJs
 
-**Multivariate statistical visualization for the browser** — PCA, t-SNE, UMAP, hierarchical
+**High-dimensional data visualization for the browser** — PCA, t-SNE, UMAP, hierarchical
 clustering, and heatmaps, powered by [D3.js](https://d3js.org/).
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)

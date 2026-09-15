@@ -907,4 +907,48 @@ body {
 .app-about-modal .modal-title {
   font-weight: 700;
 }
+
+/* =========================================================
+   Section color coding (visual separation between regions)
+   ========================================================= */
+.data-panel    { --panel-accent: #22d3ee; } /* cyan   — Data source */
+.tool-panel    { --panel-accent: #3b82f6; } /* blue   — Tools */
+.preview-panel { --panel-accent: #a78bfa; } /* violet — Data preview */
+.viz-panel     { --panel-accent: #34d399; } /* emerald— Visualization */
+.quickstart    { --panel-accent: #fbbf24; } /* amber  — Quick start */
+#consolePanel  { --panel-accent: #f472b6; } /* pink   — Console */
+
+.side-panel,
+.panel-card,
+#consolePanel {
+  border-left: 3px solid var(--panel-accent, var(--accent));
+}
+
+/* Colored title dot + soft halo, per section */
+.panel-title::before {
+  background: var(--panel-accent, var(--accent));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--panel-accent, var(--accent)) 22%, transparent);
+}
+
+/* Title underline picks up a hint of the section color */
+.panel-title {
+  border-bottom-color: color-mix(in srgb, var(--panel-accent, var(--accent)) 35%, var(--border-soft));
+}
+
+/* Console header: small colored dot before the "Console" label */
+#consoleHeader .fw-semibold {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#consoleHeader .fw-semibold::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--panel-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--panel-accent) 22%, transparent);
+}
+
     

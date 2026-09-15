@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>clustJs — multivariate visualization</title>
+  <title>clustJs — high-dimensional data visualization</title>
 
   <!-- Favicon (inline SVG) -->
   <link rel="icon"
@@ -34,8 +34,8 @@
 
       <div class="collapse navbar-collapse" id="navbarContent">
         <ul class="navbar-nav ms-auto align-items-lg-center">
-          <li class="nav-item"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#aboutModal">About</a></li>
-          <li class="nav-item"><a class="nav-link active" href="#tools">Tools</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" id="navAbout">About</a></li>
+          <li class="nav-item"><a class="nav-link active" href="#tools" id="navTools">Tools</a></li>
           <li class="nav-item">
             <a class="nav-link" href="https://github.com/lorenasandoval88/clustjs" target="_blank" rel="noopener">Code</a>
           </li>
@@ -50,7 +50,7 @@
   <!-- HERO -->
   <header class="app-hero">
     <div class="container-fluid px-4">
-      <h1 class="app-hero-title">Multivariate statistical visualization</h1>
+      <h1 class="app-hero-title">High-dimensional data visualization</h1>
       <p class="app-hero-sub">Explore your data with PCA, t-SNE, UMAP, hierarchical clustering, and heatmaps &mdash; powered by D3.js. Load a dataset, pick a tool, and go.</p>
     </div>
   </header>
@@ -117,13 +117,13 @@
       <section class="col-md-8 col-lg-9">
 
         <!-- Data preview -->
-        <div class="panel-card mb-4">
+        <div class="panel-card preview-panel mb-4">
           <div class="panel-title">Data preview</div>
           <div id="rightData"></div>
         </div>
 
         <!-- Visualization / plots -->
-        <div class="panel-card mb-4">
+        <div class="panel-card viz-panel mb-4">
           <div class="panel-title">Visualization</div>
           <div id="plotsPanel">
             <div class="plots-empty">
@@ -167,7 +167,28 @@
     </div>
   </main>
 
-  <!-- Populate the Quick start snippet (its #sdkExample div lives in the output column) -->
+  <!-- ABOUT VIEW -->
+  <section id="aboutView" class="container-fluid py-4" hidden>
+    <div class="row justify-content-center">
+      <div class="col-lg-8 col-xl-7">
+        <div class="side-panel">
+          <p class="app-about-text">
+            clustJs is a lightweight JavaScript library for high-dimensional data visualization in the
+            browser. It brings PCA, t-SNE, UMAP, hierarchical clustering, and heatmaps together behind a
+            simple ES-module API &mdash; powered by D3.js. Its hierarchical clustering faithfully reproduces
+            R's <code>scale()</code> &rarr; <code>dist()</code> &rarr; <code>hclust()</code> pipeline,
+            including the way R handles missing values.
+          </p>
+          <p class="app-about-text mb-0">
+            Load a CSV or a built-in dataset, pick a tool on the left, or call the SDK directly from the
+            console. See the
+            <a href="https://github.com/lorenasandoval88/clustjs/wiki" target="_blank" rel="noopener">documentation</a>
+            for details.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
   <script>
     document.getElementById("sdkExample").innerHTML =
       `<div class="title">Select data & tool (left) or run the functions in the built in console:</div>
@@ -338,37 +359,10 @@ await sdk.pca_plot({ data: sdk.irisData, divId: "myPCA", width: 600, height: 400
     })();
   </script>
 
-  <!-- ABOUT MODAL -->
-  <div class="modal fade" id="aboutModal" tabindex="-1" aria-labelledby="aboutModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content app-about-modal">
-        <div class="modal-header">
-          <h5 class="modal-title" id="aboutModalLabel">About clustJs</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <p class="app-about-text">
-            clustJs is a lightweight JavaScript library for multivariate statistical visualization in the
-            browser. It brings PCA, t-SNE, UMAP, hierarchical clustering, and heatmaps together behind a
-            simple ES-module API &mdash; powered by D3.js. Its hierarchical clustering faithfully reproduces
-            R's <code>scale()</code> &rarr; <code>dist()</code> &rarr; <code>hclust()</code> pipeline,
-            including the way R handles missing values.
-          </p>
-          <p class="app-about-text mb-0">
-            Load a CSV or a built-in dataset, pick a tool on the left, or call the SDK directly from the
-            console. See the
-            <a href="https://github.com/lorenasandoval88/clustjs/wiki" target="_blank" rel="noopener">documentation</a>
-            for details.
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- FOOTER -->
   <footer class="app-footer">
     <div class="container-fluid px-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
-      <span>clustJs &mdash; multivariate statistical visualization, powered by D3.js</span>
+      <span>clustJs &mdash; high-dimensional data visualization, powered by D3.js</span>
       <span class="app-footer-links">
         <a href="https://github.com/lorenasandoval88/clustjs" target="_blank" rel="noopener">GitHub</a>
         <a href="https://github.com/lorenasandoval88/clustjs/wiki" target="_blank" rel="noopener">Docs</a>
@@ -378,6 +372,29 @@ await sdk.pca_plot({ data: sdk.irisData, divId: "myPCA", width: 600, height: 400
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- About / Tools tab switching -->
+  <script>
+    (function () {
+      const navAbout = document.getElementById("navAbout");
+      const navTools = document.getElementById("navTools");
+      const mainView = document.querySelector("main");
+      const aboutView = document.getElementById("aboutView");
+
+      function showAbout(show) {
+        aboutView.hidden = !show;
+        mainView.hidden = show;
+        navAbout.classList.toggle("active", show);
+        navTools.classList.toggle("active", !show);
+      }
+
+      navAbout.addEventListener("click", (e) => {
+        e.preventDefault();
+        showAbout(true);
+      });
+      navTools.addEventListener("click", () => showAbout(false));
+    })();
+  </script>
 
   <!-- Your existing modules -->
   <script type="module" src="./dist/sdk.mjs"></script>

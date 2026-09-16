@@ -276,7 +276,7 @@ const appState = {
   hclustClusterRows: true,  // toggle for hclust row clustering
   hclustClusterCols: true,  // toggle for hclust column clustering
   distanceRows: true,       // toggle for distance matrix on rows
-  distanceCols: true,       // toggle for distance matrix on columns
+  distanceCols: false,      // toggle for distance matrix on columns (off by default)
   currentTool: null         // last clicked tool button id (drives the R comparison panel)
 };
 
@@ -329,7 +329,7 @@ function resetDatasetUiState() {
   appState.hclustClusterRows = true;
   appState.hclustClusterCols = true;
   appState.distanceRows = true;
-  appState.distanceCols = true;
+  appState.distanceCols = false;
 
   const hclustControls = document.getElementById("hclustControls");
   if (hclustControls) hclustControls.style.display = "none";

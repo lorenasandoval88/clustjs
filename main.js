@@ -277,6 +277,8 @@ const appState = {
   hclustClusterCols: true,  // toggle for hclust column clustering
   distanceRows: true,       // toggle for distance matrix on rows
   distanceCols: false,      // toggle for distance matrix on columns (off by default)
+  hclustSelection: null,    // latest hclust dendrogram selection ({rowIndices, colIndices, ...})
+  renderLinkedDistanceCards: null, // set by btnHclust; lets btnDistance reuse the linked-card renderer
   currentTool: null         // last clicked tool button id (drives the R comparison panel)
 };
 
@@ -330,6 +332,8 @@ function resetDatasetUiState() {
   appState.hclustClusterCols = true;
   appState.distanceRows = true;
   appState.distanceCols = false;
+  appState.hclustSelection = null;
+  appState.renderLinkedDistanceCards = null;
 
   const hclustControls = document.getElementById("hclustControls");
   if (hclustControls) hclustControls.style.display = "none";
@@ -1481,13 +1485,14 @@ document.getElementById("btnHclust")?.addEventListener("click", async () => {
       return;
     }
 
-    // "highlight" mode (or selection cleared)
+    // "highlight" mode (or selection cleared). Never auto-opens a card: the
+    // distance plots only appear via an explicit click (Distance tool button
+    // or "Plot selection"); here we only refresh cards that are already open.
     const renderCard = async (cardEl, axis, sel) => {
       if (!cardEl) return;
+      if (!cardEl.classList.contains("has-plot")) return;
       if (!sel.length) {
-        // No selection on this axis: restore the plain full plot if the card
-        // is showing, otherwise leave it hidden
-        if (!cardEl.classList.contains("has-plot")) return;
+        // No selection on this axis: restore the plain full plot
         const w = Math.max(520, cardEl.clientWidth - 24);
         await distance_plot({ divId: cardEl.id, data: matrix, rowNames, colNames, axis, width: w });
         return;
@@ -1512,6 +1517,11 @@ document.getElementById("btnHclust")?.addEventListener("click", async () => {
     await renderCard(document.getElementById("myDistanceCols"), "cols", colSel);
   };
 
+  // Expose so the Distance tool button can highlight the current hclust
+  // selection and drill down without duplicating this logic
+  appState.hclustSelection = null;
+  appState.renderLinkedDistanceCards = renderLinkedDistanceCards;
+
   await hclust_plot({
     divId: "myHclust",
     data: matrix,
@@ -1521,11 +1531,17 @@ document.getElementById("btnHclust")?.addEventListener("click", async () => {
     //height,
     clusterCols: appState.hclustClusterCols,
     clusterRows: appState.hclustClusterRows,
-    // Linked view: clicking a dendrogram branch outlines the same rows/cols in
-    // purple on the distance heatmaps; "Plot selection" (on either card) drills
-    // the distance cards down to the subset.
-    onSelectionChange: selection => renderLinkedDistanceCards(selection, "highlight"),
-    onPlotSelection: selection => renderLinkedDistanceCards(selection, "subset")
+    // Linked view: a dendrogram selection is remembered and outlined in purple
+    // on any distance heatmap that is already open (or opened later via the
+    // Distance tool button); "Plot selection" drills down to the subset.
+    onSelectionChange: selection => {
+      appState.hclustSelection = selection;
+      renderLinkedDistanceCards(selection, "highlight");
+    },
+    onPlotSelection: selection => {
+      appState.hclustSelection = selection;
+      renderLinkedDistanceCards(selection, "subset");
+    }
   });
 });
 
@@ -1670,6 +1686,22 @@ document.getElementById("btnDistance")?.addEventListener("click", async () => {
     btnDistCols.className = `btn btn-sm ${appState.distanceCols ? "btn-primary" : "btn-outline-secondary"}`;
   }
 
+  // Current hclust selection (if any) gets highlighted on the distance plots
+  const hclustSel = appState.hclustSelection;
+  const selRows = hclustSel?.rowIndices ?? [];
+  const selCols = hclustSel?.colIndices ?? [];
+  const addPlotSelectionButton = cardEl => {
+    if (!appState.renderLinkedDistanceCards) return;
+    const bar = document.createElement("div");
+    bar.style.cssText = "display:flex;gap:6px;margin-bottom:4px;";
+    const btn = document.createElement("button");
+    btn.textContent = "Plot selection";
+    btn.style.cssText = "padding:3px 10px;cursor:pointer;"; // match hclust's buttons
+    btn.onclick = () => appState.renderLinkedDistanceCards(hclustSel, "subset");
+    bar.appendChild(btn);
+    cardEl.prepend(bar);
+  };
+
   // Row-to-row distance matrix
   const rowsEl = document.getElementById("myDistanceRows");
   if (appState.distanceRows && rowsEl) {
@@ -1681,8 +1713,14 @@ document.getElementById("btnDistance")?.addEventListener("click", async () => {
       rowNames,
       colNames,
       axis: "rows",
-      width
+      width,
+      ...(selRows.length ? {
+        highlightRows: selRows,
+        highlightCols: selRows,
+        title: `Row distances — ${selRows.length} rows selected`
+      } : {})
     });
+    if (selRows.length) addPlotSelectionButton(rowsEl);
   } else if (rowsEl) {
     rowsEl.innerHTML = "";
     rowsEl.classList.remove("has-plot");
@@ -1699,8 +1737,14 @@ document.getElementById("btnDistance")?.addEventListener("click", async () => {
       rowNames,
       colNames,
       axis: "cols",
-      width
+      width,
+      ...(selCols.length ? {
+        highlightRows: selCols,
+        highlightCols: selCols,
+        title: `Column distances — ${selCols.length} cols selected`
+      } : {})
     });
+    if (selCols.length) addPlotSelectionButton(colsEl);
   } else if (colsEl) {
     colsEl.innerHTML = "";
     colsEl.classList.remove("has-plot");

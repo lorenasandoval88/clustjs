@@ -117,9 +117,10 @@ if (typeof colorScale === "function") {
 
   // bottom labels: Calculate font size as half the heatmap cell width
   const cellWidth = (width - marginLeft - marginRight ) / data[0].length;
-  const colDensityBoost = colNames.length > denseLabelThreshold ? denseLabelBoost : 1;
   let labelFontSizeBottom = Math.min(Math.max(cellWidth / 6, 8), 20); // clamp between 8px and 20px
-  labelFontSizeBottom = Math.min(labelFontSizeBottom * colDensityBoost, 26);
+  // Many columns: smaller text so more labels fit tightly (ticks below are only
+  // thinned when adjacent labels would actually overlap)
+  if (colNames.length > denseLabelThreshold) labelFontSizeBottom = Math.min(labelFontSizeBottom, 10);
   const maxColLabelLength = Math.min(d3.max(colNames.map(c => String(c).length)), maxLabelLength);
   // Bottom margin depends on label angle: sin(|angle|) determines vertical projection of the rotated text
   const bottomAngleRad = (Math.abs(bottomLabelAngle) * Math.PI) / 180;
@@ -129,9 +130,9 @@ if (typeof colorScale === "function") {
     Math.abs(Math.sin(bottomAngleRad)) * bottomLabelTextWidth + labelFontSizeBottom + 5
   );
   const cellHeight = (height - effectiveMarginTop - dynamicBottomMargin) / data.length;
-  const rowDensityBoost = rowNames.length > denseLabelThreshold ? denseLabelBoost : 1;
   let labelFontSizeRight = Math.min(Math.max(cellHeight / 3, 7), 20); // clamp between 7px and 20px
-  labelFontSizeRight = Math.min(labelFontSizeRight * rowDensityBoost, 24);
+  // Many rows: smaller text so more labels fit tightly
+  if (rowNames.length > denseLabelThreshold) labelFontSizeRight = Math.min(labelFontSizeRight, 9);
   const maxRowLabelLength = Math.min(d3.max(rowNames.map(r => String(r).length)), maxLabelLength);
   const dynamicRightMargin = Math.max(200, labelFontSizeRight * maxRowLabelLength * 0.6 + 100);
   const margin = ({
@@ -175,28 +176,53 @@ if (typeof colorScale === "function") {
   const colIndices = d3.range(data[0].length);
   const rowIndices = d3.range(data.length);
 
-  const maxVisibleXLabels = 49;
-  const xLabelStep = colIndices.length > maxVisibleXLabels
-    ? Math.ceil(colIndices.length / maxVisibleXLabels)
-    : 1;
+  // Minimal spacing between labels: show every label that fits, thinning ticks
+  // only when adjacent labels would overlap. The horizontal footprint of a
+  // bottom label depends on its rotation angle (vertical text ≈ font height).
+  const colSpacing = innerWidth / Math.max(colIndices.length, 1);
+  let bottomLabelFootprint = Math.abs(Math.sin(bottomAngleRad)) * labelFontSizeBottom
+    + Math.abs(Math.cos(bottomAngleRad)) * labelFontSizeBottom * 0.55 * maxColLabelLength;
+  let xLabelStep = Math.max(1, Math.ceil((bottomLabelFootprint + 1) / colSpacing));
+  // Prefer slightly smaller text over skipping labels when that lets every label fit
+  if (xLabelStep > 1 && Math.abs(Math.sin(bottomAngleRad)) > 0.9) {
+    const fitFont = colSpacing - 1;
+    if (fitFont >= 7) {
+      labelFontSizeBottom = fitFont;
+      bottomLabelFootprint = fitFont;
+      xLabelStep = 1;
+    }
+  }
   const xTickValues = colIndices.filter(i => i % xLabelStep === 0);
+  // Append the final label only when it won't collide with the previous tick
+  const lastCol = colIndices[colIndices.length - 1];
   if (
     colIndices.length > 0 &&
-    xTickValues[xTickValues.length - 1] !== colIndices[colIndices.length - 1]
+    xTickValues[xTickValues.length - 1] !== lastCol &&
+    (lastCol - xTickValues[xTickValues.length - 1]) * colSpacing >= bottomLabelFootprint + 1
   ) {
-    xTickValues.push(colIndices[colIndices.length - 1]);
+    xTickValues.push(lastCol);
   }
 
-  const maxVisibleYLabels = 49;
-  const yLabelStep = rowIndices.length > maxVisibleYLabels
-    ? Math.ceil(rowIndices.length / maxVisibleYLabels)
-    : 1;
+  // Row labels are horizontal, so their vertical footprint is the font height
+  const rowSpacing = innerHeight / Math.max(rowIndices.length, 1);
+  let yLabelStep = Math.max(1, Math.ceil((labelFontSizeRight + 1) / rowSpacing));
+  // Prefer slightly smaller text over skipping labels when that lets every label fit
+  if (yLabelStep > 1) {
+    const fitFont = rowSpacing - 0.5;
+    if (fitFont >= 6.5) {
+      labelFontSizeRight = fitFont;
+      yLabelStep = 1;
+    }
+  }
   const yTickValues = rowIndices.filter(i => i % yLabelStep === 0);
+  // Append the final label only when it won't collide with the previous tick
+  const lastRow = rowIndices[rowIndices.length - 1];
   if (
     rowIndices.length > 0 &&
-    yTickValues[yTickValues.length - 1] !== rowIndices[rowIndices.length - 1]
+    yTickValues[yTickValues.length - 1] !== lastRow &&
+    (lastRow - yTickValues[yTickValues.length - 1]) * rowSpacing >= labelFontSizeRight + 1
   ) {
-    yTickValues.push(rowIndices[rowIndices.length - 1]);
+    yTickValues.push(lastRow);
   }
 
   let x_scale = d3.scaleBand()
@@ -256,10 +282,16 @@ if (typeof colorScale === "function") {
 
 
   x_axis.selectAll('.tick').selectAll('line').remove()
+  const isVerticalBottomLabel = Math.abs(bottomLabelAngle) === 90;
   x_axis.selectAll("text")
     .style("text-anchor", bottomLabelAngle === 0 ? "middle" : "end")
-    .attr("dx", bottomLabelAngle === 0 ? "0px" : "-2px")
-    .attr("dy", bottomLabelAngle === 0 ? "0.9em" : "0.3em")
+    // d3 axisBottom sets y=9 on tick text; after a 90° rotation that becomes a
+    // horizontal shift, pushing labels off their cell centers — zero it out and
+    // center the glyph body on the tick with dy instead.
+    .attr("y", isVerticalBottomLabel ? 0 : 9)
+    .attr("x", isVerticalBottomLabel ? -4 : 0)
+    .attr("dx", bottomLabelAngle === 0 ? "0px" : (isVerticalBottomLabel ? "0px" : "-2px"))
+    .attr("dy", bottomLabelAngle === 0 ? "0.9em" : (isVerticalBottomLabel ? "0.35em" : "0.3em"))
     .attr("class", "xa")
     .attr("transform", `rotate(${bottomLabelAngle})`)
     .style("fill", "#000")

@@ -2,6 +2,8 @@ import * as d3 from "d3";
 import d3tip from "d3-tip";
 import irisData from "./data/irisData.js";
 import spiralData from "./data/spiralData.js";
+import { addPlotTitle } from "./plotTitle.mjs";
+import { attachPlotZoom } from "./plotZoom.mjs";
 
 export const scatterDt = {
   data: {
@@ -48,6 +50,7 @@ export async function scatter_plot(options = {}) {
     colors: colors = ["red", "blue", "orange", "green", "purple", "pink", "yellow"],
     margin: userMargin = {}, // e.g. { top: 25, right: 170, bottom: 45, left: 45 } — override any side
     title: title = "Scatter Plot", // string, or null/"" to hide
+    zoomable: zoomable = true, // wheel to zoom, drag to pan (title stays fixed)
     xCol: xCol = null,  // column name for x-axis
     yCol: yCol = null   // column name for y-axis
   } = options;
@@ -166,19 +169,16 @@ export async function scatter_plot(options = {}) {
 
   svg.attr("id", "svgid_scatter");
 
-  // Title
-  if (title) svg.append("text")
-    .attr("x", width / 2 - margin.left)
-    .attr("y", margin.top / 2)
-    .attr("text-anchor", "middle")
-    .style("font-size", "16px")
-    .style("font-family", "sans-serif")
-    .text(title);
+  // Title (shared style, centered over the plot area, see plotTitle.mjs)
+  addPlotTitle(svg, title, margin.left + (width - margin.left - margin.right) / 2, Math.max(16, margin.top / 2));
 
   const g = svg
     .attr('width', width)
     .attr('height', height)
     .append('g');
+
+  // Zoom/pan (shared helper, see plotZoom.mjs); the title stays fixed
+  attachPlotZoom(svg, g, { enabled: zoomable });
 
   g.append("g").call(xAxis);
   g.append("g").call(yAxis);

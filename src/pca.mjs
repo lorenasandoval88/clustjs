@@ -15,6 +15,8 @@ import {
   PCA
 } from "ml-pca"; // this is the ml-pca default export
 import irisData from "./data/irisData.js";
+import { addPlotTitle } from "./plotTitle.mjs";
+import { attachPlotZoom } from "./plotZoom.mjs";
 
 // import localforage from "localforage";  // only if you truly need it in SDK
 
@@ -96,6 +98,7 @@ export async function pca_plot(options = {}) {
     colors: colors = ["red", "blue", "orange", "green", "purple", "pink", "yellow"],
     margin: userMargin = {}, // e.g. { top: 25, right: 170, bottom: 45, left: 45 } — override any side
     title: title = "PCA Plot", // string, or null/"" to hide
+    zoomable: zoomable = true, // wheel to zoom, drag to pan (title stays fixed)
   } = options;
   const targetDivId = divId;
 
@@ -195,20 +198,17 @@ svg.attr("id", "svgid");
   // svg.id = "svgid"
   // const g = d3.select(DOM.svg(width, height));
 
-  // title
-  if (title) svg.append("text")
-    .attr("x", width / 2 - margin.left)
-    .attr("y", margin.top / 2)
-    .attr("text-anchor", "middle")
-    .style("font-size", "16px")
-    .style("font-family", "sans-serif")
-    .text(title);
+  // Title (shared style, centered over the plot area, see plotTitle.mjs)
+  addPlotTitle(svg, title, margin.left + (width - margin.left - margin.right) / 2, Math.max(16, margin.top / 2));
 
   const g = svg
     .attr('width', width)
     .attr('height', height)
     .append('g')
   // .attr('transform', `translate(${margin.left+margin.right}, ${margin.top+margin.bottom})`)
+
+  // Zoom/pan (shared helper, see plotZoom.mjs); the title stays fixed
+  attachPlotZoom(svg, g, { enabled: zoomable });
 
   g.append("g")
     .call(xAxis);

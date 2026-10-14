@@ -898,11 +898,12 @@ document.querySelectorAll(".plot-card").forEach(card => {
     zoomResetBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       const svg = card.querySelector(".plot-body svg");
-      if (svg?.__resetZoom) {
-        svg.__resetZoom();
+      // Every SDK plot ships its own zoom (see src/plotZoom.mjs).
+      if (svg?.plotZoom?.resetZoom) {
+        svg.plotZoom.resetZoom();
         return;
       }
-      // Hclust ships its own d3 zoom with an in-plot "Reset zoom" button — trigger it.
+      // Fallback for plots with an in-plot "Reset zoom" button.
       const innerReset = [...card.querySelectorAll(".plot-body button")]
         .find(b => b.textContent.trim() === "Reset zoom");
       innerReset?.click();
@@ -930,81 +931,9 @@ document.querySelectorAll(".plot-card").forEach(card => {
   });
 });
 
-// ======== ZOOM / PAN FOR ALL PLOTS (like Hclust) ========
-// Lightweight, dependency-free zoom: wheel to zoom toward the cursor, drag to pan.
-// Wraps the SVG's contents in a <g> and transforms it. Hclust is excluded because
-// it already ships its own d3 zoom.
-function enableSvgZoom(svg, { minScale = 0.5, maxScale = 12 } = {}) {
-  if (!svg || svg.__zoomEnabled) return;
-  svg.__zoomEnabled = true;
-
-  const SVGNS = "http://www.w3.org/2000/svg";
-  const layer = document.createElementNS(SVGNS, "g");
-  layer.setAttribute("class", "zoom-layer");
-  while (svg.firstChild) layer.appendChild(svg.firstChild);
-  svg.appendChild(layer);
-
-  const state = { scale: 1, x: 0, y: 0 };
-  const apply = () => {
-    layer.setAttribute("transform", `translate(${state.x}, ${state.y}) scale(${state.scale})`);
-  };
-  svg.__resetZoom = () => { state.scale = 1; state.x = 0; state.y = 0; apply(); };
-  svg.style.cursor = "grab";
-  svg.style.touchAction = "none";
-
-  svg.addEventListener("wheel", (e) => {
-    e.preventDefault();
-    const rect = svg.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
-    const newScale = Math.min(maxScale, Math.max(minScale, state.scale * factor));
-    const k = newScale / state.scale;
-    state.x = mx - k * (mx - state.x);
-    state.y = my - k * (my - state.y);
-    state.scale = newScale;
-    apply();
-  }, { passive: false });
-
-  let dragging = false, lastX = 0, lastY = 0;
-  svg.addEventListener("pointerdown", (e) => {
-    dragging = true;
-    lastX = e.clientX;
-    lastY = e.clientY;
-    svg.style.cursor = "grabbing";
-    svg.setPointerCapture?.(e.pointerId);
-  });
-  svg.addEventListener("pointermove", (e) => {
-    if (!dragging) return;
-    state.x += e.clientX - lastX;
-    state.y += e.clientY - lastY;
-    lastX = e.clientX;
-    lastY = e.clientY;
-    apply();
-  });
-  const endDrag = (e) => {
-    dragging = false;
-    svg.style.cursor = "grab";
-    svg.releasePointerCapture?.(e.pointerId);
-  };
-  svg.addEventListener("pointerup", endDrag);
-  svg.addEventListener("pointercancel", endDrag);
-}
-
-// Watch each plot body and (re-)attach zoom whenever a new SVG is rendered.
-["myPCA", "myTSNE", "myUMAP", "myScatter", "myPairs", "myHeatmap", "myDistanceRows", "myDistanceCols", "myPlots"].forEach(id => {
-  const container = document.getElementById(id);
-  if (!container) return;
-  let timer = null;
-  const observer = new MutationObserver(() => {
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      const svg = container.querySelector("svg");
-      if (svg && !svg.__zoomEnabled) enableSvgZoom(svg);
-    }, 80);
-  });
-  observer.observe(container, { childList: true, subtree: true });
-});
+// Zoom/pan for all plots now lives in the SDK (src/plotZoom.mjs): every plot ships
+// its own d3 zoom with a fixed title and exposes node.plotZoom.resetZoom(), which
+// the plot cards' "1:1" buttons call above.
 
 // Highlight the currently selected tool
 const toolButtonIds = ["btnPCA", "btnTSNE", "btnUMAP", "btnScatter", "btnPairs", "btnDistance", "btnHclust", "btnHeatmap"];
@@ -1534,6 +1463,9 @@ document.getElementById("btnHclust")?.addEventListener("click", async () => {
     colNames: colNames,
     width,
     //height,
+    // The plot card's "1:1" button resets zoom via the hclust API, so the
+    // in-plot "Reset zoom" button would be a duplicate.
+    showResetButton: false,
     clusterCols: appState.hclustClusterCols,
     clusterRows: appState.hclustClusterRows,
     // Linked view: a dendrogram selection is remembered and outlined in purple

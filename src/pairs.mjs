@@ -2,6 +2,8 @@ import * as d3 from "d3";
 import d3tip from "d3-tip";
 import irisData from "./data/irisData.js";
 import spiralData from "./data/spiralData.js";
+import { addPlotTitle } from "./plotTitle.mjs";
+import { attachPlotZoom } from "./plotZoom.mjs";
 
 export const pairsDt = {
   data: {
@@ -62,6 +64,7 @@ export async function pairs_plot(options = {}) {
     colors: colors = ["red", "blue", "orange", "green", "purple", "pink", "yellow"],
     margin: userMargin = {}, // e.g. { top: 60, right: 150, bottom: 40, left: 60 } — override any side
     title: title = "Pairs Plot", // string, or null/"" to hide
+    zoomable: zoomable = true, // wheel to zoom, drag to pan (title stays fixed)
   } = options;
   const targetDivId = divId;
 
@@ -113,16 +116,14 @@ export async function pairs_plot(options = {}) {
     .attr("height", plotHeight)
     .style("background", "white");
 
-  // Title
-  if (title) svg.append("text")
-    .attr("x", plotWidth / 2)
-    .attr("y", margin.top / 2)
-    .attr("text-anchor", "middle")
-    .style("font-size", "16px")
-    .style("font-weight", "bold")
-    .text(title);
+  // Title (shared style, centered over the pairs grid, see plotTitle.mjs)
+  addPlotTitle(svg, title, margin.left + (cellSize * n) / 2, Math.max(16, margin.top / 2));
 
-  const g = svg.append("g")
+  // Zoom wrapper — the grid and legend zoom/pan together while the title stays fixed
+  const zoomLayer = svg.append("g").attr("class", "zoom-layer");
+  attachPlotZoom(svg, zoomLayer, { enabled: zoomable });
+
+  const g = zoomLayer.append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
   // Add background for click reset
@@ -239,7 +240,7 @@ export async function pairs_plot(options = {}) {
   }
 
   // Add legend
-  const legendG = svg.append("g")
+  const legendG = zoomLayer.append("g")
     .attr("transform", `translate(${plotWidth - margin.right + 20},${margin.top})`);
 
   const legend = legendG

@@ -8,6 +8,8 @@ import {
 import {
     csvToJson
 } from "./otherFunctions.js";
+import { addPlotTitle } from "./plotTitle.mjs";
+import { attachPlotZoom } from "./plotZoom.mjs";
 // TODO: save scores not data in loacal sstorage
 // TODO: fix padding for left and right dendograms
 // TODO: reset/clear plots when variables are selected or deselected
@@ -596,16 +598,9 @@ export async function hclust_plot(options = {}) {
         .attr('height', height)
         .attr('fill', '#ffffff');
 
-    // Title, centered over the heatmap area (outside the zoom layer so it stays put)
-    if (title) {
-        svg.append('text')
-            .attr('x', margin.left + heatmapInnerWidth / 2)
-            .attr('y', 20)
-            .attr('text-anchor', 'middle')
-            .style('font-size', '16px')
-            .style('font-family', 'sans-serif')
-            .text(title);
-    }
+    // Title, centered over the heatmap area (outside the zoom layer so it stays put;
+    // shared style, see plotTitle.mjs)
+    addPlotTitle(svg, title, margin.left + heatmapInnerWidth / 2, 20);
 
     // Zoom wrapper layer — everything inside zooms/pans together
     const zoomLayer = svg.append("g");
@@ -616,16 +611,8 @@ export async function hclust_plot(options = {}) {
         // move the entire graph down and right to accomodate labels
         .attr('transform', `translate(${margin.left}, ${margin.top})`);
 
-    // Zoom behavior
-    const zoom = d3.zoom()
-        .scaleExtent([0.5, 8])
-        .on("zoom", event => {
-            zoomLayer.attr("transform", event.transform);
-        });
-
-    if (interactive && zoomable) {
-        svg.call(zoom);
-    }
+    // Zoom behavior (shared helper, see plotZoom.mjs); title/background stay fixed
+    const resetZoom = attachPlotZoom(svg, zoomLayer, { enabled: interactive && zoomable });
 
 
     // Heatmap #2: we create a new heatmap with the clustered data and append it to the main 'g' group
@@ -1082,9 +1069,7 @@ export async function hclust_plot(options = {}) {
             const resetButton = document.createElement("button");
             resetButton.textContent = "Reset zoom";
             resetButton.style.cssText = "padding:3px 10px;cursor:pointer;";
-            resetButton.onclick = () => {
-                svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity);
-            };
+            resetButton.onclick = () => resetZoom();
             buttonBar.appendChild(resetButton);
         }
 
@@ -1136,12 +1121,13 @@ export async function hclust_plot(options = {}) {
 
     // Selection API: part of the exported hclust_plot contract.
     // const node = await hclust_plot({...}); node.hclust.getSelection() / .clearSelection()
-    // / .plotSelection() / .destroy()
+    // / .plotSelection() / .resetZoom() / .destroy()
     const svgNode = svg.node();
     svgNode.hclust = {
         getSelection,
         clearSelection: clearBranchSelection,
         plotSelection,
+        resetZoom,
         destroy
     };
     return svgNode

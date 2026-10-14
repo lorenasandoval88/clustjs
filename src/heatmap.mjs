@@ -1,6 +1,8 @@
 import * as d3 from "d3";
 import d3tip from "d3-tip";
 import irisData from "./data/irisData.js";
+import { addPlotTitle } from "./plotTitle.mjs";
+import { attachPlotZoom } from "./plotZoom.mjs";
 
 
 // auxiliary function to convert a data to a data array
@@ -69,6 +71,9 @@ export async function heatmap_plot(options = {}) {
         tooltip_fontFamily: tooltip_fontFamily = 'monospace',
         tooltip_fontSize: tooltip_fontSize = '14px',
         mountToDOM: mountToDOM = true,
+        // wheel to zoom, drag to pan when mounted standalone (title stays fixed);
+        // ignored when embedded by hclust (mountToDOM=false), which has its own zoom
+        zoomable: zoomable = true,
         // when true, prints layout/diagnostic console.log messages
         debug: debug = false,
 
@@ -258,22 +263,16 @@ if (typeof colorScale === "function") {
     .attr('height', height)
     .attr('fill', '#ffffff');
 
-  // Optional title, centered over the heatmap area
-  if (title) {
-    svg.append('text')
-      .attr('x', margin.left + innerWidth / 2)
-      .attr('y', Math.max(20, margin.top - 12))
-      .attr('text-anchor', 'middle')
-      .attr('font-family', 'sans-serif')
-      .attr('font-size', '15px')
-      .attr('font-weight', '600')
-      .attr('fill', '#111111')
-      .text(title);
-  }
+  // Optional title, centered over the heatmap area (shared style, see plotTitle.mjs)
+  addPlotTitle(svg, title, margin.left + innerWidth / 2, Math.max(20, margin.top - 12));
 
+  // Zoom wrapper (standalone mode only): hclust embeds this heatmap, applies its own
+  // zoom and extracts the first <g>, so no wrapper may be added when mountToDOM=false.
+  const useZoom = mountToDOM && zoomable;
+  const zoomHost = useZoom ? svg.append('g').attr('class', 'zoom-layer') : svg;
+  if (useZoom) attachPlotZoom(svg, zoomHost, { enabled: true });
 
-        // ...existing code...
-  const g = svg
+  const g = zoomHost
     .append('g')
     // move the entire graph down and right to accomodate labels
     .attr('transform', `translate(${margin.left}, ${margin.top})`)

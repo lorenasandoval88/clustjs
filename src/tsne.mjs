@@ -3,6 +3,8 @@ import d3tip from "d3-tip";
 import { TSNE } from '@keckelt/tsne';
 import irisData from "./data/irisData.js";
 import spiralData from "./data/spiralData.js";
+import { addPlotTitle } from "./plotTitle.mjs";
+import { attachPlotZoom } from "./plotZoom.mjs";
 
 
 export const tsneDt = {
@@ -34,6 +36,7 @@ export async function tsne_plot(options = {}) {
     colors: colors = ["red", "blue", "orange", "green", "purple", "pink", "yellow"],
     margin: userMargin = {}, // e.g. { top: 25, right: 170, bottom: 45, left: 45 } — override any side
     title: title = "t-SNE Plot", // string, or null/"" to hide
+    zoomable: zoomable = true, // wheel to zoom, drag to pan (title stays fixed)
     perplexity: perplexity = 30,
     epsilon: epsilon = 10,
     iterations: iterations = 1000
@@ -182,19 +185,16 @@ export async function tsne_plot(options = {}) {
 
   svg.attr("id", "svgid_tsne");
 
-  // Title
-  if (title) svg.append("text")
-    .attr("x", width / 2 - margin.left)
-    .attr("y", margin.top / 2)
-    .attr("text-anchor", "middle")
-    .style("font-size", "16px")
-    .style("font-family", "sans-serif")
-    .text(title);
+  // Title (shared style, centered over the plot area, see plotTitle.mjs)
+  addPlotTitle(svg, title, margin.left + (width - margin.left - margin.right) / 2, Math.max(16, margin.top / 2));
 
   const g = svg
     .attr('width', width)
     .attr('height', height)
     .append('g');
+
+  // Zoom/pan (shared helper, see plotZoom.mjs); the title stays fixed
+  attachPlotZoom(svg, g, { enabled: zoomable });
 
   g.append("g").call(xAxis);
   g.append("g").call(yAxis);

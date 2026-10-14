@@ -40,8 +40,8 @@ export async function umap_plot(options = {}) {
   const {
     divId: divId = "",
     data: data = irisData,
-    width: width = 600,
-    height: height = 300,
+    width: width = 600, // standardized default across all clustjs plots
+    height: height = 460,
     colors: colors = ["red", "blue", "orange", "green", "purple", "pink", "yellow"],
     margin: userMargin = {}, // e.g. { top: 25, right: 170, bottom: 45, left: 45 } — override any side
     title: title = "UMAP Plot", // string, or null/"" to hide

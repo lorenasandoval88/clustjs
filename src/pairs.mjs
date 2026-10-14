@@ -59,8 +59,8 @@ export async function pairs_plot(options = {}) {
   const {
     divId: divId = "",
     data: data = irisData,
-    width: width = 1000,
-    height: height = 1000,
+    width: width = 600, // standardized default across all clustjs plots
+    height: height = 600, // unused: the grid is square and self-sizes from width
     colors: colors = ["red", "blue", "orange", "green", "purple", "pink", "yellow"],
     margin: userMargin = {}, // e.g. { top: 60, right: 150, bottom: 40, left: 60 } — override any side
     title: title = "Pairs Plot", // string, or null/"" to hide
@@ -106,8 +106,10 @@ export async function pairs_plot(options = {}) {
   const maxOpacity = 0.6;
 
   const n = numericKeys.length;
-  const cellSize = Math.min(180, (width - 100) / n);
   const margin = { top: 60, right: 150, bottom: 40, left: 60, ...userMargin };
+  // Cell size derived from the requested width minus the real margins, so the
+  // rendered SVG width matches the requested width (capped at 180px per cell).
+  const cellSize = Math.min(180, (width - margin.left - margin.right) / n);
   const plotWidth = cellSize * n + margin.left + margin.right;
   const plotHeight = cellSize * n + margin.top + margin.bottom;
 
@@ -273,8 +275,8 @@ export async function pairs_UI(options = {}) {
   const {
     divId: divId = "",
     data: data = irisData,
-    width: width = 1000,
-    height: height = 1000,
+    width: width = 600,
+    height: height = 600,
     colors: colors = ["red", "blue", "orange", "green", "purple", "pink", "yellow"],
     margin: margin = {},
   } = options;

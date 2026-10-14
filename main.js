@@ -469,8 +469,13 @@ function renderTableRight(data, title = "Dataset Preview") {
     // Create button for column selection
     const btn = document.createElement("button");
     btn.className = "btn btn-sm w-100 text-start";
-    btn.textContent = c.replaceAll("_", " ");
-    btn.style.fontSize = "0.85rem";
+    const fullLabel = c.replaceAll("_", " ");
+    // Truncate long column names at 20 chars; the full name stays available as a tooltip
+    const isTruncated = fullLabel.length > 20;
+    btn.textContent = isTruncated ? fullLabel.slice(0, 20) + "…" : fullLabel;
+    if (isTruncated) btn.title = fullLabel;
+    btn.style.fontSize = "0.95rem";
+    btn.style.whiteSpace = "nowrap";
     btn.style.padding = "4px 8px";
     
     // Check if column is selected
@@ -479,7 +484,7 @@ function renderTableRight(data, title = "Dataset Preview") {
     
     // Add tooltip for categorical columns
     if (isCategorical) {
-      btn.title = "Categorical columns cannot be deselected";
+      btn.title = (isTruncated ? fullLabel + " — " : "") + "Categorical columns cannot be deselected";
       btn.style.cursor = "not-allowed";
     }
 

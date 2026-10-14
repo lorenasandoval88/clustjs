@@ -273,6 +273,8 @@ export async function hclust_plot(options = {}) {
         heatmapColor: heatmapColor = ['#4575b4', '#ffffbf', '#d73027'],
         heatmapColorScale: heatmapColorScale = null,
         missingValue: missingValue = null,
+        // fill color for missing heatmap cells (and the "Missing" legend swatch)
+        missingColor: missingColor = "#bdbdbd",
         removeMissingBy: removeMissingBy = "none",
         // minimum jointly-observed overlap (q / P) required before a pairwise distance is
         // trusted; pairs below this ratio are treated as unavailable. 0 = no minimum (R behavior).
@@ -605,6 +607,7 @@ export async function hclust_plot(options = {}) {
     color: heatmapColor,
     colorScale: heatmapColorScale,
     missingValue: Number.NaN,
+    missingColor,
     bottomLabelAngle,
     maxLabelLength,
     hoverHighlight: interactive && hoverHighlight,

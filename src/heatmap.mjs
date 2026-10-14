@@ -51,6 +51,8 @@ export async function heatmap_plot(options = {}) {
 
     colorScale: colorScale = null,
     missingValue: missingValue = -1,
+    // fill color for missing cells (and the "Missing" legend swatch)
+    missingColor: missingColor = "#bdbdbd",
     denseLabelThreshold: denseLabelThreshold = 49,
     denseLabelBoost: denseLabelBoost = 1.8,
     // angle (degrees) for bottom column labels; -90 = vertical, -45 = diagonal, 0 = horizontal
@@ -337,7 +339,7 @@ if (typeof colorScale === "function") {
 
 
   function getHeatmapColor(v, color_scale) {
-  if (v === missingValue || !Number.isFinite(v)) return "#32CD32";
+  if (v === missingValue || !Number.isFinite(v)) return missingColor;
   return color_scale(v);
 }
 
@@ -486,7 +488,7 @@ g.append("rect")
   .attr("y", legendY + legendHeight + 20)
   .attr("width", 15)
   .attr("height", 15)
-  .attr("fill", "#32CD32");// missing  = green color
+  .attr("fill", missingColor);// missing cell color
 
 g.append("text")
   .attr("x", legendX + 20)

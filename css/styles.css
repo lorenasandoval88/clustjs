@@ -472,7 +472,8 @@ body {
   --border: #232a37;
   --border-soft: #1b212c;
   --text: #e6edf3;
-  --text-muted: #8b98a9;
+  --text-muted: #9fadc0;   /* secondary copy — brightened for dark-bg legibility */
+  --text-label: #c3cedd;   /* small uppercase labels need extra contrast */
   --accent: #3b82f6;
   --radius: 0.85rem;
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
@@ -603,11 +604,11 @@ body {
 
 /* Form controls */
 .form-label {
-  color: var(--text-muted);
-  font-size: 0.75rem;
+  color: var(--text-label);
+  font-size: 0.8rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
 }
 
 .form-control,
@@ -644,11 +645,11 @@ body {
 /* Full-width labelled separator inside the tools grid (groups row/col views) */
 .tools-group-label {
   grid-column: 1 / -1;
-  font-size: 0.68rem;
+  font-size: 0.8rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-muted);
+  color: var(--text-label);
   margin-top: 0.35rem;
   padding-top: 0.6rem;
   border-top: 1px solid var(--border-soft);
@@ -714,6 +715,38 @@ body {
 
 .tool-square:active {
   transform: translateY(0);
+}
+
+/* Secondary action buttons inside dark panels (Download CSV, Transpose data,
+   Clear all plots): replace Bootstrap's gray outline variants, which are nearly
+   invisible on the dark theme, with themed equivalents. */
+.side-panel .btn-outline-light,
+.side-panel .btn-outline-secondary,
+.panel-card .btn-outline-light,
+.panel-card .btn-outline-secondary {
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.side-panel .btn-outline-light:hover:not(:disabled),
+.side-panel .btn-outline-secondary:hover:not(:disabled),
+.panel-card .btn-outline-light:hover:not(:disabled),
+.panel-card .btn-outline-secondary:hover:not(:disabled) {
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.18), rgba(59, 130, 246, 0.06));
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+.side-panel .btn-outline-light:disabled,
+.side-panel .btn-outline-secondary:disabled,
+.panel-card .btn-outline-light:disabled,
+.panel-card .btn-outline-secondary:disabled {
+  background: transparent;
+  border-color: var(--border-soft);
+  color: var(--text-muted);
+  opacity: 1;
 }
 
 .hclust-controls {

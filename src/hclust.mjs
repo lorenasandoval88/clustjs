@@ -48,7 +48,8 @@ export const hclustDt = {
 
 const transpose = m => m[0].map((x, i) => m.map(x => x[i])) // for dendograms
 
-const toFiniteNumber = value => {
+// Exported for unit testing (pure function, no DOM).
+export const toFiniteNumber = value => {
     if (typeof value === "number") {
         return Number.isFinite(value) ? value : null;
     }
@@ -61,7 +62,8 @@ const toFiniteNumber = value => {
     return null;
 }
 
-const extractHclustInput = ({
+// Exported for unit testing (pure function, no DOM).
+export const extractHclustInput = ({
     data,
     rowNames,
     colNames
@@ -101,7 +103,8 @@ const extractHclustInput = ({
     };
 }
 
-const resolveMissingFilterIndices = (matrix, removeMissingBy = "none") => {
+// Exported for unit testing (pure function, no DOM).
+export const resolveMissingFilterIndices = (matrix, removeMissingBy = "none") => {
     const rowIndices = d3.range(matrix.length);
     const colIndices = d3.range(matrix[0]?.length ?? 0);
 
@@ -146,7 +149,8 @@ const materializeHclustInput = ({
 // Stage 1 (R's scale()): standardize each column using its OBSERVED values only.
 // The mean and the sample standard deviation (n - 1 denominator, via d3.deviation) are
 // computed from finite entries; missing entries stay null so an NA never becomes a number.
-const scaleMatrixColumns = matrix => {
+// Exported for unit testing (pure function, no DOM).
+export const scaleMatrixColumns = matrix => {
     const rowCount = matrix.length;
     const colCount = matrix[0]?.length ?? 0;
 
@@ -174,7 +178,22 @@ const scaleMatrixColumns = matrix => {
 // Distance metrics supported by the missing-aware pairwise calculation. Anything else is
 // rejected rather than silently treated as Euclidean (which would give wrong results for
 // e.g. "maximum" or "canberra").
-const SUPPORTED_DISTANCE_METRICS = new Set(["euclidean", "manhattan", "cityblock"]);
+export const SUPPORTED_DISTANCE_METRICS = new Set(["euclidean", "manhattan", "cityblock"]);
+
+// Agglomeration methods accepted by ml-hclust's agnes(). Validated up front so a typo fails
+// with a clear hclust_plot() error instead of a RangeError from deep inside the library.
+export const SUPPORTED_CLUSTERING_METHODS = new Set([
+    "single", "complete", "average", "upgma", "wpgma",
+    "centroid", "upgmc", "median", "wpgmc", "ward", "ward2"
+]);
+
+const assertClusteringMethod = (method, optionName) => {
+    // ml-hclust also accepts a custom update function; pass those through untouched.
+    if (typeof method === "function") return;
+    if (typeof method !== "string" || !SUPPORTED_CLUSTERING_METHODS.has(method.toLowerCase())) {
+        throw new Error(`hclust_plot(): unsupported ${optionName} "${method}". Supported methods: ${[...SUPPORTED_CLUSTERING_METHODS].join(", ")}.`);
+    }
+};
 
 // Stage 2: build a full symmetric distance matrix using R's missing-value convention.
 // Only dimensions observed in BOTH rows contribute; the accumulated difference is rescaled
@@ -182,38 +201,47 @@ const SUPPORTED_DISTANCE_METRICS = new Set(["euclidean", "manhattan", "cityblock
 // comparisons: d_ij = sqrt( (P / q_ij) * sum_{k in O_ij} (z_ik - z_jk)^2 ) for euclidean.
 // Like R's dist(), a pair with no (or insufficient) jointly-observed dimensions yields NA;
 // rather than invent a distance we stop with an error before clustering.
-const pairwiseDistanceMatrix = (matrix, metric = "euclidean", minOverlapRatio = 0) => {
+// Exported for unit testing (pure function, no DOM).
+export const pairwiseDistanceMatrix = (matrix, metric = "euclidean", minOverlapRatio = 0) => {
     if (!SUPPORTED_DISTANCE_METRICS.has(metric)) {
-        throw new Error(`hclust_plot(): unsupported distance metric "${metric}". Supported metrics: euclidean, manhattan.`);
+        throw new Error(`hclust_plot(): unsupported distance metric "${metric}". Supported metrics: ${[...SUPPORTED_DISTANCE_METRICS].join(", ")}.`);
     }
 
     const rowCount = matrix.length;
     const totalDims = matrix[0]?.length ?? 0; // P
     const isManhattan = metric === "manhattan" || metric === "cityblock";
 
+    // Pre-extract each row into a Float64Array with NaN marking missing values: the O(n²·p)
+    // hot loop then needs a single self-equality check (NaN !== NaN) per value instead of
+    // null + isFinite tests on polymorphic array entries.
+    const rows = matrix.map(row => Float64Array.from(row, value =>
+        (value === null || !Number.isFinite(value)) ? NaN : value));
+
     const distances = Array.from({ length: rowCount }, () => new Array(rowCount).fill(0));
-    const unavailablePairs = [];
+    let unavailablePairCount = 0;
 
     for (let i = 0; i < rowCount; i++) {
+        const rowI = rows[i];
         for (let j = i + 1; j < rowCount; j++) {
+            const rowJ = rows[j];
             let accumulated = 0;
             let shared = 0; // q_ij: dimensions observed in both rows
 
             for (let k = 0; k < totalDims; k++) {
-                const a = matrix[i][k];
-                const b = matrix[j][k];
-                // A dimension participates only when BOTH rows observed it.
-                if (a === null || b === null || !Number.isFinite(a) || !Number.isFinite(b)) continue;
+                const a = rowI[k];
+                const b = rowJ[k];
+                // A dimension participates only when BOTH rows observed it (NaN fails a === a).
+                if (a !== a || b !== b) continue;
                 const diff = a - b;
                 accumulated += isManhattan ? Math.abs(diff) : diff * diff;
                 shared++;
             }
 
             const overlapRatio = totalDims > 0 ? shared / totalDims : 0;
-            // shared === 0 is exact R behavior (dist() returns NA). The minOverlapRatio gate is a
+            // shared === 0 is exact R behavior (dist() returns NA). The min overlap ratio is a
             // stricter, opt-in extension; either way the pair is unavailable, not a real distance.
             if (shared === 0 || overlapRatio < minOverlapRatio) {
-                unavailablePairs.push([i, j]);
+                unavailablePairCount++;
                 distances[i][j] = NaN;
                 distances[j][i] = NaN;
                 continue;
@@ -230,8 +258,8 @@ const pairwiseDistanceMatrix = (matrix, metric = "euclidean", minOverlapRatio = 
 
     // Matching R's dist(), refuse to cluster on invented distances: if any pair has no (or
     // insufficient) jointly-observed dimensions, stop rather than fabricate a value.
-    if (unavailablePairs.length > 0) {
-        throw new Error(`hclust_plot(): ${unavailablePairs.length} pair(s) have no sufficient jointly-observed values; cannot compute a valid distance matrix.`);
+    if (unavailablePairCount > 0) {
+        throw new Error(`hclust_plot(): ${unavailablePairCount} pair(s) have no sufficient jointly-observed values; cannot compute a valid distance matrix.`);
     }
 
     return distances;
@@ -272,6 +300,8 @@ export async function hclust_plot(options = {}) {
         // heatmap color (array of 3 colors: low, middle, high)
         heatmapColor: heatmapColor = ['#4575b4', '#ffffbf', '#d73027'],
         heatmapColorScale: heatmapColorScale = null,
+        // sentinel marking missing measurements (normalized to null internally). NOTE: this
+        // intentionally differs from heatmap_plot(), whose standalone default is -1.
         missingValue: missingValue = null,
         // fill color for missing heatmap cells (and the "Missing" legend swatch)
         missingColor: missingColor = "#bdbdbd",
@@ -303,8 +333,16 @@ export async function hclust_plot(options = {}) {
         onSelectionChange: onSelectionChange = null,
         // called with the current selection when "Plot selection" drills down to the subset
         onPlotSelection: onPlotSelection = null,
+        // called with the new plot's SVG node whenever the plot re-renders itself
+        // ("Plot selection" drill-down or "Show all"), so callers can re-apply hooks
+        onRerender: onRerender = null,
+        // when true, prints layout/diagnostic console.log messages
+        debug: debug = false,
     } = options;
     const targetDivId = divId;
+
+    assertClusteringMethod(clusteringMethodRows, "clusteringMethodRows");
+    assertClusteringMethod(clusteringMethodCols, "clusteringMethodCols");
 
     // Reserve room above the top dendrogram for the title
     const marginTop = title ? marginTopInput + 28 : marginTopInput;
@@ -430,7 +468,7 @@ export async function hclust_plot(options = {}) {
             : autoWidth);
     const height = Number.isFinite(inputHeight) && inputHeight > 0 ? inputHeight : autoHeight;
 
-    console.log("hclust_plot dimensions:", { width, height });
+    if (debug) console.log("hclust_plot dimensions:", { width, height });
 
     // 'data' is now the main matrix input
     // console.log("hclust_plot() data:", data)
@@ -467,9 +505,8 @@ export async function hclust_plot(options = {}) {
     // console.log("rowIdx", rowIdx)
 
 
-    const clusteredMatrix = transpose(    colIdx.map(i => transpose(rowIdx.map(e => data[e]))[i]));
-
-    const displayMatrix = transpose(    colIdx.map(i => transpose(rowIdx.map(e => displayData[e]))[i]));
+    // Reorder rows/columns into dendrogram leaf order for display.
+    const displayMatrix = rowIdx.map(r => colIdx.map(c => displayData[r][c]));
 
     const validColNames = Array.isArray(colNames) && colNames.length === data[0].length
         ? colNames
@@ -610,8 +647,7 @@ export async function hclust_plot(options = {}) {
     missingColor,
     bottomLabelAngle,
     maxLabelLength,
-    hoverHighlight: interactive && hoverHighlight,
-    clickSelect: interactive && clickSelect,
+    debug,
     mountToDOM: false,
 });
 
@@ -776,13 +812,18 @@ export async function hclust_plot(options = {}) {
             return null;
         }
         const subData = subRowIdx.map(r => subColIdx.map(c => data[r][c]));
+        // Preserve the caller's display values in the drill-down instead of silently
+        // switching the subset plot to scaled values.
+        const subDisplayData = hasExplicitDisplayData
+            ? subRowIdx.map(r => subColIdx.map(c => displayData[r][c]))
+            : null;
         if (typeof onPlotSelection === "function") {
             try { onPlotSelection(getSelection()); } catch (err) { console.error("onPlotSelection failed:", err); }
         }
-        return hclust_plot({
+        const newNode = await hclust_plot({
             ...options,
             data: subData,
-            displayData: null,
+            displayData: subDisplayData,
             rowNames: subRowIdx.map(r => rowNames[r]),
             colNames: subColIdx.map(c => colNames[c]),
             // subset was already scaled/filtered above; don't re-apply
@@ -793,6 +834,10 @@ export async function hclust_plot(options = {}) {
             clusterCols: clusterCols && subColIdx.length > 1,
             _fullOptions: options._fullOptions ?? options
         });
+        if (typeof onRerender === "function") {
+            try { onRerender(newNode); } catch (err) { console.error("onRerender failed:", err); }
+        }
+        return newNode;
     }
 
     //################################################################
@@ -868,46 +913,47 @@ export async function hclust_plot(options = {}) {
         // Add small gap (5px) between dendrogram leaves and heatmap
         const colDendroGap = 5;
         const colDendroY = margin.top - colPadding - colDendroGap;
-        root.links().forEach((link, i) => {
-            zoomLayer
-                .append("path")
-                .datum(link)
-                .attr("class", "link col-link")
-                .attr("stroke", link.source.color || `${colDendoColor}`)
-                .attr("stroke-width", `${4}px`)
-                .attr("fill", 'none')
-                .style("pointer-events", "none") // interaction handled by the wide hit path below
-                .attr("transform", `translate(${margin.left}, ${colDendroY})`)
-                .attr("d", colElbow(link))
-            // Invisible wide path on top: a generous click/hover target
-            zoomLayer
-                .append("path")
-                .datum(link)
-                .attr("class", "link-hit col-link-hit")
-                .attr("stroke", "transparent")
-                .attr("stroke-width", `${14}px`)
-                .attr("fill", 'none')
-                .style("cursor", (interactive && clickSelect) ? "pointer" : "default")
-                .attr("transform", `translate(${margin.left}, ${colDendroY})`)
-                .attr("d", colElbow(link))
-                .on('mouseover', dendoTooltip.show)
-                // Hide the tooltip when "mouseout"
-                .on('mouseout', dendoTooltip.hide)
-                .on('click', (event, d) => {
-                    if (!(interactive && clickSelect)) return;
-                    event.stopPropagation();
-                    const node = d.target;
-                    selectedCols.clear();
-                    if (selectedColNode === node) {
-                        selectedColNode = null;
-                    } else {
-                        selectedColNode = node;
-                        collectLeafOrders(node).forEach(o => selectedCols.add(o));
-                    }
-                    applyBranchHighlight();
-                    notifySelection();
-                })
-        })
+        const colLinks = root.links();
+        // One group carries the shared transform; visible paths first, then transparent
+        // wide hit paths on top as generous click/hover targets.
+        const colLinkG = zoomLayer.append("g")
+            .attr("class", "col-links")
+            .attr("transform", `translate(${margin.left}, ${colDendroY})`);
+        colLinkG.selectAll("path.col-link")
+            .data(colLinks)
+            .join("path")
+            .attr("class", "link col-link")
+            .attr("stroke", d => d.source.color || `${colDendoColor}`)
+            .attr("stroke-width", "4px")
+            .attr("fill", "none")
+            .style("pointer-events", "none") // interaction handled by the wide hit path below
+            .attr("d", colElbow);
+        colLinkG.selectAll("path.col-link-hit")
+            .data(colLinks)
+            .join("path")
+            .attr("class", "link-hit col-link-hit")
+            .attr("stroke", "transparent")
+            .attr("stroke-width", "14px")
+            .attr("fill", "none")
+            .style("cursor", (interactive && clickSelect) ? "pointer" : "default")
+            .attr("d", colElbow)
+            .on('mouseover', dendoTooltip.show)
+            // Hide the tooltip when "mouseout"
+            .on('mouseout', dendoTooltip.hide)
+            .on('click', (event, d) => {
+                if (!(interactive && clickSelect)) return;
+                event.stopPropagation();
+                const node = d.target;
+                selectedCols.clear();
+                if (selectedColNode === node) {
+                    selectedColNode = null;
+                } else {
+                    selectedColNode = node;
+                    collectLeafOrders(node).forEach(o => selectedCols.add(o));
+                }
+                applyBranchHighlight();
+                notifySelection();
+            })
     }
 
 
@@ -938,7 +984,9 @@ export async function hclust_plot(options = {}) {
             return height2 - (data.data.height / rowMaxHeight) * height2
         }
 
-        const rowMaxHeight = root2.data.height + 2;
+        // Ensure rowMaxHeight is always positive to prevent flipping for small/flat trees
+        // (same guard as the column dendrogram).
+        const rowMaxHeight = Math.max(root2.data.height, 1);
         const clusterLayout2 = d3.cluster()
         clusterLayout2(root2)
 
@@ -958,57 +1006,72 @@ export async function hclust_plot(options = {}) {
         svg.call(dendoTooltip)
 
 
-        // row (left) dendrogram 
-        root2.links().forEach((link, i) => {
-            zoomLayer
-                .append("path")
-                .datum(link)
-                .attr("class", "link row-link")
-                .attr("stroke", link.source.color || `${rowDendoColor}`)
-                .attr("stroke-width", `${4}px`)
-                .attr("fill", 'none')
-                .style("pointer-events", "none") // interaction handled by the wide hit path below
-                .attr(`transform`, `translate(0,${margin.top})`) // position row dendrogram at left edge of heatmap, below top dendrogram if present
-                .attr("d", rowElbow(link))
-            // Invisible wide path on top: a generous click/hover target
-            zoomLayer
-                .append("path")
-                .datum(link)
-                .attr("class", "link-hit row-link-hit")
-                .attr("stroke", "transparent")
-                .attr("stroke-width", `${14}px`)
-                .attr("fill", 'none')
-                .style("cursor", (interactive && clickSelect) ? "pointer" : "default")
-                .attr(`transform`, `translate(0,${margin.top})`)
-                .attr("d", rowElbow(link))
-                .on('mouseover', dendoTooltip.show)
-                // Hide the tooltip when "mouseout"
-                .on('mouseout', dendoTooltip.hide)
-                .on('click', (event, d) => {
-                    if (!(interactive && clickSelect)) return;
-                    event.stopPropagation();
-                    const node = d.target;
-                    selectedRows.clear();
-                    if (selectedRowNode === node) {
-                        selectedRowNode = null;
-                    } else {
-                        selectedRowNode = node;
-                        collectLeafOrders(node).forEach(o => selectedRows.add(o));
-                    }
-                    applyBranchHighlight();
-                    notifySelection();
-                })
-        })
+        // row (left) dendrogram
+        const rowLinks = root2.links();
+        // One group carries the shared transform (left edge of heatmap, below top dendrogram
+        // if present); visible paths first, then transparent wide hit paths on top.
+        const rowLinkG = zoomLayer.append("g")
+            .attr("class", "row-links")
+            .attr("transform", `translate(0,${margin.top})`);
+        rowLinkG.selectAll("path.row-link")
+            .data(rowLinks)
+            .join("path")
+            .attr("class", "link row-link")
+            .attr("stroke", d => d.source.color || `${rowDendoColor}`)
+            .attr("stroke-width", "4px")
+            .attr("fill", "none")
+            .style("pointer-events", "none") // interaction handled by the wide hit path below
+            .attr("d", rowElbow);
+        rowLinkG.selectAll("path.row-link-hit")
+            .data(rowLinks)
+            .join("path")
+            .attr("class", "link-hit row-link-hit")
+            .attr("stroke", "transparent")
+            .attr("stroke-width", "14px")
+            .attr("fill", "none")
+            .style("cursor", (interactive && clickSelect) ? "pointer" : "default")
+            .attr("d", rowElbow)
+            .on('mouseover', dendoTooltip.show)
+            // Hide the tooltip when "mouseout"
+            .on('mouseout', dendoTooltip.hide)
+            .on('click', (event, d) => {
+                if (!(interactive && clickSelect)) return;
+                event.stopPropagation();
+                const node = d.target;
+                selectedRows.clear();
+                if (selectedRowNode === node) {
+                    selectedRowNode = null;
+                } else {
+                    selectedRowNode = node;
+                    collectLeafOrders(node).forEach(o => selectedRows.add(o));
+                }
+                applyBranchHighlight();
+                notifySelection();
+            })
     }
 
 
 
     // Here we add the svg to the plot div
     // Check if the div was provided in the function call
-    // Shared lock state for click-select (scoped to this plot instance)
-    let lockedCell = null;
+
+    // Tear down DOM side effects of this instance: d3-tip nodes live on document.body and
+    // would otherwise leak on every re-render. Safe to call multiple times.
+    const destroy = () => {
+        try { dendoTooltip.destroy(); } catch (err) { /* already removed */ }
+        if (myNewPlot && myNewPlot.heatmap && typeof myNewPlot.heatmap.destroy === "function") {
+            try { myNewPlot.heatmap.destroy(); } catch (err) { /* already removed */ }
+        }
+        svg.on(".zoom", null);
+    };
 
     const _mountPlot = (div) => {
+        // Destroy any previous plot instance mounted in this div so its body-level
+        // tooltip nodes don't accumulate across re-renders.
+        div.querySelectorAll("svg").forEach(node => {
+            if (node.hclust && typeof node.hclust.destroy === "function") node.hclust.destroy();
+            if (node.heatmap && typeof node.heatmap.destroy === "function") node.heatmap.destroy();
+        });
         div.innerHTML = "";
 
         // Button bar
@@ -1029,13 +1092,7 @@ export async function hclust_plot(options = {}) {
             const clearButton = document.createElement("button");
             clearButton.textContent = "Clear selection";
             clearButton.style.cssText = "padding:3px 10px;cursor:pointer;";
-            clearButton.onclick = () => {
-                lockedCell = null;
-                d3.selectAll(".heatmap-cell")
-                    .style("opacity", 1)
-                    .style("stroke", "none");
-                clearBranchSelection();
-            };
+            clearButton.onclick = () => clearBranchSelection();
             buttonBar.appendChild(clearButton);
 
             // Re-render the plot using only the branch-selected rows/columns
@@ -1051,7 +1108,12 @@ export async function hclust_plot(options = {}) {
             const showAllButton = document.createElement("button");
             showAllButton.textContent = "Show all";
             showAllButton.style.cssText = "padding:3px 10px;cursor:pointer;";
-            showAllButton.onclick = () => hclust_plot(options._fullOptions);
+            showAllButton.onclick = async () => {
+                const newNode = await hclust_plot(options._fullOptions);
+                if (typeof onRerender === "function") {
+                    try { onRerender(newNode); } catch (err) { console.error("onRerender failed:", err); }
+                }
+            };
             buttonBar.appendChild(showAllButton);
         }
 
@@ -1059,42 +1121,30 @@ export async function hclust_plot(options = {}) {
         div.appendChild(svg.node());
     };
 
-    if (document.getElementById(targetDivId)) {
-        const div = document.getElementById(targetDivId);
-        _mountPlot(div);
-
-    } else if (!document.getElementById("childDiv")) {
-
+    let mountDiv = document.getElementById(targetDivId);
+    if (!mountDiv) {
         const currentDivNum = hclustDt.data.divNum;
-
-        const div = document.createElement("div");
-        div.id = targetDivId || 'hclust_plot' + currentDivNum;
-        console.log("div  NOT provided in function options or doesn't exist... created a new div with id: ", div.id, "and appended to document body!");
+        mountDiv = document.createElement("div");
+        mountDiv.id = targetDivId || 'hclust_plot' + currentDivNum;
+        if (debug) console.log("div NOT provided in function options or doesn't exist... created a new div with id: ", mountDiv.id, "and appended to document body!");
 
         const plotsPanel = document.getElementById("plotsPanel");
-        (plotsPanel || document.body).appendChild(div);
-        _mountPlot(div);
+        (plotsPanel || document.body).appendChild(mountDiv);
         hclustDt.data.divNum = currentDivNum + 1;
     }
-    // console.log("svg", svg.node())
+    _mountPlot(mountDiv);
 
     // Selection API: part of the exported hclust_plot contract.
-    // const node = await hclust_plot({...}); node.hclust.getSelection() / .clearSelection() / .plotSelection()
+    // const node = await hclust_plot({...}); node.hclust.getSelection() / .clearSelection()
+    // / .plotSelection() / .destroy()
     const svgNode = svg.node();
     svgNode.hclust = {
         getSelection,
         clearSelection: clearBranchSelection,
-        plotSelection
+        plotSelection,
+        destroy
     };
     return svgNode
-}
-
-
-export async function hclust_UI(options = {}) {
-    console.log("RUNNING hclust_UI()-------------------------------");
-
-    hclustDt.data.divNum += 1
-
 }
 
 

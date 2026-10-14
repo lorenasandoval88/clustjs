@@ -50,6 +50,8 @@ export async function heatmap_plot(options = {}) {
     title: title = "Heatmap", // optional plot title rendered above the heatmap; null/"" to hide
 
     colorScale: colorScale = null,
+    // sentinel marking missing cells. NOTE: the standalone heatmap default is -1 for
+    // backward compatibility; hclust_plot() uses null and passes NaN through here.
     missingValue: missingValue = -1,
     // fill color for missing cells (and the "Missing" legend swatch)
     missingColor: missingColor = "#bdbdbd",
@@ -67,6 +69,8 @@ export async function heatmap_plot(options = {}) {
         tooltip_fontFamily: tooltip_fontFamily = 'monospace',
         tooltip_fontSize: tooltip_fontSize = '14px',
         mountToDOM: mountToDOM = true,
+        // when true, prints layout/diagnostic console.log messages
+        debug: debug = false,
 
   } = options
         const targetDivId = divId;
@@ -79,11 +83,11 @@ export async function heatmap_plot(options = {}) {
   const rowCount = data.length;
   const autoWidth = Math.min(maxAutoSize, Math.max(500, colCount * 16 + 180));
   const autoHeight = Math.min(maxAutoSize, Math.max(500, rowCount * 16 + 180));
-  console.log("Calculated autoWidth:", autoWidth, "autoHeight:", autoHeight);
+  if (debug) console.log("Calculated autoWidth:", autoWidth, "autoHeight:", autoHeight);
   const width = Number.isFinite(inputWidth) && inputWidth > 0 ? inputWidth : autoWidth;
   const height = Number.isFinite(inputHeight) && inputHeight > 0 ? inputHeight : autoHeight;
 
-  console.log("heatmap_plot dimensions:", { width, height });
+  if (debug) console.log("heatmap_plot dimensions:", { width, height });
 
   // Reserve room for the title above the heatmap
   const effectiveMarginTop = title ? Math.max(marginTop, 34) : marginTop;
@@ -503,20 +507,35 @@ g.append("text")
 
   // Here we add the svg to the plot div
   // Check if the div was provided in the function call
-  if (mountToDOM) {
-    if (document.getElementById(targetDivId)) {
-      console.log(`plot div provided in function parameters.divId:`, targetDivId);
-      const div = document.getElementById(targetDivId)
-      div.innerHTML = ""
-      div.appendChild(svg.node())
-    } else if (!document.getElementById("childDiv")) {
-      const div = document.createElement("div")
-      const plotsPanel = document.getElementById("plotsPanel");
-      (plotsPanel || document.body).appendChild(div)
-      div.appendChild(svg.node());
+  const svgNode = svg.node();
+
+  // Tear down DOM side effects of this instance: the d3-tip node lives on document.body
+  // and would otherwise leak on every re-render. Safe to call multiple times.
+  svgNode.heatmap = {
+    destroy: () => {
+      try { tooltip.destroy(); } catch (err) { /* already removed */ }
     }
+  };
+
+  if (mountToDOM) {
+    let div = document.getElementById(targetDivId);
+    if (div) {
+      if (debug) console.log(`plot div provided in function parameters.divId:`, targetDivId);
+    } else {
+      div = document.createElement("div");
+      if (targetDivId) div.id = targetDivId;
+      const plotsPanel = document.getElementById("plotsPanel");
+      (plotsPanel || document.body).appendChild(div);
+    }
+    // Destroy any previous heatmap mounted in this div so its body-level tooltip
+    // node doesn't accumulate across re-renders.
+    div.querySelectorAll("svg").forEach(node => {
+      if (node.heatmap && typeof node.heatmap.destroy === "function") node.heatmap.destroy();
+    });
+    div.innerHTML = "";
+    div.appendChild(svgNode);
   }
 
 
-  return svg.node()
+  return svgNode
 }

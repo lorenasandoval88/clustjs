@@ -13,7 +13,7 @@ export * as d3 from "d3";
 // PLOTS
 // ===============================
 
-export { hclust_plot,  hclustDt } from "./hclust.mjs";//hclust_UI
+export { hclust_plot,  hclustDt } from "./hclust.mjs";
 export { pca_plot, pca_UI, pcaDt } from "./pca.mjs";
 export { tsne_plot, tsne_UI, tsneDt } from "./tsne.mjs";
 export { umap_plot, umap_UI, umapDt } from "./umap.mjs";

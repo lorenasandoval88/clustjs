@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>missingColor test</title></head>
+<body>
+<div id="default"></div>
+<div id="custom"></div>
+<script type="module">
+  const sdk = await import("./dist/sdk.mjs");
+  const data = [
+    [1, 2, NaN, 4],
+    [2, NaN, 3, 1],
+    [4, 3, 2, 1],
+  ];
+  await sdk.hclust_plot({
+    divId: "default",
+    data,
+    rowNames: ["r1", "r2", "r3"],
+    colNames: ["a", "b", "c", "d"],
+    width: 450, height: 400,
+  });
+  await sdk.hclust_plot({
+    divId: "custom",
+    data,
+    rowNames: ["r1", "r2", "r3"],
+    colNames: ["a", "b", "c", "d"],
+    missingColor: "hotpink",
+    width: 450, height: 400,
+  });
+  window.__done = true;
+</script>
+</body>
+</html>

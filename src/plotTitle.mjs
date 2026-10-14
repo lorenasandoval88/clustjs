@@ -1,7 +1,6 @@
 // Shared plot-title renderer so every clustjs plot title looks identical:
 // sans-serif, 16px, semibold, dark fill, centered at the given coordinates.
-// Append to the static SVG root (never a zoom/pan layer) so the title stays
-// fixed while the plot moves.
+// Append to the plot's zoom layer so the title zooms/pans together with the plot.
 export function addPlotTitle(svg, title, x, y) {
     if (!title) return null;
     return svg.append("text")

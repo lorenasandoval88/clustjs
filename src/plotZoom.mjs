@@ -1,8 +1,8 @@
 import * as d3 from "d3";
 
 // Shared d3-zoom wiring for all clustjs plots: wheel to zoom toward the cursor,
-// drag to pan. Transforms `layer` while everything outside it (title, background)
-// stays fixed. Exposes node.plotZoom.resetZoom(); the reset is applied
+// drag to pan. Transforms `layer` (which includes the plot title) while anything
+// outside it stays fixed. Exposes node.plotZoom.resetZoom(); the reset is applied
 // synchronously (no transition) so it also works when rAF is throttled
 // (e.g. background tabs).
 export function attachPlotZoom(svg, layer, { enabled = true, scaleExtent = [0.5, 8] } = {}) {

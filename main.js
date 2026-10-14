@@ -932,7 +932,7 @@ document.querySelectorAll(".plot-card").forEach(card => {
 });
 
 // Zoom/pan for all plots now lives in the SDK (src/plotZoom.mjs): every plot ships
-// its own d3 zoom with a fixed title and exposes node.plotZoom.resetZoom(), which
+// its own d3 zoom and exposes node.plotZoom.resetZoom(), which
 // the plot cards' "1:1" buttons call above.
 
 // Highlight the currently selected tool

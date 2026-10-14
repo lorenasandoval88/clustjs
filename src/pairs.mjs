@@ -64,7 +64,7 @@ export async function pairs_plot(options = {}) {
     colors: colors = ["red", "blue", "orange", "green", "purple", "pink", "yellow"],
     margin: userMargin = {}, // e.g. { top: 60, right: 150, bottom: 40, left: 60 } — override any side
     title: title = "Pairs Plot", // string, or null/"" to hide
-    zoomable: zoomable = true, // wheel to zoom, drag to pan (title stays fixed)
+    zoomable: zoomable = true, // wheel to zoom, drag to pan
   } = options;
   const targetDivId = divId;
 
@@ -116,12 +116,13 @@ export async function pairs_plot(options = {}) {
     .attr("height", plotHeight)
     .style("background", "white");
 
-  // Title (shared style, centered over the pairs grid, see plotTitle.mjs)
-  addPlotTitle(svg, title, margin.left + (cellSize * n) / 2, Math.max(16, margin.top / 2));
-
-  // Zoom wrapper — the grid and legend zoom/pan together while the title stays fixed
+  // Zoom wrapper — the grid, legend and title zoom/pan together
   const zoomLayer = svg.append("g").attr("class", "zoom-layer");
   attachPlotZoom(svg, zoomLayer, { enabled: zoomable });
+
+  // Title (shared style, centered over the pairs grid; inside the zoom layer so it
+  // moves with the plot)
+  addPlotTitle(zoomLayer, title, margin.left + (cellSize * n) / 2, Math.max(16, margin.top / 2));
 
   const g = zoomLayer.append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);

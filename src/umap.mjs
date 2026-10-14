@@ -45,7 +45,7 @@ export async function umap_plot(options = {}) {
     colors: colors = ["red", "blue", "orange", "green", "purple", "pink", "yellow"],
     margin: userMargin = {}, // e.g. { top: 25, right: 170, bottom: 45, left: 45 } — override any side
     title: title = "UMAP Plot", // string, or null/"" to hide
-    zoomable: zoomable = true, // wheel to zoom, drag to pan (title stays fixed)
+    zoomable: zoomable = true, // wheel to zoom, drag to pan
     nNeighbors: nNeighbors = 15,
     minDist: minDist = 0.1,
     nComponents: nComponents = 2
@@ -104,7 +104,7 @@ export async function umap_plot(options = {}) {
   const fontFamily = 'monospace';
   const maxOpacity = 0.7;
   const margin = {
-    top: 25,
+    top: 42, // headroom so the title clears the plot area
     right: 170,
     bottom: 45,
     left: 45,
@@ -172,16 +172,17 @@ export async function umap_plot(options = {}) {
 
   svg.attr("id", "svgid_umap");
 
-  // Title (shared style, centered over the plot area, see plotTitle.mjs)
-  addPlotTitle(svg, title, margin.left + (width - margin.left - margin.right) / 2, Math.max(16, margin.top / 2));
-
   const g = svg
     .attr('width', width)
     .attr('height', height)
     .append('g');
 
-  // Zoom/pan (shared helper, see plotZoom.mjs); the title stays fixed
+  // Zoom/pan (shared helper, see plotZoom.mjs)
   attachPlotZoom(svg, g, { enabled: zoomable });
+
+  // Title (shared style, centered over the plot area; inside the zoom layer so it
+  // moves with the plot)
+  addPlotTitle(g, title, margin.left + (width - margin.left - margin.right) / 2, Math.max(16, margin.top / 2));
 
   g.append("g").call(xAxis);
   g.append("g").call(yAxis);

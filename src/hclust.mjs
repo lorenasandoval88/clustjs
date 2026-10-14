@@ -598,12 +598,12 @@ export async function hclust_plot(options = {}) {
         .attr('height', height)
         .attr('fill', '#ffffff');
 
-    // Title, centered over the heatmap area (outside the zoom layer so it stays put;
-    // shared style, see plotTitle.mjs)
-    addPlotTitle(svg, title, margin.left + heatmapInnerWidth / 2, 20);
-
-    // Zoom wrapper layer — everything inside zooms/pans together
+    // Zoom wrapper layer — everything inside (including the title) zooms/pans together
     const zoomLayer = svg.append("g");
+
+    // Title, centered over the heatmap area (shared style; inside the zoom layer so
+    // it moves with the plot)
+    addPlotTitle(zoomLayer, title, margin.left + heatmapInnerWidth / 2, 20);
 
     // Create the main group before appending myNewPlot
     const g = zoomLayer
@@ -611,7 +611,7 @@ export async function hclust_plot(options = {}) {
         // move the entire graph down and right to accomodate labels
         .attr('transform', `translate(${margin.left}, ${margin.top})`);
 
-    // Zoom behavior (shared helper, see plotZoom.mjs); title/background stay fixed
+    // Zoom behavior (shared helper, see plotZoom.mjs)
     const resetZoom = attachPlotZoom(svg, zoomLayer, { enabled: interactive && zoomable });
 
 

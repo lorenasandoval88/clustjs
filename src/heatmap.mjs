@@ -71,7 +71,7 @@ export async function heatmap_plot(options = {}) {
         tooltip_fontFamily: tooltip_fontFamily = 'monospace',
         tooltip_fontSize: tooltip_fontSize = '14px',
         mountToDOM: mountToDOM = true,
-        // wheel to zoom, drag to pan when mounted standalone (title stays fixed);
+        // wheel to zoom, drag to pan when mounted standalone;
         // ignored when embedded by hclust (mountToDOM=false), which has its own zoom
         zoomable: zoomable = true,
         // when true, prints layout/diagnostic console.log messages
@@ -263,14 +263,15 @@ if (typeof colorScale === "function") {
     .attr('height', height)
     .attr('fill', '#ffffff');
 
-  // Optional title, centered over the heatmap area (shared style, see plotTitle.mjs)
-  addPlotTitle(svg, title, margin.left + innerWidth / 2, Math.max(20, margin.top - 12));
-
   // Zoom wrapper (standalone mode only): hclust embeds this heatmap, applies its own
   // zoom and extracts the first <g>, so no wrapper may be added when mountToDOM=false.
   const useZoom = mountToDOM && zoomable;
   const zoomHost = useZoom ? svg.append('g').attr('class', 'zoom-layer') : svg;
   if (useZoom) attachPlotZoom(svg, zoomHost, { enabled: true });
+
+  // Optional title, centered over the heatmap area (shared style; inside the zoom
+  // layer so it moves with the plot)
+  addPlotTitle(zoomHost, title, margin.left + innerWidth / 2, Math.max(20, margin.top - 12));
 
   const g = zoomHost
     .append('g')

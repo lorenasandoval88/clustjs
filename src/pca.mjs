@@ -98,7 +98,7 @@ export async function pca_plot(options = {}) {
     colors: colors = ["red", "blue", "orange", "green", "purple", "pink", "yellow"],
     margin: userMargin = {}, // e.g. { top: 25, right: 170, bottom: 45, left: 45 } — override any side
     title: title = "PCA Plot", // string, or null/"" to hide
-    zoomable: zoomable = true, // wheel to zoom, drag to pan (title stays fixed)
+    zoomable: zoomable = true, // wheel to zoom, drag to pan
   } = options;
   const targetDivId = divId;
 
@@ -128,7 +128,7 @@ export async function pca_plot(options = {}) {
   const fontFamily = 'monospace'
   const maxOpacity = 0.7
   const margin = {
-    top: 25,
+    top: 42, // headroom so the title clears the plot area
     right: 170,
     bottom: 45,
     left: 45,
@@ -198,17 +198,18 @@ svg.attr("id", "svgid");
   // svg.id = "svgid"
   // const g = d3.select(DOM.svg(width, height));
 
-  // Title (shared style, centered over the plot area, see plotTitle.mjs)
-  addPlotTitle(svg, title, margin.left + (width - margin.left - margin.right) / 2, Math.max(16, margin.top / 2));
-
   const g = svg
     .attr('width', width)
     .attr('height', height)
     .append('g')
   // .attr('transform', `translate(${margin.left+margin.right}, ${margin.top+margin.bottom})`)
 
-  // Zoom/pan (shared helper, see plotZoom.mjs); the title stays fixed
+  // Zoom/pan (shared helper, see plotZoom.mjs)
   attachPlotZoom(svg, g, { enabled: zoomable });
+
+  // Title (shared style, centered over the plot area; inside the zoom layer so it
+  // moves with the plot)
+  addPlotTitle(g, title, margin.left + (width - margin.left - margin.right) / 2, Math.max(16, margin.top / 2));
 
   g.append("g")
     .call(xAxis);
